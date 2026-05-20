@@ -44,7 +44,6 @@ export default function SchoolPortal() {
 
   const handleUploadResult = (result: Result) => {
     setResults((prev) => {
-      // Remove existing result for same student+subject
       const filtered = prev.filter(
         (r) => !(r.student === result.student && r.subject === result.subject)
       );
@@ -88,203 +87,227 @@ export default function SchoolPortal() {
   // Staff Portal View
   if (view === "staff-portal" && loggedInLecturer) {
     return (
-      <main className="min-h-screen bg-gray-100">
+      <main className="min-h-screen bg-background">
         <Navbar
-          currentPage={currentPage}
-          onNavigate={(page) => { setCurrentPage(page); if (page !== "Home" && page !== "About Us") setView("home"); }}
-          onStudentPortal={() => setView("student-login")}
-          onStaffPortal={() => setView("staff-login")}
+          isPortal
+          portalType="staff"
+          userName={loggedInLecturer.name}
+          userDetails={loggedInLecturer.subject}
+          onLogout={handleLogout}
         />
-
-        {/* HERO SECTION */}
-        <section className="relative bg-gradient-to-r from-blue-950 via-green-900 to-green-700 text-white">
-          <div className="max-w-7xl mx-auto px-6 py-24 text-center">
-            <h1 className="text-5xl font-bold mb-6">
-              WAMY Isiolo High School
-            </h1>
-
-            <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
-              Excellence Through Education, Discipline & Leadership.
-              Nurturing future leaders through quality education,
-              Islamic values and holistic development.
-            </p>
-
-            <div className="flex flex-col md:flex-row justify-center gap-4">
-              <button
-                onClick={() => setView("student-login")}
-                className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg"
-              >
-                Student Portal
-              </button>
-
-              <button
-                onClick={() => setView("staff-login")}
-                className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg"
-              >
-                Staff Portal
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* WELCOME */}
-        <section className="max-w-6xl mx-auto px-6 py-16">
-          <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
-            <h2 className="text-4xl font-bold text-blue-900 mb-6">
-              Welcome to WAMY Isiolo High School
-            </h2>
-
-            <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
-              WAMY Isiolo High School is dedicated to academic excellence,
-              discipline, innovation and character building. We provide
-              quality education in a supportive Islamic environment that
-              empowers students to succeed academically and morally.
-            </p>
-          </div>
-        </section>
-
-        {/* STATS */}
-        <section className="max-w-6xl mx-auto px-6 pb-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <h3 className="text-5xl font-bold text-blue-700 mb-2">69+</h3>
-              <p className="text-gray-600 font-semibold">Students</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <h3 className="text-5xl font-bold text-green-700 mb-2">8</h3>
-              <p className="text-gray-600 font-semibold">Staff Members</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <h3 className="text-5xl font-bold text-yellow-600 mb-2">3</h3>
-              <p className="text-gray-600 font-semibold">Classes</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <h3 className="text-5xl font-bold text-red-600 mb-2">100%</h3>
-              <p className="text-gray-600 font-semibold">Discipline</p>
-            </div>
-
-          </div>
-        </section>
-
-        {/* SCHOOL LIFE */}
-        <section className="max-w-6xl mx-auto px-6 pb-16">
-          <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">
-            School Life & Activities
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-              <img
-                src="/sports.jpg"
-                alt="Sports"
-                className="w-full h-72 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3>
-                <p className="text-gray-600">
-                  Building discipline, teamwork and leadership through sports.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-              <img
-                src="/scouts.jpg"
-                alt="Scouts"
-                className="w-full h-72 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-2xl font-bold mb-3">Scouts Movement</h3>
-                <p className="text-gray-600">
-                  Training responsible students with leadership skills and character.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* PRINCIPAL MESSAGE */}
-        <section className="bg-blue-950 text-white py-20">
-          <div className="max-w-5xl mx-auto px-6 text-center">
-            <h2 className="text-4xl font-bold mb-8">
-              Message from the Principal
-            </h2>
-
-            <p className="text-xl leading-9 text-gray-200">
-              “At WAMY Isiolo High School, we believe in nurturing students
-              academically, morally and spiritually. Our mission is to produce
-              disciplined future leaders prepared for success in this world and
-              the hereafter.”
-            </p>
-
-            <div className="mt-8 text-yellow-400 font-bold text-xl">
-              — Principal Osman Halake
-            </div>
-          </div>
-        </section>
-        {/* ACADEMICS */}
-        {currentPage === "Academics" && (
-          <section className="max-w-6xl mx-auto px-6 py-16">
-            <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
-                <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
-                  <span className="text-2xl">📚</span>
-                  <p className="font-semibold text-gray-800">{s}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* DOWNLOADS */}
-        {currentPage === "Downloads" && (
-          <section className="max-w-4xl mx-auto px-6 py-16">
-            <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Downloads</h2>
-            <div className="space-y-4">
-              {[
-                {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
-                {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
-                {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
-                {icon:"📜", title:"School Rules & Regulations", sub:"PDF — Student Handbook"},
-                {icon:"🩺", title:"Medical / Health Form", sub:"PDF — Required for boarding students"},
-              ].map((d) => (
-                <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
-                  <span className="text-3xl">{d.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800">{d.title}</p>
-                    <p className="text-sm text-gray-500">{d.sub}</p>
-                  </div>
-                  <button onClick={()=>alert("Contact school administration for this document.")} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Download</button>
-                </div>
-              ))}
-              <p className="text-center text-sm text-gray-500 mt-4">📞 Contact: info@wamyisiolo.sc.ke | P.O BOX 734-60300, ISIOLO</p>
-            </div>
-          </section>
-        )}
-
-        {/* FOOTER */}
-        <footer className="bg-black text-gray-300 py-10">
-          <div className="max-w-6xl mx-auto px-6 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">
-              WAMY Isiolo High School
-            </h3>
-
-            <p>Email: info@wamyisiolo.sc.ke</p>
-            <p>Isiolo, Kenya</p>
-
-            <div className="mt-6 text-sm text-gray-500">
-              © 2026 WAMY Isiolo High School. All rights reserved.
-            </div>
-          </div>
-        </footer>
+        <StaffPortal
+          lecturer={loggedInLecturer}
+          results={results}
+          fees={fees}
+          onUploadResult={handleUploadResult}
+          onDeleteResult={handleDeleteResult}
+          onUpdateFees={handleUpdateFees}
+        />
       </main>
     );
   }
+
+  // Student Login View
+  if (view === "student-login") {
+    return (
+      <main className="min-h-screen bg-background">
+        <Navbar
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+          onStudentPortal={() => setView("student-login")}
+          onStaffPortal={() => setView("staff-login")}
+        />
+        <StudentLogin onLogin={handleStudentLogin} onBack={() => setView("home")} />
+      </main>
+    );
+  }
+
+  // Staff Login View
+  if (view === "staff-login") {
+    return (
+      <main className="min-h-screen bg-background">
+        <Navbar
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+          onStudentPortal={() => setView("student-login")}
+          onStaffPortal={() => setView("staff-login")}
+        />
+        <StaffLogin onLogin={handleStaffLogin} onBack={() => setView("home")} />
+      </main>
+    );
+  }
+
+  // Home View
+  return (
+    <main className="min-h-screen bg-gray-100">
+      <Navbar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        onStudentPortal={() => setView("student-login")}
+        onStaffPortal={() => setView("staff-login")}
+      />
+
+      {/* HERO SECTION */}
+      <section className="relative bg-gradient-to-r from-blue-950 via-green-900 to-green-700 text-white">
+        <div className="max-w-7xl mx-auto px-6 py-24 text-center">
+          <h1 className="text-5xl font-bold mb-6">WAMY Isiolo High School</h1>
+          <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
+            Excellence Through Education, Discipline & Leadership.
+            Nurturing future leaders through quality education,
+            Islamic values and holistic development.
+          </p>
+          <div className="flex flex-col md:flex-row justify-center gap-4">
+            <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg">
+              Student Portal
+            </button>
+            <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg">
+              Staff Portal
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* HOME PAGE CONTENT */}
+      {currentPage === "Home" && (
+        <>
+          <section className="max-w-6xl mx-auto px-6 py-16">
+            <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
+              <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
+              <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
+                WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
+              </p>
+            </div>
+          </section>
+
+          <section className="max-w-6xl mx-auto px-6 pb-16">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-blue-700 mb-2">69+</h3><p className="text-gray-600 font-semibold">Students</p></div>
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-green-700 mb-2">8</h3><p className="text-gray-600 font-semibold">Staff Members</p></div>
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-yellow-600 mb-2">3</h3><p className="text-gray-600 font-semibold">Classes</p></div>
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-red-600 mb-2">100%</h3><p className="text-gray-600 font-semibold">Discipline</p></div>
+            </div>
+          </section>
+
+          <section className="max-w-6xl mx-auto px-6 pb-16">
+            <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+                <img src="/sports.jpg" alt="Sports" className="w-full h-72 object-cover" />
+                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3><p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p></div>
+              </div>
+              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+                <img src="/scouts.jpg" alt="Scouts" className="w-full h-72 object-cover" />
+                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouts Movement</h3><p className="text-gray-600">Training responsible students with leadership skills and character.</p></div>
+              </div>
+              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+                <img src="/jamboree.jpg" alt="Jamboree" className="w-full h-72 object-cover" />
+                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouting Jamboree</h3><p className="text-gray-600">Students showcasing practical skills at inter-school camps.</p></div>
+              </div>
+              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+                <img src="/certificates.jpg" alt="Certificates" className="w-full h-72 object-cover" />
+                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Certificates of Participation</h3><p className="text-gray-600">Recognizing student achievement and hard work.</p></div>
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-blue-950 text-white py-20">
+            <div className="max-w-5xl mx-auto px-6 text-center">
+              <h2 className="text-4xl font-bold mb-8">Message from the Principal</h2>
+              <p className="text-xl leading-9 text-gray-200">"At WAMY Isiolo High School, we believe in nurturing students academically, morally and spiritually. Our mission is to produce disciplined future leaders prepared for success in this world and the hereafter."</p>
+              <div className="mt-8 text-yellow-400 font-bold text-xl">— Principal Osman Halake</div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ABOUT PAGE */}
+      {currentPage === "About Us" && (
+        <section className="max-w-4xl mx-auto px-6 py-16 space-y-6">
+          <h2 className="text-4xl font-bold text-blue-900 text-center mb-10">About Us</h2>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-green-700 mb-3">🌿 Our Mission</h3>
+            <p className="text-gray-600 leading-8">To provide quality, inclusive, and values-based education that equips students with academic excellence, strong character, and life skills necessary to thrive in a dynamic world.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-green-700 mb-3">🎯 Our Vision</h3>
+            <p className="text-gray-600 leading-8">To be a leading institution in Isiolo County that produces responsible, knowledgeable, and faith-grounded graduates who contribute positively to society.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-green-700 mb-3">🏫 About the School</h3>
+            <p className="text-gray-600 leading-8">WAMY Isiolo High School (World Assembly of Muslim Youth — Isiolo) is a Day and Boarding senior school in Isiolo County, Kenya. We offer STEM, Social Sciences, and Islamic classes with over 69 students, 8 dedicated staff members, and 3 classes.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-green-700 mb-3">⭐ Core Values</h3>
+            <ul className="text-gray-600 space-y-2 list-disc list-inside">
+              <li>Academic Excellence</li>
+              <li>Integrity & Discipline</li>
+              <li>Inclusivity & Respect</li>
+              <li>Community Service</li>
+              <li>Faith & Character</li>
+            </ul>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-green-700 mb-3">🤝 Extra-Curricular Activities</h3>
+            <ul className="text-gray-600 space-y-2 list-disc list-inside">
+              <li>Football & Sports</li>
+              <li>Scout Troop</li>
+              <li>First Aid Training</li>
+              <li>Inter-school competitions and jamborees</li>
+            </ul>
+          </div>
+        </section>
+      )}
+
+      {/* ACADEMICS PAGE */}
+      {currentPage === "Academics" && (
+        <section className="max-w-6xl mx-auto px-6 py-16">
+          <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
+              <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
+                <span className="text-2xl">📚</span>
+                <p className="font-semibold text-gray-800">{s}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* DOWNLOADS PAGE */}
+      {currentPage === "Downloads" && (
+        <section className="max-w-4xl mx-auto px-6 py-16">
+          <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Downloads</h2>
+          <div className="space-y-4">
+            {[
+              {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
+              {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
+              {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
+              {icon:"📜", title:"School Rules & Regulations", sub:"PDF — Student Handbook"},
+              {icon:"🩺", title:"Medical / Health Form", sub:"PDF — Required for boarding students"},
+            ].map((d) => (
+              <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
+                <span className="text-3xl">{d.icon}</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800">{d.title}</p>
+                  <p className="text-sm text-gray-500">{d.sub}</p>
+                </div>
+                <button onClick={()=>alert("Contact school administration for this document.")} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Download</button>
+              </div>
+            ))}
+            <p className="text-center text-sm text-gray-500 mt-4">📞 Contact: info@wamyisiolo.sc.ke | P.O BOX 734-60300, ISIOLO</p>
+          </div>
+        </section>
+      )}
+
+      {/* FOOTER */}
+      <footer className="bg-black text-gray-300 py-10">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h3 className="text-2xl font-bold text-white mb-4">WAMY Isiolo High School</h3>
+          <p>Email: info@wamyisiolo.sc.ke</p>
+          <p>Isiolo, Kenya</p>
+          <div className="mt-6 text-sm text-gray-500">© 2026 WAMY Isiolo High School. All rights reserved.</div>
+        </div>
+      </footer>
+    </main>
+  );
 }
