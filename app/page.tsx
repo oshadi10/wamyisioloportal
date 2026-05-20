@@ -63,8 +63,7 @@ export default function SchoolPortal() {
       [student]: { total, paid },
     }));
   };
-
-  // 1. STUDENT PORTAL VIEW
+ // 1. STUDENT PORTAL VIEW
   if (view === "student-portal" && loggedInStudent) {
     return (
       <main className="min-h-screen bg-background">
@@ -141,14 +140,14 @@ export default function SchoolPortal() {
     );
   }
 
- // 5. DEFAULT MAIN LAYOUT (Handles Navigation Links like About, Admissions, etc.)
+  // 5. DEFAULT MAIN LAYOUT (Handles Navigation Links like About, Admissions, etc.)
   return (
     <main className="min-h-screen bg-gray-100">
       <Navbar
         currentPage={currentPage}
         onNavigate={(page) => {
           setCurrentPage(page);
-          setView("home"); // Ensure we go back to the main layout structure
+          setView("home");
         }}
         onStudentPortal={() => setView("student-login")}
         onStaffPortal={() => setView("staff-login")}
@@ -293,7 +292,7 @@ export default function SchoolPortal() {
         </section>
       )}
 
-      {/* FOOTER - Renders universally across all sub-pages */}
+      {/* FOOTER */}
       <footer className="bg-black text-gray-300 py-10">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h3 className="text-2xl font-bold text-white mb-4">WAMY Isiolo High School</h3>
@@ -306,3 +305,4 @@ export default function SchoolPortal() {
       </footer>
     </main>
   );
+}
