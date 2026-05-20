@@ -53,7 +53,7 @@ export default function SchoolPortal() {
 
   const handleDeleteResult = (student: string, subject: string) => {
     setResults((prev) =>
-      prev.filter((r) => !(r.student === student && r.subject === subject))
+      prev.filter((r) => !(r.student === student && r.subject === subject && r.term === term))
     );
   };
 
