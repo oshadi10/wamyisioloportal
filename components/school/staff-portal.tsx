@@ -54,7 +54,8 @@ export function StaffPortal({
   const [activeTab, setActiveTab] = useState("results");
 
   // Form states
-  const [newSubject, setNewSubject] = useState(lecturer.subject);
+  const lecturerSubjects = lecturer.subject.split(" / ");
+const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
 
@@ -181,11 +182,15 @@ export function StaffPortal({
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Feed Results</h4>
                     <div className="space-y-2">
-                      <Input
-  placeholder="Subject"
-  value={newSubject || lecturer.subject}
+                     <select
+  value={newSubject}
   onChange={(e) => setNewSubject(e.target.value)}
-/>
+  className="w-full border rounded-md px-3 py-2 text-sm"
+>
+  {lecturerSubjects.map((sub) => (
+    <option key={sub} value={sub}>{sub}</option>
+  ))}
+</select>
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           type="number"
