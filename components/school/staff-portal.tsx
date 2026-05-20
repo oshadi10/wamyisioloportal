@@ -167,8 +167,10 @@ export function StaffPortal({
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="results">Results</TabsTrigger>
-                  <TabsTrigger value="fees">Fees</TabsTrigger>
+                 <TabsTrigger value="results">Results</TabsTrigger>
+{lecturer.name === "Mr. Osman Halake" && (
+  <TabsTrigger value="fees">Fees</TabsTrigger>
+)}
                 </TabsList>
 
                 <p className="text-sm text-muted-foreground mb-4">
@@ -254,45 +256,47 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                <TabsContent value="fees" className="space-y-4">
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm">Update Fees</h4>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">
-                          Total Fees (KSh)
-                        </Label>
-                        <Input
-                          type="number"
-                          value={feeTotal}
-                          onChange={(e) => setFeeTotal(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">
-                          Amount Paid (KSh)
-                        </Label>
-                        <Input
-                          type="number"
-                          value={feePaid}
-                          onChange={(e) => setFeePaid(e.target.value)}
-                        />
-                      </div>
-                      <div className="p-3 bg-muted rounded-md text-sm">
-                        Balance:{" "}
-                        <span className="text-destructive font-medium">
-                          KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}
-                        </span>
-                      </div>
-                      <Button
-                        onClick={handleUpdateFees}
-                        className="bg-[#1a56a0] hover:bg-[#154a8a]"
-                      >
-                        Update Fees
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
+                {lecturer.name === "Mr. Osman Halake" && (
+  <TabsContent value="fees" className="space-y-4">
+    <div className="space-y-3">
+      <h4 className="font-medium text-sm">Update Fees</h4>
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">
+            Total Fees (KSh)
+          </Label>
+          <Input
+            type="number"
+            value={feeTotal}
+            onChange={(e) => setFeeTotal(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">
+            Amount Paid (KSh)
+          </Label>
+          <Input
+            type="number"
+            value={feePaid}
+            onChange={(e) => setFeePaid(e.target.value)}
+          />
+        </div>
+        <div className="p-3 bg-muted rounded-md text-sm">
+          Balance:{" "}
+          <span className="text-destructive font-medium">
+            KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}
+          </span>
+        </div>
+        <Button
+          onClick={handleUpdateFees}
+          className="bg-[#1a56a0] hover:bg-[#154a8a]"
+        >
+          Update Fees
+        </Button>
+      </div>
+    </div>
+  </TabsContent>
+)}
               </Tabs>
             </CardContent>
           </Card>
