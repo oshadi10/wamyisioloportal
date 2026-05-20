@@ -91,7 +91,7 @@ export default function SchoolPortal() {
       <main className="min-h-screen bg-gray-100">
         <Navbar
           currentPage={currentPage}
-          onNavigate={setCurrentPage}
+          onNavigate={(page) => { setCurrentPage(page); if (page !== "Home" && page !== "About Us") setView("home"); }}
           onStudentPortal={() => setView("student-login")}
           onStaffPortal={() => setView("staff-login")}
         />
@@ -228,6 +228,46 @@ export default function SchoolPortal() {
             </div>
           </div>
         </section>
+        {/* ACADEMICS */}
+        {currentPage === "Academics" && (
+          <section className="max-w-6xl mx-auto px-6 py-16">
+            <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
+                <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
+                  <span className="text-2xl">📚</span>
+                  <p className="font-semibold text-gray-800">{s}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* DOWNLOADS */}
+        {currentPage === "Downloads" && (
+          <section className="max-w-4xl mx-auto px-6 py-16">
+            <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Downloads</h2>
+            <div className="space-y-4">
+              {[
+                {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
+                {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
+                {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
+                {icon:"📜", title:"School Rules & Regulations", sub:"PDF — Student Handbook"},
+                {icon:"🩺", title:"Medical / Health Form", sub:"PDF — Required for boarding students"},
+              ].map((d) => (
+                <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
+                  <span className="text-3xl">{d.icon}</span>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800">{d.title}</p>
+                    <p className="text-sm text-gray-500">{d.sub}</p>
+                  </div>
+                  <button onClick={()=>alert("Contact school administration for this document.")} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Download</button>
+                </div>
+              ))}
+              <p className="text-center text-sm text-gray-500 mt-4">📞 Contact: info@wamyisiolo.sc.ke | P.O BOX 734-60300, ISIOLO</p>
+            </div>
+          </section>
+        )}
 
         {/* FOOTER */}
         <footer className="bg-black text-gray-300 py-10">
