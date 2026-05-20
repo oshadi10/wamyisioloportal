@@ -200,7 +200,7 @@ export default function SchoolPortal() {
                 <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouts Movement</h3><p className="text-gray-600">Training responsible students with leadership skills and character.</p></div>
               </div>
               <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <img src="/indoor.jpg" alt="Jamboree" className="w-full h-72 object-cover" />
+                <img src="/outdoor.jpg" alt="Jamboree" className="w-full h-72 object-cover" />
                 <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouting Jamboree</h3><p className="text-gray-600">Students showcasing practical skills at inter-school camps.</p></div>
               </div>
               <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
