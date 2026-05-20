@@ -99,7 +99,7 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
       grade,
     });
 
-    setNewSubject("");
+    
     setNewMarks("");
     setNewGrade("");
   };
