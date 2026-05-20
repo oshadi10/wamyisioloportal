@@ -49,6 +49,7 @@ export interface Result {
   subject: string;
   marks: number;
   grade: string;
+  term: string;
 }
 
 export interface FeeRecord {
@@ -98,7 +99,6 @@ export const termOptions = [
   'Term 3, 2025'
 ];
 
-// Initialize default fees for all students
 export const initializeFees = (): Record<string, FeeRecord> => {
   const fees: Record<string, FeeRecord> = {};
   Object.keys(studentAccounts).forEach(name => {
@@ -107,8 +107,7 @@ export const initializeFees = (): Record<string, FeeRecord> => {
   return fees;
 };
 
-// Initial results
 export const initialResults: Result[] = [
-  { student: 'Talha Hussein', className: 'Form 3', subject: 'Mathematics', marks: 90, grade: 'A' },
-  { student: 'Talha Hussein', className: 'Form 3', subject: 'English', marks: 82, grade: 'A-' }
+  { student: 'Talha Hussein', className: 'Form 3', subject: 'Mathematics', marks: 90, grade: 'A', term: 'Term 1, 2026' },
+  { student: 'Talha Hussein', className: 'Form 3', subject: 'English', marks: 82, grade: 'A-', term: 'Term 1, 2026' }
 ];
