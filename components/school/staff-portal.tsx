@@ -254,19 +254,21 @@ export function StaffPortal({
                             <TableBody>
                               {termResults.map((result, index) => (
                                 <TableRow key={index}>
-                                  <TableCell>{result.subject}</TableCell>
-                                  <TableCell>{result.marks}</TableCell>
-                                  <TableCell className="font-semibold">{result.grade}</TableCell>
-                                  <TableCell>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => onDeleteResult(selectedStudent, result.subject, result.term)}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
+  <TableCell>{result.subject}</TableCell>
+  <TableCell>{result.marks}</TableCell>
+  <TableCell className="font-semibold">{result.grade}</TableCell>
+  <TableCell>
+    {lecturerSubjects.includes(result.subject) && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onDeleteResult(selectedStudent, result.subject, result.term)}
+      >
+        <Trash2 className="h-3 w-3" />
+      </Button>
+    )}
+  </TableCell>
+</TableRow>
                               ))}
                             </TableBody>
                           </Table>
