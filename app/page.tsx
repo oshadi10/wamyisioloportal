@@ -148,8 +148,30 @@ export default function SchoolPortal() {
       />
 
       {/* HERO SECTION */}
-      <section className="relative bg-gradient-to-r from-blue-950 via-green-900 to-green-700 text-white">
-        <div className="max-w-7xl mx-auto px-6 py-24 text-center">
+      <section className="relative text-white overflow-hidden">
+        {/* Slideshow Background */}
+<div className="absolute inset-0 z-0">
+  {["/sports.jpg", "/scouts.jpg", "/outdoor.jpg", "/firstaid.jpg"].map((img, i) => (
+    <div
+      key={i}
+      className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+      style={{
+        backgroundImage: `url(${img})`,
+        animation: `slide ${16}s infinite`,
+        animationDelay: `${i * 4}s`,
+        opacity: 0,
+      }}
+    />
+  ))}
+  <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
+</div>
+<style>{`
+  @keyframes slide {
+    0%, 20% { opacity: 1; }
+    25%, 100% { opacity: 0; }
+  }
+`}</style>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 text-center">
           <h1 className="text-5xl font-bold mb-6">WAMY Isiolo High School</h1>
           <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
             Excellence Through Education, Discipline & Leadership.
