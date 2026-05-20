@@ -54,7 +54,7 @@ export function StaffPortal({
   const [activeTab, setActiveTab] = useState("results");
 
   // Form states
-  const [newSubject, setNewSubject] = useState("");
+  const [newSubject, setNewSubject] = useState(lecturer.subject);
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
 
@@ -182,10 +182,10 @@ export function StaffPortal({
                     <h4 className="font-medium text-sm">Feed Results</h4>
                     <div className="space-y-2">
                       <Input
-                        placeholder="Subject"
-                        value={newSubject}
-                        onChange={(e) => setNewSubject(e.target.value)}
-                      />
+  placeholder="Subject"
+  value={newSubject || lecturer.subject}
+  onChange={(e) => setNewSubject(e.target.value)}
+/>
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           type="number"
