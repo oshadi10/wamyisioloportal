@@ -28,6 +28,7 @@ import {
   Result,
   FeeRecord,
   getGrade,
+  termOptions,
 } from "@/lib/school-data";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ interface StaffPortalProps {
   results: Result[];
   fees: Record<string, FeeRecord>;
   onUploadResult: (result: Result) => void;
-  onDeleteResult: (student: string, subject: string) => void;
+  onDeleteResult: (student: string, subject: string, term: string) => void;
   onUpdateFees: (student: string, total: number, paid: number) => void;
 }
 
@@ -53,11 +54,11 @@ export function StaffPortal({
   const [selectedStudent, setSelectedStudent] = useState(classStudents[classNames[0]][0]);
   const [activeTab, setActiveTab] = useState("results");
 
-  // Form states
   const lecturerSubjects = lecturer.subject.split(" / ");
-const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
+  const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
+  const [newTerm, setNewTerm] = useState("Term 1, 2026");
 
   const [feeTotal, setFeeTotal] = useState(
     (fees[selectedStudent]?.total || 45000).toString()
@@ -97,9 +98,9 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
       subject: newSubject.trim(),
       marks,
       grade,
+      term: newTerm,
     });
 
-    
     setNewMarks("");
     setNewGrade("");
   };
@@ -107,7 +108,6 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
   const handleUpdateFees = () => {
     const total = Number(feeTotal);
     const paid = Number(feePaid);
-
     if (isNaN(total) || isNaN(paid) || total < 0 || paid < 0) {
       alert("Enter valid fee amounts.");
       return;
@@ -116,10 +116,17 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
       alert("Amount paid cannot exceed total fees.");
       return;
     }
-
     onUpdateFees(selectedStudent, total, paid);
     alert(`Fees updated for ${selectedStudent}.`);
   };
+
+  // Group results by term
+  const resultsByTerm = studentResults.reduce((acc, r) => {
+    const t = r.term || "Unknown Term";
+    if (!acc[t]) acc[t] = [];
+    acc[t].push(r);
+    return acc;
+  }, {} as Record<string, Result[]>);
 
   return (
     <div className="max-w-5xl mx-auto p-4">
@@ -168,10 +175,10 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4">
-                 <TabsTrigger value="results">Results</TabsTrigger>
-{lecturer.name === "Mr. Osman Halake" && (
-  <TabsTrigger value="fees">Fees</TabsTrigger>
-)}
+                  <TabsTrigger value="results">Results</TabsTrigger>
+                  {lecturer.name === "Mr. Osman Halake" && (
+                    <TabsTrigger value="fees">Fees</TabsTrigger>
+                  )}
                 </TabsList>
 
                 <p className="text-sm text-muted-foreground mb-4">
@@ -182,15 +189,28 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Feed Results</h4>
                     <div className="space-y-2">
-                     <select
-  value={newSubject}
-  onChange={(e) => setNewSubject(e.target.value)}
-  className="w-full border rounded-md px-3 py-2 text-sm"
->
-  {lecturerSubjects.map((sub) => (
-    <option key={sub} value={sub}>{sub}</option>
-  ))}
-</select>
+                      {/* Term Dropdown */}
+                      <select
+                        value={newTerm}
+                        onChange={(e) => setNewTerm(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        {termOptions.map((term) => (
+                          <option key={term} value={term}>{term}</option>
+                        ))}
+                      </select>
+
+                      {/* Subject Dropdown */}
+                      <select
+                        value={newSubject}
+                        onChange={(e) => setNewSubject(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                      >
+                        {lecturerSubjects.map((sub) => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                      </select>
+
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           type="number"
@@ -216,45 +236,44 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
                     </div>
                   </div>
 
-                  {studentResults.length > 0 && (
-                    <div className="space-y-2">
+                  {studentResults.length > 0 ? (
+                    <div className="space-y-4">
                       <h4 className="font-medium text-sm">Existing Results</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Subject</TableHead>
-                            <TableHead>Marks</TableHead>
-                            <TableHead>Grade</TableHead>
-                            <TableHead className="w-[80px]"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {studentResults.map((result, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{result.subject}</TableCell>
-                              <TableCell>{result.marks}</TableCell>
-                              <TableCell className="font-semibold">
-                                {result.grade}
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    onDeleteResult(selectedStudent, result.subject)
-                                  }
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      {Object.entries(resultsByTerm).map(([term, termResults]) => (
+                        <div key={term}>
+                          <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">{term}</p>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Subject</TableHead>
+                                <TableHead>Marks</TableHead>
+                                <TableHead>Grade</TableHead>
+                                <TableHead className="w-[80px]"></TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {termResults.map((result, index) => (
+                                <TableRow key={index}>
+                                  <TableCell>{result.subject}</TableCell>
+                                  <TableCell>{result.marks}</TableCell>
+                                  <TableCell className="font-semibold">{result.grade}</TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => onDeleteResult(selectedStudent, result.subject, result.term)}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {studentResults.length === 0 && (
+                  ) : (
                     <p className="text-sm text-muted-foreground">
                       No results yet for this student.
                     </p>
@@ -262,46 +281,39 @@ const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
                 </TabsContent>
 
                 {lecturer.name === "Mr. Osman Halake" && (
-  <TabsContent value="fees" className="space-y-4">
-    <div className="space-y-3">
-      <h4 className="font-medium text-sm">Update Fees</h4>
-      <div className="space-y-3">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Total Fees (KSh)
-          </Label>
-          <Input
-            type="number"
-            value={feeTotal}
-            onChange={(e) => setFeeTotal(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Amount Paid (KSh)
-          </Label>
-          <Input
-            type="number"
-            value={feePaid}
-            onChange={(e) => setFeePaid(e.target.value)}
-          />
-        </div>
-        <div className="p-3 bg-muted rounded-md text-sm">
-          Balance:{" "}
-          <span className="text-destructive font-medium">
-            KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}
-          </span>
-        </div>
-        <Button
-          onClick={handleUpdateFees}
-          className="bg-[#1a56a0] hover:bg-[#154a8a]"
-        >
-          Update Fees
-        </Button>
-      </div>
-    </div>
-  </TabsContent>
-)}
+                  <TabsContent value="fees" className="space-y-4">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm">Update Fees</h4>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
+                          <Input
+                            type="number"
+                            value={feeTotal}
+                            onChange={(e) => setFeeTotal(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
+                          <Input
+                            type="number"
+                            value={feePaid}
+                            onChange={(e) => setFeePaid(e.target.value)}
+                          />
+                        </div>
+                        <div className="p-3 bg-muted rounded-md text-sm">
+                          Balance:{" "}
+                          <span className="text-destructive font-medium">
+                            KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}
+                          </span>
+                        </div>
+                        <Button onClick={handleUpdateFees} className="bg-[#1a56a0] hover:bg-[#154a8a]">
+                          Update Fees
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                )}
               </Tabs>
             </CardContent>
           </Card>
