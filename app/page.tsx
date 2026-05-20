@@ -157,8 +157,8 @@ export default function SchoolPortal() {
       className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
       style={{
         backgroundImage: `url(${img})`,
-        animation: `slide ${16}s infinite`,
-        animationDelay: `${i * 4}s`,
+        animation: `slide ${32}s infinite`,
+        animationDelay: `${i * 8}s`,
         opacity: 0,
       }}
     />
