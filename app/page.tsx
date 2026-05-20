@@ -63,7 +63,7 @@ export default function SchoolPortal() {
       [student]: { total, paid },
     }));
   };
- // 1. STUDENT PORTAL VIEW
+  // 1. STUDENT PORTAL VIEW
   if (view === "student-portal" && loggedInStudent) {
     return (
       <main className="min-h-screen bg-background">
