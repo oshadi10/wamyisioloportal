@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Trophy } from "lucide-react";
 import { useState } from "react";
 import {
   classStudents,
@@ -60,6 +60,9 @@ export function StaffPortal({
   const [newGrade, setNewGrade] = useState("");
   const [newTerm, setNewTerm] = useState("Term 1, 2026");
 
+  const [meritClass, setMeritClass] = useState(classNames[0]);
+  const [meritTerm, setMeritTerm] = useState("Term 1, 2026");
+
   const [feeTotal, setFeeTotal] = useState(
     (fees[selectedStudent]?.total || 45000).toString()
   );
@@ -68,7 +71,6 @@ export function StaffPortal({
   );
 
   const studentResults = results.filter((r) => r.student === selectedStudent);
-  const studentFees = fees[selectedStudent] || { total: 45000, paid: 30000 };
 
   const handleClassChange = (className: string) => {
     setSelectedClass(className);
@@ -91,7 +93,6 @@ export function StaffPortal({
     }
     const marks = Number(newMarks);
     const grade = newGrade.trim() || getGrade(marks);
-
     onUploadResult({
       student: selectedStudent,
       className: selectedClass,
@@ -100,7 +101,6 @@ export function StaffPortal({
       grade,
       term: newTerm,
     });
-
     setNewMarks("");
     setNewGrade("");
   };
@@ -120,7 +120,27 @@ export function StaffPortal({
     alert(`Fees updated for ${selectedStudent}.`);
   };
 
-  // Group results by term
+  const getMeritList = () => {
+    const students = classStudents[meritClass];
+    return students
+      .map((student) => {
+        const studentTermResults = results.filter(
+          (r) => r.student === student && r.term === meritTerm
+        );
+        const totalMarks = studentTermResults.reduce((sum, r) => sum + r.marks, 0);
+        const subjects = studentTermResults.length;
+        const average = subjects > 0
+          ? Math.round((totalMarks / subjects) * 10) / 10
+          : 0;
+        const overallGrade = subjects > 0 ? getGrade(average) : "-";
+        return { student, totalMarks, subjects, average, overallGrade };
+      })
+      .filter((s) => s.subjects > 0)
+      .sort((a, b) => b.totalMarks - a.totalMarks);
+  };
+
+  const meritList = getMeritList();
+
   const resultsByTerm = studentResults.reduce((acc, r) => {
     const t = r.term || "Unknown Term";
     if (!acc[t]) acc[t] = [];
@@ -131,7 +151,6 @@ export function StaffPortal({
   return (
     <div className="max-w-5xl mx-auto p-4">
       <div className="grid md:grid-cols-[280px_1fr] gap-4">
-        {/* Class List Sidebar */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Class Lists</CardTitle>
@@ -149,7 +168,6 @@ export function StaffPortal({
                 ))}
               </SelectContent>
             </Select>
-
             <div className="max-h-[400px] overflow-y-auto space-y-1">
               {classStudents[selectedClass].map((student) => (
                 <button
@@ -169,27 +187,28 @@ export function StaffPortal({
           </CardContent>
         </Card>
 
-        {/* Main Content */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="results">Results</TabsTrigger>
+                  <TabsTrigger value="merit">
+                    <Trophy className="h-4 w-4 mr-1" />
+                    Merit List
+                  </TabsTrigger>
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="fees">Fees</TabsTrigger>
                   )}
                 </TabsList>
 
-                <p className="text-sm text-muted-foreground mb-4">
-                  Selected: <span className="font-medium text-foreground">{selectedStudent}</span> - {selectedClass}
-                </p>
-
                 <TabsContent value="results" className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Selected: <span className="font-medium text-foreground">{selectedStudent}</span> - {selectedClass}
+                  </p>
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Feed Results</h4>
                     <div className="space-y-2">
-                      {/* Term Dropdown */}
                       <select
                         value={newTerm}
                         onChange={(e) => setNewTerm(e.target.value)}
@@ -199,8 +218,6 @@ export function StaffPortal({
                           <option key={term} value={term}>{term}</option>
                         ))}
                       </select>
-
-                      {/* Subject Dropdown */}
                       <select
                         value={newSubject}
                         onChange={(e) => setNewSubject(e.target.value)}
@@ -210,7 +227,6 @@ export function StaffPortal({
                           <option key={sub} value={sub}>{sub}</option>
                         ))}
                       </select>
-
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           type="number"
@@ -226,10 +242,7 @@ export function StaffPortal({
                           onChange={(e) => setNewGrade(e.target.value)}
                         />
                       </div>
-                      <Button
-                        onClick={handleUploadResult}
-                        className="bg-[#1a56a0] hover:bg-[#154a8a]"
-                      >
+                      <Button onClick={handleUploadResult} className="bg-[#1a56a0] hover:bg-[#154a8a]">
                         <Plus className="h-4 w-4 mr-2" />
                         Upload Result
                       </Button>
@@ -254,21 +267,21 @@ export function StaffPortal({
                             <TableBody>
                               {termResults.map((result, index) => (
                                 <TableRow key={index}>
-  <TableCell>{result.subject}</TableCell>
-  <TableCell>{result.marks}</TableCell>
-  <TableCell className="font-semibold">{result.grade}</TableCell>
-  <TableCell>
-    {lecturerSubjects.includes(result.subject) && (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onDeleteResult(selectedStudent, result.subject, result.term)}
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
-    )}
-  </TableCell>
-</TableRow>
+                                  <TableCell>{result.subject}</TableCell>
+                                  <TableCell>{result.marks}</TableCell>
+                                  <TableCell className="font-semibold">{result.grade}</TableCell>
+                                  <TableCell>
+                                    {lecturerSubjects.includes(result.subject) && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => onDeleteResult(selectedStudent, result.subject, result.term)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
                               ))}
                             </TableBody>
                           </Table>
@@ -276,9 +289,113 @@ export function StaffPortal({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No results yet for this student.
-                    </p>
+                    <p className="text-sm text-muted-foreground">No results yet for this student.</p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="merit" className="space-y-4">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    Class Merit List
+                  </h4>
+                  <div className="flex gap-2">
+                    <select
+                      value={meritClass}
+                      onChange={(e) => setMeritClass(e.target.value)}
+                      className="border rounded-md px-3 py-2 text-sm flex-1"
+                    >
+                      {classNames.map((cls) => (
+                        <option key={cls} value={cls}>{cls}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={meritTerm}
+                      onChange={(e) => setMeritTerm(e.target.value)}
+                      className="border rounded-md px-3 py-2 text-sm flex-1"
+                    >
+                      {termOptions.map((term) => (
+                        <option key={term} value={term}>{term}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {meritList.length > 0 ? (() => {
+                    const classTermResults = results.filter(
+                      (r) => r.className === meritClass && r.term === meritTerm
+                    );
+                    const subjects = [...new Set(classTermResults.map((r) => r.subject))].sort();
+                    const subjectMeans = subjects.map((subject) => {
+                      const subjectResults = classTermResults.filter((r) => r.subject === subject);
+                      const mean = subjectResults.length > 0
+                        ? Math.round((subjectResults.reduce((sum, r) => sum + r.marks, 0) / subjectResults.length) * 10) / 10
+                        : 0;
+                      return { subject, mean, grade: getGrade(mean) };
+                    });
+                    const classOverallMean = meritList.length > 0
+                      ? Math.round((meritList.reduce((sum, s) => sum + s.average, 0) / meritList.length) * 10) / 10
+                      : 0;
+
+                    return (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-collapse border border-gray-200">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="border border-gray-200 px-3 py-2 text-left font-semibold whitespace-nowrap">Student</th>
+                              {subjects.map((s) => (
+                                <th key={s} className="border border-gray-200 px-3 py-2 text-center font-semibold whitespace-nowrap">{s}</th>
+                              ))}
+                              <th className="border border-gray-200 px-3 py-2 text-center font-semibold bg-blue-50">Total</th>
+                              <th className="border border-gray-200 px-3 py-2 text-center font-semibold bg-blue-50">Mean</th>
+                              <th className="border border-gray-200 px-3 py-2 text-center font-semibold bg-blue-50">Grade</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {meritList.map((entry, index) => (
+                              <tr key={entry.student} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                <td className="border border-gray-200 px-3 py-2 font-medium whitespace-nowrap">
+                                  {index === 0 ? "🥇 " : index === 1 ? "🥈 " : index === 2 ? "🥉 " : `${index + 1}. `}
+                                  {entry.student}
+                                </td>
+                                {subjects.map((subject) => {
+                                  const r = classTermResults.find(
+                                    (r) => r.student === entry.student && r.subject === subject
+                                  );
+                                  return (
+                                    <td key={subject} className="border border-gray-200 px-3 py-2 text-center">
+                                      {r ? (
+                                        <span>
+                                          {r.marks}<br />
+                                          <span className="text-xs text-muted-foreground">{r.grade}</span>
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-300">—</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                                <td className="border border-gray-200 px-3 py-2 text-center font-semibold bg-blue-50">{entry.totalMarks}</td>
+                                <td className="border border-gray-200 px-3 py-2 text-center bg-blue-50">{entry.average}</td>
+                                <td className="border border-gray-200 px-3 py-2 text-center font-semibold bg-blue-50">{entry.overallGrade}</td>
+                              </tr>
+                            ))}
+                            <tr className="bg-yellow-50 font-semibold">
+                              <td className="border border-gray-200 px-3 py-2">Subject Mean</td>
+                              {subjectMeans.map(({ subject, mean, grade }) => (
+                                <td key={subject} className="border border-gray-200 px-3 py-2 text-center">
+                                  {mean}<br />
+                                  <span className="text-xs">{grade}</span>
+                                </td>
+                              ))}
+                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">—</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{classOverallMean}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{getGrade(classOverallMean)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })() : (
+                    <p className="text-sm text-muted-foreground">No results found for {meritClass} — {meritTerm}.</p>
                   )}
                 </TabsContent>
 
@@ -289,19 +406,11 @@ export function StaffPortal({
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
-                          <Input
-                            type="number"
-                            value={feeTotal}
-                            onChange={(e) => setFeeTotal(e.target.value)}
-                          />
+                          <Input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
-                          <Input
-                            type="number"
-                            value={feePaid}
-                            onChange={(e) => setFeePaid(e.target.value)}
-                          />
+                          <Input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} />
                         </div>
                         <div className="p-3 bg-muted rounded-md text-sm">
                           Balance:{" "}
