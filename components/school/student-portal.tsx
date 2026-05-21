@@ -79,7 +79,7 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
     // Convert logo to base64
     let logoSrc = "";
     try {
-      const response = await fetch("https://v0-wamyisioloportal.vercel.app/wamy_logggo.png");
+      const response = await fetch("https://v0-wamyisioloportal.vercel.app/wamy%20logggo.png");
       const imageBlob = await response.blob();
       logoSrc = await new Promise((resolve) => {
         const reader = new FileReader();
