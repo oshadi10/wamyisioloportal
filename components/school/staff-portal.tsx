@@ -362,14 +362,14 @@ export function StaffPortal({
                                   );
                                   return (
                                     <td key={subject} className="border border-gray-200 px-3 py-2 text-center">
-                                      {r ? (
+                                     {r ? (
                                         <span>
                                           {r.marks}<br />
-                                          <span className="text-xs text-muted-foreground">{r.grade}</span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {meritClass === 'Grade 10' ? getGrade10Grade(r.marks) : getGrade(r.marks)}
+                                          </span>
                                         </span>
                                       ) : (
-                                        <span className="text-gray-300">—</span>
-                                      )}
                                     </td>
                                   );
                                 })}
