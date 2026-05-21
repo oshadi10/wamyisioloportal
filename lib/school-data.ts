@@ -38,7 +38,7 @@ export const lecturers: Lecturer[] = [
   { name: 'Mr. Dennis Kipkoech', subject: 'Mathematics / Physics', email: 'dennis@wamyisiolo.sc.ke', password: 'dennis222' },
   { name: 'Mr. John Simiyu', subject: 'Kiswahili / History', email: 'john@wamyisiolo.sc.ke', password: 'john333' },
   { name: 'Mrs. Selina Ewoi', subject: 'Biology / Agriculture', email: 'selina@wamyisiolo.sc.ke', password: 'selina444' },
-  { name: 'Mr. Leonard Kiprotich', subject: 'Biology / Chemistry', email: 'leonard@wamyisiolo.sc.ke', password: 'leonard555' },
+  { name: 'Mr. Leonard Kiprotich', subject: 'Biology / Chemistry / General Science', email: 'leonard@wamyisiolo.sc.ke', password: 'leonard123' },
   { name: 'Mr. Rotich Mark', subject: 'English / Literature', email: 'rotich@wamyisiolo.sc.ke', password: 'rotich666' },
   { name: 'Mr. Kibet Shadrack', subject: 'Biology / Agriculture / Community Service Learning', email: 'kibet@wamyisiolo.sc.ke', password: 'kibet777' }
 ];
