@@ -369,7 +369,8 @@ export function StaffPortal({
                                             {meritClass === 'Grade 10' ? getGrade10Grade(r.marks) : getGrade(r.marks)}
                                           </span>
                                         </span>
-                                      ) : (
+                                      ) : (<span className="text-gray-300">—</span>
+                                      )}
                                     </td>
                                   );
                                 })}
