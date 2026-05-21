@@ -26,6 +26,7 @@ import {
   FeeRecord,
   termOptions,
   getGrade,
+  getGrade10Grade,
   getComment,
 } from "@/lib/school-data";
 
@@ -51,7 +52,7 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
   const downloadReport = () => {
     const total = myResults.reduce((s, r) => s + Number(r.marks), 0);
     const mean = myResults.length ? (total / myResults.length).toFixed(1) : "0";
-    const overall = getGrade(Number(mean));
+    const overall = studentClass === 'Grade 10' ? getGrade10Grade(Number(mean)) : getGrade(Number(mean));
     const teacherComment =
       Number(mean) >= 75
         ? "Excellent performance. Maintain the spirit."
