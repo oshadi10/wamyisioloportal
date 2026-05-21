@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus, Trophy } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import {
   classStudents,
   Lecturer,
@@ -386,8 +387,8 @@ export function StaffPortal({
                                 </td>
                               ))}
                               <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">—</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{classOverallMean}</td>
                               <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{meritClass === 'Grade 10' ? getGrade10Grade(classOverallMean) : getGrade(classOverallMean)}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{getGrade(classOverallMean)}</td>
                             </tr>
                           </tbody>
                         </table>
