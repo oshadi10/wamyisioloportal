@@ -104,7 +104,7 @@ export const termOptions = [
   'Term 3, 2027',
   'Mid-Term 3, 2027',
 ];
-];
+
 
 export const initializeFees = (): Record<string, FeeRecord> => {
   const fees: Record<string, FeeRecord> = {};
