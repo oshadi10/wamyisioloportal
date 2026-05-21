@@ -76,6 +76,27 @@ export const getGrade = (marks: number): string => {
   if (marks >= 40) return 'D+';
   return 'D';
 };
+export const getGrade10Grade = (marks: number): string => {
+  if (marks >= 90) return 'EE1';
+  if (marks >= 75) return 'EE2';
+  if (marks >= 58) return 'ME1';
+  if (marks >= 41) return 'ME2';
+  if (marks >= 31) return 'AE1';
+  if (marks >= 21) return 'AE2';
+  if (marks >= 11) return 'BE1';
+  return 'BE2';
+};
+
+export const getGrade10Points = (marks: number): number => {
+  if (marks >= 90) return 8;
+  if (marks >= 75) return 7;
+  if (marks >= 58) return 6;
+  if (marks >= 41) return 5;
+  if (marks >= 31) return 4;
+  if (marks >= 21) return 3;
+  if (marks >= 11) return 2;
+  return 1;
+};
 
 export const getComment = (marks: number): string => {
   if (marks >= 80) return 'Excellent performance';
