@@ -50,6 +50,7 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
   );
 
   const downloadReport = () => {
+    const downloadReport = async () => {
     const total = myResults.reduce((s, r) => s + Number(r.marks), 0);
     const mean = myResults.length ? (total / myResults.length).toFixed(1) : "0";
     const overall = studentClass === 'Grade 10' ? getGrade10Grade(Number(mean)) : getGrade(Number(mean));
@@ -77,9 +78,23 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
 
     const feeBalance = myFees.total - myFees.paid;
 
-    const html = `<!DOCTYPE html><html><head><title>Report Form - ${studentName}</title></head><body style="background:#e7dfc2;padding:20px;font-family:Arial"><div style="max-width:860px;margin:auto;background:#f8f5e8;border:4px solid #333;padding:25px"><div style="display:flex;align-items:center;gap:20px"><img src="https://v0-wamyisioloportal.vercel.app/wamy_logggo.png" style="width:100px;height:100px;object-fit:contain" /><div style="flex:1;text-align:center"><h1 style="margin:0;font-size:38px;font-weight:900">WAMY ISIOLO HIGH SCHOOL</h1><p style="margin:4px 0;font-size:22px">P.O BOX 734-60300, ISIOLO</p></div></div><div style="margin-top:28px;font-size:24px;line-height:1.9;font-weight:bold"><div>STUDENT NAME: <span style="font-weight:normal">${studentName}</span></div><div>ADM NO.: <span style="font-weight:normal">${admNo}</span></div><div>CLASS: <span style="font-weight:normal">${studentClass}</span></div><div>TERM: <span style="font-weight:normal">${selectedTerm}</span></div></div><table style="width:100%;border-collapse:collapse;margin-top:24px"><thead><tr style="background:#efefe5"><th style="border:1px solid #444;padding:10px;font-size:18px">SUBJECTS</th><th style="border:1px solid #444;padding:10px;font-size:18px">MARKS</th><th style="border:1px solid #444;padding:10px;font-size:18px">GRADES</th><th style="border:1px solid #444;padding:10px;font-size:18px">COMMENT</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;padding:20px">No results for this term</td></tr>'}</tbody></table><div style="margin-top:28px;border-top:2px solid #555;padding-top:16px;font-size:22px;line-height:2"><div><strong>TOTAL MARKS:</strong> ${total}</div><div><strong>MEAN SCORE:</strong> ${mean}</div><div><strong>OVERALL GRADE:</strong> ${overall}</div></div><div style="margin-top:20px;border-top:2px solid #555;padding-top:16px;font-size:20px;line-height:2"><div><strong>TEACHER&apos;S COMMENT:</strong> ${teacherComment}</div><div><strong>PRINCIPAL&apos;S COMMENT:</strong> ${principalComment}</div></div><div style="margin-top:20px;border-top:2px solid #555;padding-top:16px;font-size:20px"><strong>FEE BALANCE:</strong> <span style="color:#a32d2d">KSh ${feeBalance.toLocaleString()}</span></div></div></body></html>`;
+    const html = `<!DOCTYPE html><html><head><title>Report Form - ${studentName}</title></head><body style="background:#e7dfc2;padding:20px;font-family:Arial"><div style="max-width:860px;margin:auto;background:#f8f5e8;border:4px solid #333;padding:25px"><div style="display:flex;align-items:center;gap:20px"><img src="LOGO_PLACEHOLDER" style="width:100px;height:100px;object-fit:contain" /><div style="flex:1;text-align:center"><h1 style="margin:0;font-size:38px;font-weight:900">WAMY ISIOLO HIGH SCHOOL</h1><p style="margin:4px 0;font-size:22px">P.O BOX 734-60300, ISIOLO</p></div></div><div style="margin-top:28px;font-size:24px;line-height:1.9;font-weight:bold"><div>STUDENT NAME: <span style="font-weight:normal">${studentName}</span></div><div>ADM NO.: <span style="font-weight:normal">${admNo}</span></div><div>CLASS: <span style="font-weight:normal">${studentClass}</span></div><div>TERM: <span style="font-weight:normal">${selectedTerm}</span></div></div><table style="width:100%;border-collapse:collapse;margin-top:24px"><thead><tr style="background:#efefe5"><th style="border:1px solid #444;padding:10px;font-size:18px">SUBJECTS</th><th style="border:1px solid #444;padding:10px;font-size:18px">MARKS</th><th style="border:1px solid #444;padding:10px;font-size:18px">GRADES</th><th style="border:1px solid #444;padding:10px;font-size:18px">COMMENT</th></tr></thead><tbody>${rows || '<tr><td colspan="4" style="text-align:center;padding:20px">No results for this term</td></tr>'}</tbody></table><div style="margin-top:28px;border-top:2px solid #555;padding-top:16px;font-size:22px;line-height:2"><div><strong>TOTAL MARKS:</strong> ${total}</div><div><strong>MEAN SCORE:</strong> ${mean}</div><div><strong>OVERALL GRADE:</strong> ${overall}</div></div><div style="margin-top:20px;border-top:2px solid #555;padding-top:16px;font-size:20px;line-height:2"><div><strong>TEACHER&apos;S COMMENT:</strong> ${teacherComment}</div><div><strong>PRINCIPAL&apos;S COMMENT:</strong> ${principalComment}</div></div><div style="margin-top:20px;border-top:2px solid #555;padding-top:16px;font-size:20px"><strong>FEE BALANCE:</strong> <span style="color:#a32d2d">KSh ${feeBalance.toLocaleString()}</span></div></div></body></html>`;
 
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    // Convert logo to base64
+    let logoSrc = "";
+    try {
+      const response = await fetch("https://v0-wamyisioloportal.vercel.app/wamy_logggo.png");
+      const imageBlob = await response.blob();
+      logoSrc = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(imageBlob);
+      });
+    } catch {
+      logoSrc = "";
+    }
+
+    const blob = new Blob([html.replace("LOGO_PLACEHOLDER", logoSrc)], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
