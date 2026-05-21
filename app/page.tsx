@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Navbar } from "@/components/school/navbar";
 import { StudentLogin, StaffLogin } from "@/components/school/login-forms";
 import { StudentPortal } from "@/components/school/student-portal";
@@ -11,7 +12,6 @@ import {
   Result,
   FeeRecord,
   initializeFees,
-  initialResults,
   studentAccounts,
   getStudentClass,
 } from "@/lib/school-data";
@@ -23,8 +23,26 @@ export default function SchoolPortal() {
   const [currentPage, setCurrentPage] = useState("Home");
   const [loggedInStudent, setLoggedInStudent] = useState<string | null>(null);
   const [loggedInLecturer, setLoggedInLecturer] = useState<Lecturer | null>(null);
-  const [results, setResults] = useState<Result[]>(initialResults);
+  const [results, setResults] = useState<Result[]>([]);
   const [fees, setFees] = useState<Record<string, FeeRecord>>(initializeFees);
+
+  useEffect(() => {
+    fetchResults();
+  }, []);
+
+  const fetchResults = async () => {
+    const { data, error } = await supabase.from("results").select("*");
+    if (error) { console.error(error); return; }
+    const mapped: Result[] = (data || []).map((r: any) => ({
+      student: r.student,
+      className: r.class_name,
+      subject: r.subject,
+      marks: r.marks,
+      grade: r.grade,
+      term: r.term,
+    }));
+    setResults(mapped);
+  };
 
   const handleStudentLogin = (studentName: string) => {
     setLoggedInStudent(studentName);
@@ -42,19 +60,32 @@ export default function SchoolPortal() {
     setView("home");
   };
 
-  const handleUploadResult = (result: Result) => {
-    setResults((prev) => {
-      const filtered = prev.filter(
-        (r) => !(r.student === result.student && r.subject === result.subject)
-      );
-      return [...filtered, result];
+  const handleUploadResult = async (result: Result) => {
+    await supabase.from("results").delete().match({
+      student: result.student,
+      subject: result.subject,
+      term: result.term,
     });
+    const { error } = await supabase.from("results").insert({
+      student: result.student,
+      class_name: result.className,
+      subject: result.subject,
+      marks: result.marks,
+      grade: result.grade,
+      term: result.term,
+    });
+    if (error) { console.error(error); return; }
+    fetchResults();
   };
 
-  const handleDeleteResult = (student: string, subject: string) => {
-    setResults((prev) =>
-      prev.filter((r) => !(r.student === student && r.subject === subject && r.term === term))
-    );
+  const handleDeleteResult = async (student: string, subject: string, term: string) => {
+    const { error } = await supabase.from("results").delete().match({
+      student,
+      subject,
+      term,
+    });
+    if (error) { console.error(error); return; }
+    fetchResults();
   };
 
   const handleUpdateFees = (student: string, total: number, paid: number) => {
@@ -64,7 +95,6 @@ export default function SchoolPortal() {
     }));
   };
 
-  // Student Portal View
   if (view === "student-portal" && loggedInStudent) {
     return (
       <main className="min-h-screen bg-background">
@@ -84,7 +114,6 @@ export default function SchoolPortal() {
     );
   }
 
-  // Staff Portal View
   if (view === "staff-portal" && loggedInLecturer) {
     return (
       <main className="min-h-screen bg-background">
@@ -107,7 +136,6 @@ export default function SchoolPortal() {
     );
   }
 
-  // Student Login View
   if (view === "student-login") {
     return (
       <main className="min-h-screen bg-background">
@@ -122,7 +150,6 @@ export default function SchoolPortal() {
     );
   }
 
-  // Staff Login View
   if (view === "staff-login") {
     return (
       <main className="min-h-screen bg-background">
@@ -137,7 +164,6 @@ export default function SchoolPortal() {
     );
   }
 
-  // Home View
   return (
     <main className="min-h-screen bg-gray-100">
       <Navbar
@@ -149,28 +175,27 @@ export default function SchoolPortal() {
 
       {/* HERO SECTION */}
       <section className="relative text-white overflow-hidden">
-        {/* Slideshow Background */}
-<div className="absolute inset-0 z-0">
-  {["/sports.jpg", "/scouts.jpg", "/outdoor.jpg", "/firstaid.jpg"].map((img, i) => (
-    <div
-      key={i}
-      className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-      style={{
-        backgroundImage: `url(${img})`,
-        animation: `slide ${32}s infinite`,
-        animationDelay: `${i * 8}s`,
-        opacity: 0,
-      }}
-    />
-  ))}
-  <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
-</div>
-<style>{`
-  @keyframes slide {
-    0%, 20% { opacity: 1; }
-    25%, 100% { opacity: 0; }
-  }
-`}</style>
+        <div className="absolute inset-0 z-0">
+          {["/sports.jpg", "/scouts.jpg", "/outdoor.jpg", "/firstaid.jpg"].map((img, i) => (
+            <div
+              key={i}
+              className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+              style={{
+                backgroundImage: `url(${img})`,
+                animation: `slide ${32}s infinite`,
+                animationDelay: `${i * 8}s`,
+                opacity: 0,
+              }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
+        </div>
+        <style>{`
+          @keyframes slide {
+            0%, 20% { opacity: 1; }
+            25%, 100% { opacity: 0; }
+          }
+        `}</style>
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 text-center">
           <h1 className="text-5xl font-bold mb-6">WAMY Isiolo High School</h1>
           <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
@@ -189,7 +214,6 @@ export default function SchoolPortal() {
         </div>
       </section>
 
-      {/* HOME PAGE CONTENT */}
       {currentPage === "Home" && (
         <>
           <section className="max-w-6xl mx-auto px-6 py-16">
@@ -200,7 +224,6 @@ export default function SchoolPortal() {
               </p>
             </div>
           </section>
-
           <section className="max-w-6xl mx-auto px-6 pb-16">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-blue-700 mb-2">69+</h3><p className="text-gray-600 font-semibold">Students</p></div>
@@ -209,7 +232,6 @@ export default function SchoolPortal() {
               <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-red-600 mb-2">100%</h3><p className="text-gray-600 font-semibold">Discipline</p></div>
             </div>
           </section>
-
           <section className="max-w-6xl mx-auto px-6 pb-16">
             <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -231,7 +253,6 @@ export default function SchoolPortal() {
               </div>
             </div>
           </section>
-
           <section className="bg-blue-950 text-white py-20">
             <div className="max-w-5xl mx-auto px-6 text-center">
               <h2 className="text-4xl font-bold mb-8">Message from the Principal</h2>
@@ -242,7 +263,6 @@ export default function SchoolPortal() {
         </>
       )}
 
-      {/* ABOUT PAGE */}
       {currentPage === "About Us" && (
         <section className="max-w-4xl mx-auto px-6 py-16 space-y-6">
           <h2 className="text-4xl font-bold text-blue-900 text-center mb-10">About Us</h2>
@@ -280,56 +300,10 @@ export default function SchoolPortal() {
         </section>
       )}
 
-      {/* ACADEMICS PAGE */}
       {currentPage === "Academics" && (
         <section className="max-w-6xl mx-auto px-6 py-16">
           <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
               <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
-                <span className="text-2xl">📚</span>
-                <p className="font-semibold text-gray-800">{s}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* DOWNLOADS PAGE */}
-      {currentPage === "Downloads" && (
-        <section className="max-w-4xl mx-auto px-6 py-16">
-          <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Downloads</h2>
-          <div className="space-y-4">
-            {[
-              {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
-              {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
-              {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
-              {icon:"📜", title:"School Rules & Regulations", sub:"PDF — Student Handbook"},
-              {icon:"🩺", title:"Medical / Health Form", sub:"PDF — Required for boarding students"},
-            ].map((d) => (
-              <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
-                <span className="text-3xl">{d.icon}</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800">{d.title}</p>
-                  <p className="text-sm text-gray-500">{d.sub}</p>
-                </div>
-                <button onClick={()=>alert("Contact school administration for this document.")} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Download</button>
-              </div>
-            ))}
-            <p className="text-center text-sm text-gray-500 mt-4">📞 Contact: info@wamyisiolo.sc.ke | P.O BOX 734-60300, ISIOLO</p>
-          </div>
-        </section>
-      )}
-
-      {/* FOOTER */}
-      <footer className="bg-black text-gray-300 py-10">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h3 className="text-2xl font-bold text-white mb-4">WAMY Isiolo High School</h3>
-          <p>Email: info@wamyisiolo.sc.ke</p>
-          <p>Isiolo, Kenya</p>
-          <div className="mt-6 text-sm text-gray-500">© 2026 WAMY Isiolo High School. All rights reserved.</div>
-        </div>
-      </footer>
-    </main>
-  );
-}
+                <span className="text-2xl">📚</sp
