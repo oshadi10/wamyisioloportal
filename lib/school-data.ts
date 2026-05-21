@@ -92,11 +92,18 @@ export const getComment = (marks: number): string => {
 
 export const termOptions = [
   'Term 1, 2026',
+  'Mid-Term 1, 2026',
   'Term 2, 2026',
+  'Mid-Term 2, 2026',
   'Term 3, 2026',
-  'Term 1, 2025',
-  'Term 2, 2025',
-  'Term 3, 2025'
+  'Mid-Term 3, 2026',
+  'Term 1, 2027',
+  'Mid-Term 1, 2027',
+  'Term 2, 2027',
+  'Mid-Term 2, 2027',
+  'Term 3, 2027',
+  'Mid-Term 3, 2027',
+];
 ];
 
 export const initializeFees = (): Record<string, FeeRecord> => {
