@@ -28,10 +28,9 @@ import {
   Result,
   FeeRecord,
   getGrade,
+  getGrade10Grade,
   termOptions,
 } from "@/lib/school-data";
-import { cn } from "@/lib/utils";
-
 interface StaffPortalProps {
   lecturer: Lecturer;
   results: Result[];
@@ -92,7 +91,7 @@ export function StaffPortal({
       return;
     }
     const marks = Number(newMarks);
-    const grade = newGrade.trim() || getGrade(marks);
+    const grade = newGrade.trim() || (selectedClass === 'Grade 10' ? getGrade10Grade(marks) : getGrade(marks));
     onUploadResult({
       student: selectedStudent,
       className: selectedClass,
@@ -132,7 +131,7 @@ export function StaffPortal({
         const average = subjects > 0
           ? Math.round((totalMarks / subjects) * 10) / 10
           : 0;
-        const overallGrade = subjects > 0 ? getGrade(average) : "-";
+        const overallGrade = subjects > 0 ? (meritClass === 'Grade 10' ? getGrade10Grade(average) : getGrade(average)) : "-";
         return { student, totalMarks, subjects, average, overallGrade };
       })
       .filter((s) => s.subjects > 0)
@@ -329,7 +328,7 @@ export function StaffPortal({
                       const mean = subjectResults.length > 0
                         ? Math.round((subjectResults.reduce((sum, r) => sum + r.marks, 0) / subjectResults.length) * 10) / 10
                         : 0;
-                      return { subject, mean, grade: getGrade(mean) };
+                      return { subject, mean, grade: meritClass === 'Grade 10' ? getGrade10Grade(mean) : getGrade(mean) };
                     });
                     const classOverallMean = meritList.length > 0
                       ? Math.round((meritList.reduce((sum, s) => sum + s.average, 0) / meritList.length) * 10) / 10
@@ -387,7 +386,7 @@ export function StaffPortal({
                                 </td>
                               ))}
                               <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">—</td>
-                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{classOverallMean}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{meritClass === 'Grade 10' ? getGrade10Grade(classOverallMean) : getGrade(classOverallMean)}</td>
                               <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{getGrade(classOverallMean)}</td>
                             </tr>
                           </tbody>
