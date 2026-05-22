@@ -323,48 +323,29 @@ export default function SchoolPortal() {
                 <CardContent className="p-6 bg-white">
                   <div className="overflow-x-auto rounded-lg border border-slate-100">
                     <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
-                          <TableHead className="font-bold text-slate-900 h-11">Academic Term</TableHead>
-                          <TableHead className="font-bold text-slate-900 h-11">Opening Date</TableHead>
-                          <TableHead className="font-bold text-slate-900 h-11">Half-Term Break</TableHead>
-                          <TableHead className="font-bold text-slate-900 h-11">Closing Date</TableHead>
-                          <TableHead className="font-bold text-slate-900 text-center h-11">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {termDates.length === 0 ? (
-                          <TableRow>
-                            <td colSpan={5} className="text-center py-6 text-sm text-muted-foreground italic">
-                              No academic term entries initialized yet. Add them via your Database Panel.
-                            </td>
-                          </TableRow>
-                        ) : (
-                          termDates.map((item) => (
-                            <TableRow 
-                              key={item.id || item.term} 
-                              className={item.status === "Current Term" ? "bg-blue-50/60 font-medium hover:bg-blue-50/80 transition-colors" : "hover:bg-slate-50/40"}
-                            >
-                              <TableCell className="font-bold text-slate-900 py-3">{item.term}</TableCell>
-                              <TableCell className="py-3">{item.opening_date || item.opening}</TableCell>
-                              <TableCell className="text-slate-600 py-3">{item.half_term || item.halfTerm}</TableCell>
-                              <TableCell className="py-3">{item.closing_date || item.closing}</TableCell>
-                              <TableCell className="text-center py-3">
-                                <span className={`inline-block text-[11px] font-bold px-3 py-0.5 rounded-full ${
-                                  item.status === "Current Term" 
-                                    ? "bg-blue-100 text-blue-800 border border-blue-200 animate-pulse" 
-                                    : item.status === "Completed"
-                                    ? "bg-slate-100 text-slate-400 line-through"
-                                    : "bg-amber-50 text-amber-800 border border-amber-200"
-                                }`}>
-                                  {item.status}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+  <TableHeader>
+    <TableRow className="bg-slate-50/70">
+      <TableHead className="font-bold text-slate-900">Opening Date</TableHead>
+      <TableHead className="font-bold text-slate-900">IDD Break</TableHead>
+      <TableHead className="font-bold text-slate-900">Mid-Term Exam</TableHead>
+      <TableHead className="font-bold text-slate-900">Mid-Term Break</TableHead>
+      <TableHead className="font-bold text-slate-900">End-Term Exam</TableHead>
+      <TableHead className="font-bold text-slate-900">Closing Date</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {termDates.map((item) => (
+      <TableRow key={item.id}>
+        <TableCell className="py-3 font-medium">{item.opening_date}</TableCell>
+        <TableCell className="py-3">{item.idd_date}</TableCell>
+        <TableCell className="py-3">{item.midterm_exam}</TableCell>
+        <TableCell className="py-3">{item.mid_term}</TableCell>
+        <TableCell className="py-3">{item.end_term_exam}</TableCell>
+        <TableCell className="py-3 font-semibold text-blue-900">{item.closing_date}</TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>
                   </div>
                 </CardContent>
               </Card>
