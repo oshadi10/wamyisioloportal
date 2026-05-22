@@ -30,7 +30,7 @@ export default function SchoolPortal() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [timetables, setTimetables] = useState<any[]>([]);
   
-  // State for dynamic term dates
+  // State for database term dates
   const [termDates, setTermDates] = useState<any[]>([]);
 
   useEffect(() => {
