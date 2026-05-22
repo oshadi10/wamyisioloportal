@@ -186,6 +186,7 @@ export function StaffPortal({
     setMatFile(null);
     setMatUploading(false);
   };
+
   const handleUploadTimetable = async () => {
     if (!ttFile || !ttTitle.trim()) { alert("Enter title and select a file."); return; }
     setTtUploading(true);
@@ -477,7 +478,7 @@ export function StaffPortal({
                               ))}
                               <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">—</td>
                               <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{classOverallMean}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-center bg-yellow-100">{meritClass === 'Grade 10' ? getGrade10Grade(classOverallMean) : getGrade(classOverallMean)}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-center font-semibold bg-yellow-100">{meritClass === 'Grade 10' ? getGrade10Grade(classOverallMean) : getGrade(classOverallMean)}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -488,74 +489,75 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-               <TabsContent value="materials" className="space-y-4">
-  <h4 className="font-medium text-sm">Post New Material</h4>
-  <div className="space-y-2">
-    <div className="grid grid-cols-2 gap-2">
-      <select value={matClass} onChange={(e) => setMatClass(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
-        {classNames.map((cls) => <option key={cls} value={cls}>{cls}</option>)}
-        <option value="All Classes">All Classes</option>
-      </select>
-      <select value={matSubject} onChange={(e) => setMatSubject(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
-        {lecturerSubjects.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
-      </select>
-    </div>
-    <Input
-      placeholder="Title (e.g. Assignment 1 — Algebra)"
-      value={matTitle}
-      onChange={(e) => setMatTitle(e.target.value)}
-    />
-    <textarea
-      placeholder="Type notes, instructions or revision questions here... (optional if uploading a file)"
-      value={matContent}
-      onChange={(e) => setMatContent(e.target.value)}
-      className="w-full border rounded-md px-3 py-2 text-sm min-h-[100px]"
-    />
-    <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-      <p className="text-sm text-muted-foreground mb-2">Upload PDF or file (optional)</p>
-      <input
-        type="file"
-        accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png"
-        onChange={(e) => setMatFile(e.target.files?.[0] || null)}
-        className="text-sm"
-      />
-      {matFile && <p className="text-xs text-green-600 mt-1">Selected: {matFile.name}</p>}
-    </div>
-    <Input
-      placeholder="Description (optional)"
-      value={matDesc}
-      onChange={(e) => setMatDesc(e.target.value)}
-    />
-    <Button onClick={handlePostMaterial} disabled={matUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
-      <Plus className="h-4 w-4 mr-2" />
-      {matUploading ? "Posting..." : "Post Material"}
-    </Button>
-  </div>
+                <TabsContent value="materials" className="space-y-4">
+                  <h4 className="font-medium text-sm">Post New Material</h4>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <select value={matClass} onChange={(e) => setMatClass(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
+                        {classNames.map((cls) => <option key={cls} value={cls}>{cls}</option>)}
+                        <option value="All Classes">All Classes</option>
+                      </select>
+                      <select value={matSubject} onChange={(e) => setMatSubject(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
+                        {lecturerSubjects.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+                      </select>
+                    </div>
+                    <Input
+                      placeholder="Title (e.g. Assignment 1 — Algebra)"
+                      value={matTitle}
+                      onChange={(e) => setMatTitle(e.target.value)}
+                    />
+                    <textarea
+                      placeholder="Type notes, instructions or revision questions here... (optional if uploading a file)"
+                      value={matContent}
+                      onChange={(e) => setMatContent(e.target.value)}
+                      className="w-full border rounded-md px-3 py-2 text-sm min-h-[100px]"
+                    />
+                    <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">Upload PDF or file (optional)</p>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png"
+                        onChange={(e) => setMatFile(e.target.files?.[0] || null)}
+                        className="text-sm"
+                      />
+                      {matFile && <p className="text-xs text-green-600 mt-1">Selected: {matFile.name}</p>}
+                    </div>
+                    <Input
+                      placeholder="Description (optional)"
+                      value={matDesc}
+                      onChange={(e) => setMatDesc(e.target.value)}
+                    />
+                    <Button onClick={handlePostMaterial} disabled={matUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
+                      <Plus className="h-4 w-4 mr-2" />
+                      {matUploading ? "Posting..." : "Post Material"}
+                    </Button>
+                  </div>
 
-  <h4 className="font-medium text-sm mt-4">Posted Materials</h4>
-  {materials.filter((m) => m.teacher_name === lecturer.name).length === 0 ? (
-    <p className="text-sm text-muted-foreground">No materials posted yet.</p>
-  ) : (
-    <div className="space-y-2">
-      {materials.filter((m) => m.teacher_name === lecturer.name).map((m) => (
-        <div key={m.id} className="border rounded-md p-3 space-y-1">
-          <div className="flex items-center justify-between">
-            <p className="font-medium text-sm">{m.title}</p>
-            <Button variant="outline" size="sm" onClick={() => onDeleteMaterial(m.id)} className="text-destructive border-destructive hover:bg-destructive/10">Delete</Button>
-          </div>
-          <p className="text-xs text-muted-foreground">{m.subject} · {m.class_name} · {new Date(m.created_at).toLocaleDateString()}</p>
-          {m.content && <p className="text-sm text-muted-foreground line-clamp-2">{m.content}</p>}
-          {m.file_url && (
-            <a href={m.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">
-              📎 {m.file_name}
-            </a>
-          )}
-        </div>
-      ))}
-    </div>
-  )}
-</TabsContent>
-                {lecturer.name === "Mr. Osman Halake" && (<TabsContent value="timetables" className="space-y-4">
+                  <h4 className="font-medium text-sm mt-4">Posted Materials</h4>
+                  {materials.filter((m) => m.teacher_name === lecturer.name).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No materials posted yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {materials.filter((m) => m.teacher_name === lecturer.name).map((m) => (
+                        <div key={m.id} className="border rounded-md p-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm">{m.title}</p>
+                            <Button variant="outline" size="sm" onClick={() => onDeleteMaterial(m.id)} className="text-destructive border-destructive hover:bg-destructive/10">Delete</Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{m.subject} · {m.class_name} · {new Date(m.created_at).toLocaleDateString()}</p>
+                          {m.content && <p className="text-sm text-muted-foreground line-clamp-2">{m.content}</p>}
+                          {m.file_url && (
+                            <a href={m.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">
+                              📎 {m.file_name}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="timetables" className="space-y-4">
                   {lecturer.name === "Mr. Osman Halake" && (
                     <div className="space-y-3 border rounded-md p-3">
                       <h4 className="font-medium text-sm">Upload Timetable</h4>
@@ -615,6 +617,8 @@ export function StaffPortal({
                     </div>
                   )}
                 </TabsContent>
+
+                {lecturer.name === "Mr. Osman Halake" && (
                   <TabsContent value="fees" className="space-y-4">
                     <div className="space-y-3">
                       <h4 className="font-medium text-sm">Update Fees</h4>
