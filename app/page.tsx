@@ -29,8 +29,6 @@ export default function SchoolPortal() {
   const [fees, setFees] = useState<Record<string, FeeRecord>>(initializeFees);
   const [materials, setMaterials] = useState<any[]>([]);
   const [timetables, setTimetables] = useState<any[]>([]);
-  
-  // State for database term dates
   const [termDates, setTermDates] = useState<any[]>([]);
 
   useEffect(() => {
@@ -41,17 +39,21 @@ export default function SchoolPortal() {
   }, []);
 
   const fetchTermDates = async () => {
-    const { data, error } = await supabase
-      .from("term_dates")
-      .select("*")
-      .order("created_at", { ascending: true });
-    
-    if (error) { 
-      console.error(error); 
-      return; 
-    }
-    if (data) {
-      setTermDates(data);
+    try {
+      const { data, error } = await supabase
+        .from("term_dates")
+        .select("*")
+        .order("created_at", { ascending: true });
+      
+      if (error) { 
+        console.error(error); 
+        return; 
+      }
+      if (data) {
+        setTermDates(data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -256,26 +258,9 @@ export default function SchoolPortal() {
       {/* HERO SECTION */}
       <section className="relative text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
-          {["/sports.jpg", "/scouts.jpg", "/outdoor.jpg", "/firstaid.jpg"].map((img, i) => (
-            <div
-              key={i}
-              className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-              style={{
-                backgroundImage: `url(${img})`,
-                animation: `slide ${32}s infinite`,
-                animationDelay: `${i * 8}s`,
-                opacity: 0,
-              }}
-            />
-          ))}
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/sports.jpg')` }} />
           <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
         </div>
-        <style>{`
-          @keyframes slide {
-            0%, 20% { opacity: 1; }
-            25%, 100% { opacity: 0; }
-          }
-        `}</style>
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 text-center">
           <h1 className="text-5xl font-bold mb-6">WAMY Isiolo High School</h1>
           <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
@@ -379,20 +364,12 @@ export default function SchoolPortal() {
             <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <img src="/sports.jpg" alt="Sports" className="w-full h-72 object-cover" />
+                <div className="w-full h-72 bg-slate-200 flex items-center justify-center text-slate-500 font-semibold">Sports Image Placeholder</div>
                 <div className="p-6"><h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3><p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p></div>
               </div>
               <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <img src="/scouts.jpg" alt="Scouts" className="w-full h-72 object-cover" />
+                <div className="w-full h-72 bg-slate-200 flex items-center justify-center text-slate-500 font-semibold">Scouts Image Placeholder</div>
                 <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouts Movement</h3><p className="text-gray-600">Training responsible students with leadership skills and character.</p></div>
-              </div>
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <img src="/outdoor.jpg" alt="Jamboree" className="w-full h-72 object-cover" />
-                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouting Jamboree</h3><p className="text-gray-600">Students showcasing practical skills at inter-school camps.</p></div>
-              </div>
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <img src="/firstaid.jpg" alt="Certificates" className="w-full h-72 object-cover" />
-                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Certificates of Participation</h3><p className="text-gray-600">Recognizing student achievement and hard work.</p></div>
               </div>
             </div>
           </section>
@@ -419,10 +396,6 @@ export default function SchoolPortal() {
             <h3 className="text-2xl font-bold text-green-700 mb-3">🎯 Our Vision</h3>
             <p className="text-gray-600 leading-8">To be a leading institution in Isiolo County that produces responsible, knowledgeable, and faith-grounded graduates who contribute positively to society.</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-green-700 mb-3">🏫 About the School</h3>
-            <p className="text-gray-600 leading-8">WAMY Isiolo High School (World Assembly of Muslim Youth — Isiolo) is a Day and Boarding senior school in Isiolo County, Kenya. We offer STEM, Social Sciences, and Islamic classes with over 69 students, 8 dedicated staff members, and 3 classes.</p>
-          </div>
         </section>
       )}
 
@@ -448,8 +421,6 @@ export default function SchoolPortal() {
               {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
               {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
               {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
-              {icon:"📜", title:"School Rules & Regulations", sub:"PDF — Student Handbook"},
-              {icon:"🩺", title:"Medical / Health Form", sub:"PDF — Required for boarding students"},
             ].map((d) => (
               <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
                 <span className="text-3xl">{d.icon}</span>
