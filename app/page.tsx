@@ -25,11 +25,28 @@ export default function SchoolPortal() {
   const [loggedInLecturer, setLoggedInLecturer] = useState<Lecturer | null>(null);
   const [results, setResults] = useState<Result[]>([]);
   const [fees, setFees] = useState<Record<string, FeeRecord>>(initializeFees);
-
-  useEffect(() => {
+  const [materials, setMaterials] = useState<any[]>([]);
+ useEffect(() => {
     fetchResults();
+    fetchMaterials();
   }, []);
+  const fetchMaterials = async () => {
+    const { data, error } = await supabase.from("materials").select("*").order("created_at", { ascending: false });
+    if (error) { console.error(error); return; }
+    setMaterials(data || []);
+  };
 
+  const handlePostMaterial = async (material: any) => {
+    const { error } = await supabase.from("materials").insert(material);
+    if (error) { console.error(error); return; }
+    fetchMaterials();
+  };
+
+  const handleDeleteMaterial = async (id: string) => {
+    const { error } = await supabase.from("materials").delete().eq("id", id);
+    if (error) { console.error(error); return; }
+    fetchMaterials();
+  };
   const fetchResults = async () => {
     const { data, error } = await supabase.from("results").select("*");
     if (error) { console.error(error); return; }
@@ -105,10 +122,11 @@ export default function SchoolPortal() {
           userDetails={`${getStudentClass(loggedInStudent)} - Adm: ${studentAccounts[loggedInStudent]}`}
           onLogout={handleLogout}
         />
-        <StudentPortal
+       <StudentPortal
           studentName={loggedInStudent}
           results={results}
           fees={fees}
+          materials={materials}
         />
       </main>
     );
@@ -128,9 +146,12 @@ export default function SchoolPortal() {
           lecturer={loggedInLecturer}
           results={results}
           fees={fees}
+          materials={materials}
           onUploadResult={handleUploadResult}
           onDeleteResult={handleDeleteResult}
           onUpdateFees={handleUpdateFees}
+          onPostMaterial={handlePostMaterial}
+          onDeleteMaterial={handleDeleteMaterial}
         />
       </main>
     );
