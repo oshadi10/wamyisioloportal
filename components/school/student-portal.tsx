@@ -39,7 +39,7 @@ interface StudentPortalProps {
   timetables: any[];
 }
 
-export function StudentPortal({ studentName, results, fees, materials }: StudentPortalProps) {
+export function StudentPortal({ studentName, results, fees, materials, timetables }: StudentPortalProps) {
   const [selectedTerm, setSelectedTerm] = useState("Term 1, 2026");
   const [activeTab, setActiveTab] = useState("results");
 
