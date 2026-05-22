@@ -30,7 +30,7 @@ export default function SchoolPortal() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [timetables, setTimetables] = useState<any[]>([]);
   
-  // State for database term dates
+  // State for dynamic term dates
   const [termDates, setTermDates] = useState<any[]>([]);
 
   useEffect(() => {
@@ -283,7 +283,7 @@ export default function SchoolPortal() {
             Nurturing future leaders through quality education,
             Islamic values and holistic development.
           </p>
-          <div className="flex flex-col md flex-row justify-center gap-4">
+          <div className="flex flex-col md:flex-row justify-center gap-4">
             <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
               Student Portal
             </button>
@@ -340,23 +340,21 @@ export default function SchoolPortal() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {termDates.length === 0 ? (
-                          <TableRow>
-                            <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
-                              No academic data saved yet. Insert a row in your term_dates database table.
-                            </td>
+                        {termDates && termDates.length > 0 && termDates[0] ? (
+                          <TableRow className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
+                            <TableCell className="py-4 font-bold text-slate-900">{termDates[0].opening_date || "—"}</TableCell>
+                            <TableCell className="py-4 text-amber-800 font-semibold">{termDates[0].idd_date || "—"}</TableCell>
+                            <TableCell className="py-4 text-slate-700">{termDates[0].midterm_exam || "—"}</TableCell>
+                            <TableCell className="py-4 text-blue-800 font-semibold">{termDates[0].mid_term || "—"}</TableCell>
+                            <TableCell className="py-4 text-slate-700">{termDates[0].end_term_exam || "—"}</TableCell>
+                            <TableCell className="py-4 font-bold text-emerald-800">{termDates[0].closing_date || "—"}</TableCell>
                           </TableRow>
                         ) : (
-                          termDates.map((item, idx) => (
-                            <TableRow key={item.id || idx} className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
-                              <TableCell className="py-4 font-bold text-slate-900">{item.opening_date || "—"}</TableCell>
-                              <TableCell className="py-4 text-amber-800 font-semibold">{item.idd_date || "—"}</TableCell>
-                              <TableCell className="py-4 text-slate-700">{item.midterm_exam || "—"}</TableCell>
-                              <TableCell className="py-4 text-blue-800 font-semibold">{item.mid_term || "—"}</TableCell>
-                              <TableCell className="py-4 text-slate-700">{item.end_term_exam || "—"}</TableCell>
-                              <TableCell className="py-4 font-bold text-emerald-800">{item.closing_date || "—"}</TableCell>
-                            </TableRow>
-                          ))
+                          <TableRow>
+                            <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
+                              Loading academic calendar dates from database...
+                            </td>
+                          </TableRow>
                         )}
                       </TableBody>
                     </Table>
