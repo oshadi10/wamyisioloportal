@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { useState } from "react";
 import {
   studentAccounts,
@@ -55,6 +55,13 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
   const myMaterials = materials.filter(
     (m) => m.class_name === studentClass || m.class_name === "All Classes"
   );
+
+  // Helper check to identify image files for native inline rendering
+  const isImageFile = (fileName: string) => {
+    if (!fileName) return false;
+    const lowerName = fileName.toLowerCase();
+    return lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") || lowerName.endsWith(".webp");
+  };
 
   const downloadReport = async () => {
     const total = myResults.reduce((s, r) => s + Number(r.marks), 0);
@@ -120,6 +127,7 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
           <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
         </TabsList>
 
+        {/* Results Tab */}
         <TabsContent value="results" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
@@ -175,6 +183,7 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
           </Card>
         </TabsContent>
 
+        {/* Materials Tab */}
         <TabsContent value="materials" className="space-y-3">
           <Card>
             <CardHeader>
@@ -185,33 +194,34 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
                 <p className="text-sm text-muted-foreground">No materials posted yet.</p>
               ) : (
                 <div className="space-y-3">
-                 {myMaterials.map((m) => (
-                <div key={m.id} className="border rounded-md p-3 space-y-1">
-                  <p className="font-medium text-sm">{m.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {m.subject} · {m.teacher_name} · {new Date(m.created_at).toLocaleDateString()}
-                  </p>
-                  {m.content && (
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{m.content}</p>
-                  )}
-                  {m.file_url && (
-                    <a
-                      href={m.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-1 text-xs bg-[#1a56a0] text-white px-3 py-1 rounded-md"
-                    >
-                      📎 Download {m.file_name}
-                    </a>
-                  )}
-                </div>
-              ))}
+                  {myMaterials.map((m) => (
+                    <div key={m.id} className="border rounded-md p-3 space-y-1">
+                      <p className="font-medium text-sm">{m.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {m.subject} · {m.teacher_name} · {new Date(m.created_at).toLocaleDateString()}
+                      </p>
+                      {m.content && (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{m.content}</p>
+                      )}
+                      {m.file_url && (
+                        <a
+                          href={m.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block mt-1 text-xs bg-[#1a56a0] text-white px-3 py-1 rounded-md"
+                        >
+                          📎 Download {m.file_name}
+                        </a>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Fees Tab */}
         <TabsContent value="fees">
           <Card>
             <CardHeader className="pb-3">
@@ -244,21 +254,51 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="timetables" className="space-y-3">
+
+        {/* Timetables Tab - Direct Display Interface for Students */}
+        <TabsContent value="timetables" className="space-y-4">
+          {/* Teaching Timetables Block */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Teaching Timetables</CardTitle>
             </CardHeader>
             <CardContent>
               {timetables.filter((t) => t.type === "teaching").length === 0 ? (
-                <p className="text-sm text-muted-foreground">No teaching timetables uploaded yet.</p>
+                <p className="text-sm text-muted-foreground italic">No teaching timetables uploaded yet.</p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {timetables.filter((t) => t.type === "teaching").map((t) => (
-                    <div key={t.id} className="border rounded-md p-3">
-                      <p className="font-medium text-sm">{t.title}</p>
-                      <p className="text-xs text-muted-foreground mb-1">{t.term}</p>
-                      <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs bg-[#1a56a0] text-white px-3 py-1 rounded-md">📎 View / Download</a>
+                    <div key={t.id} className="border rounded-md p-4 space-y-2 bg-white shadow-sm">
+                      <div>
+                        <p className="font-semibold text-sm text-slate-900">{t.title}</p>
+                        <p className="text-xs text-muted-foreground">{t.term}</p>
+                      </div>
+                      
+                      {isImageFile(t.file_name) ? (
+                        <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[600px] w-full">
+                          <img 
+                            src={t.file_url} 
+                            alt={t.title} 
+                            className="object-contain max-w-full h-auto rounded-md" 
+                            loading="eager"
+                          />
+                        </div>
+                      ) : (
+                        <div className="border rounded-md bg-slate-50 p-3 flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                            <FileText className="h-4 w-4 text-slate-500" />
+                            {t.file_name}
+                          </div>
+                          <a 
+                            href={t.file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs bg-[#1a56a0] text-white px-3 py-1 rounded-md font-medium"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -266,20 +306,48 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
             </CardContent>
           </Card>
 
+          {/* Exam Timetables Block */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Exam Timetables</CardTitle>
             </CardHeader>
             <CardContent>
               {timetables.filter((t) => t.type === "exam").length === 0 ? (
-                <p className="text-sm text-muted-foreground">No exam timetables uploaded yet.</p>
+                <p className="text-sm text-muted-foreground italic">No exam timetables uploaded yet.</p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {timetables.filter((t) => t.type === "exam").map((t) => (
-                    <div key={t.id} className="border rounded-md p-3">
-                      <p className="font-medium text-sm">{t.title}</p>
-                      <p className="text-xs text-muted-foreground mb-1">{t.term}</p>
-                      <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs bg-[#146f3a] text-white px-3 py-1 rounded-md">📎 View / Download</a>
+                    <div key={t.id} className="border rounded-md p-4 space-y-2 bg-white shadow-sm">
+                      <div>
+                        <p className="font-semibold text-sm text-slate-900">{t.title}</p>
+                        <p className="text-xs text-muted-foreground">{t.term}</p>
+                      </div>
+                      
+                      {isImageFile(t.file_name) ? (
+                        <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[600px] w-full">
+                          <img 
+                            src={t.file_url} 
+                            alt={t.title} 
+                            className="object-contain max-w-full h-auto rounded-md" 
+                            loading="eager"
+                          />
+                        </div>
+                      ) : (
+                        <div className="border rounded-md bg-slate-50 p-3 flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                            <FileText className="h-4 w-4 text-slate-500" />
+                            {t.file_name}
+                          </div>
+                          <a 
+                            href={t.file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs bg-[#146f3a] text-white px-3 py-1 rounded-md font-medium"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
