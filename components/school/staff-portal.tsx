@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Trophy } from "lucide-react";
+import { Trash2, Plus, Trophy, Eye, Calendar } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -234,6 +234,13 @@ export function StaffPortal({
     return acc;
   }, {} as Record<string, Result[]>);
 
+  // Helper function to check if the uploaded timetable is an image
+  const isImageFile = (fileName: string) => {
+    if (!fileName) return false;
+    const lowerName = fileName.toLowerCase();
+    return lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg");
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4">
       <div className="grid md:grid-cols-[280px_1fr] gap-4">
@@ -290,6 +297,7 @@ export function StaffPortal({
                   )}
                 </TabsList>
 
+                {/* Results Tab Content */}
                 <TabsContent value="results" className="space-y-4">
                   <p className="text-sm text-muted-foreground mb-4">
                     Selected: <span className="font-medium text-foreground">{selectedStudent}</span> - {selectedClass}
@@ -381,6 +389,7 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
+                {/* Merit List Tab Content */}
                 <TabsContent value="merit" className="space-y-4">
                   <h4 className="font-medium text-sm flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-yellow-500" />
@@ -489,6 +498,7 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
+                {/* Materials Tab Content */}
                 <TabsContent value="materials" className="space-y-4">
                   <h4 className="font-medium text-sm">Post New Material</h4>
                   <div className="space-y-2">
@@ -557,67 +567,130 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                <TabsContent value="timetables" className="space-y-4">
+                {/* Timetables Tab Content - Inline Renderer */}
+                <TabsContent value="timetables" className="space-y-6">
                   {lecturer.name === "Mr. Osman Halake" && (
-                    <div className="space-y-3 border rounded-md p-3">
-                      <h4 className="font-medium text-sm">Upload Timetable</h4>
-                      <select value={ttType} onChange={(e) => setTtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
+                    <div className="space-y-3 border rounded-md p-4 bg-muted/30">
+                      <h4 className="font-medium text-sm flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        Upload New Timetable (Upload PNG/JPG to display directly)
+                      </h4>
+                      <select value={ttType} onChange={(e) => setTtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
                         <option value="teaching">Teaching Timetable</option>
                         <option value="exam">Exam Timetable</option>
                       </select>
-                      <select value={ttTerm} onChange={(e) => setTtTerm(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
+                      <select value={ttTerm} onChange={(e) => setTtTerm(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
                         {termOptions.map((term) => <option key={term} value={term}>{term}</option>)}
                       </select>
-                      <Input placeholder="Title (e.g. Form 4 Teaching Timetable)" value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} />
-                      <input type="file" accept=".pdf,.jpg,.png,.doc,.docx" onChange={(e) => setTtFile(e.target.files?.[0] || null)} className="text-sm" />
-                      {ttFile && <p className="text-xs text-green-600">Selected: {ttFile.name}</p>}
+                      <Input placeholder="Title (e.g. Form 4 Teaching Timetable)" value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} className="bg-white" />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => setTtFile(e.target.files?.[0] || null)} className="text-sm" />
+                      {ttFile && <p className="text-xs text-green-600 font-medium">Selected: {ttFile.name}</p>}
                       <Button onClick={handleUploadTimetable} disabled={ttUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
                         {ttUploading ? "Uploading..." : "Upload Timetable"}
                       </Button>
                     </div>
                   )}
 
-                  <h4 className="font-medium text-sm">Teaching Timetables</h4>
-                  {timetables.filter((t) => t.type === "teaching").length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No teaching timetables uploaded yet.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {timetables.filter((t) => t.type === "teaching").map((t) => (
-                        <div key={t.id} className="border rounded-md p-3 flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{t.title}</p>
-                            <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
-                            <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">📎 {t.file_name}</a>
-                          </div>
-                          {lecturer.name === "Mr. Osman Halake" && (
-                            <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive">Delete</Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Teaching Timetables Block */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-base text-slate-800 border-b pb-1">Teaching Timetables</h4>
+                    {timetables.filter((t) => t.type === "teaching").length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">No teaching timetables posted.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {timetables.filter((t) => t.type === "teaching").map((t) => (
+                          <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-semibold text-md text-slate-900">{t.title}</p>
+                                <p className="text-xs text-muted-foreground">{t.term} · Uploaded on {new Date(t.created_at).toLocaleDateString()}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <a href={t.file_url} target="_blank" rel="noopener noreferrer">
+                                  <Button variant="outline" size="sm" className="text-xs">
+                                    <Eye className="h-3 w-3 mr-1" /> Open File
+                                  </Button>
+                                </a>
+                                {lecturer.name === "Mr. Osman Halake" && (
+                                  <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/5">
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
 
-                  <h4 className="font-medium text-sm mt-2">Exam Timetables</h4>
-                  {timetables.filter((t) => t.type === "exam").length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No exam timetables uploaded yet.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {timetables.filter((t) => t.type === "exam").map((t) => (
-                        <div key={t.id} className="border rounded-md p-3 flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{t.title}</p>
-                            <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
-                            <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">📎 {t.file_name}</a>
+                            {/* Direct View Engine */}
+                            {isImageFile(t.file_name) ? (
+                              <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[600px]">
+                                <img 
+                                  src={t.file_url} 
+                                  alt={t.title} 
+                                  className="object-contain max-w-full h-auto rounded"
+                                  loading="lazy"
+                                />
+                              </div>
+                            ) : (
+                              <div className="bg-slate-50 border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground">
+                                ℹ️ This timetable is a document file ({t.file_name.split('.').pop()?.toUpperCase()}). Click <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">Open File</a> to view.
+                              </div>
+                            )}
                           </div>
-                          {lecturer.name === "Mr. Osman Halake" && (
-                            <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive">Delete</Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Exam Timetables Block */}
+                  <div className="space-y-3 pt-2">
+                    <h4 className="font-semibold text-base text-slate-800 border-b pb-1">Exam Timetables</h4>
+                    {timetables.filter((t) => t.type === "exam").length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">No exam timetables posted.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {timetables.filter((t) => t.type === "exam").map((t) => (
+                          <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-semibold text-md text-slate-900">{t.title}</p>
+                                <p className="text-xs text-muted-foreground">{t.term} · Uploaded on {new Date(t.created_at).toLocaleDateString()}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <a href={t.file_url} target="_blank" rel="noopener noreferrer">
+                                  <Button variant="outline" size="sm" className="text-xs">
+                                    <Eye className="h-3 w-3 mr-1" /> Open File
+                                  </Button>
+                                </a>
+                                {lecturer.name === "Mr. Osman Halake" && (
+                                  <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/5">
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Direct View Engine */}
+                            {isImageFile(t.file_name) ? (
+                              <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[600px]">
+                                <img 
+                                  src={t.file_url} 
+                                  alt={t.title} 
+                                  className="object-contain max-w-full h-auto rounded"
+                                  loading="lazy"
+                                />
+                              </div>
+                            ) : (
+                              <div className="bg-slate-50 border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground">
+                                ℹ️ This timetable is a document file ({t.file_name.split('.').pop()?.toUpperCase()}). Click <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">Open File</a> to view.
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
 
+                {/* Fees Tab Content */}
                 {lecturer.name === "Mr. Osman Halake" && (
                   <TabsContent value="fees" className="space-y-4">
                     <div className="space-y-3">
