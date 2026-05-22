@@ -26,9 +26,11 @@ export default function SchoolPortal() {
   const [results, setResults] = useState<Result[]>([]);
   const [fees, setFees] = useState<Record<string, FeeRecord>>(initializeFees);
   const [materials, setMaterials] = useState<any[]>([]);
- useEffect(() => {
+  const [timetables, setTimetables] = useState<any[]>([]);
+useEffect(() => {
     fetchResults();
     fetchMaterials();
+    fetchTimetables();
   }, []);
   const fetchMaterials = async () => {
     const { data, error } = await supabase.from("materials").select("*").order("created_at", { ascending: false });
@@ -46,6 +48,23 @@ export default function SchoolPortal() {
     const { error } = await supabase.from("materials").delete().eq("id", id);
     if (error) { console.error(error); return; }
     fetchMaterials();
+  };
+  const fetchTimetables = async () => {
+    const { data, error } = await supabase.from("timetables").select("*").order("created_at", { ascending: false });
+    if (error) { console.error(error); return; }
+    setTimetables(data || []);
+  };
+
+  const handleUploadTimetable = async (timetable: any) => {
+    const { error } = await supabase.from("timetables").insert(timetable);
+    if (error) { console.error(error); return; }
+    fetchTimetables();
+  };
+
+  const handleDeleteTimetable = async (id: string) => {
+    const { error } = await supabase.from("timetables").delete().eq("id", id);
+    if (error) { console.error(error); return; }
+    fetchTimetables();
   };
   const fetchResults = async () => {
     const { data, error } = await supabase.from("results").select("*");
@@ -127,6 +146,7 @@ export default function SchoolPortal() {
           results={results}
           fees={fees}
           materials={materials}
+          timetables={timetables}
         />
       </main>
     );
@@ -142,16 +162,19 @@ export default function SchoolPortal() {
           userDetails={loggedInLecturer.subject}
           onLogout={handleLogout}
         />
-        <StaffPortal
+       <StaffPortal
           lecturer={loggedInLecturer}
           results={results}
           fees={fees}
           materials={materials}
+          timetables={timetables}
           onUploadResult={handleUploadResult}
           onDeleteResult={handleDeleteResult}
           onUpdateFees={handleUpdateFees}
           onPostMaterial={handlePostMaterial}
           onDeleteMaterial={handleDeleteMaterial}
+          onUploadTimetable={handleUploadTimetable}
+          onDeleteTimetable={handleDeleteTimetable}
         />
       </main>
     );
