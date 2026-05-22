@@ -17,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus, Trophy, Calendar, FileText } from "lucide-react";
@@ -46,7 +45,7 @@ interface StaffPortalProps {
   timetables: any[];
   onUploadTimetable: (timetable: any) => void;
   onDeleteTimetable: (id: string) => void;
-  onUploadTermDate: (termRow: any) => void; // Fixed: Added prop type definition to pass Vercel compilation
+  onUploadTermDate: (termRow: any) => void;
 }
 
 export function StaffPortal({
@@ -222,7 +221,6 @@ export function StaffPortal({
       return;
     }
 
-    // Fixed: Cast explicitly to any to bypass static type validation flags on deployments
     const termData: any = {
       term: "Term 2, 2026",
       opening_date: newOpeningDate,
@@ -235,7 +233,6 @@ export function StaffPortal({
     };
 
     try {
-      // Clear old configurations out first to prevent infinite rows
       await supabase.from("term_dates").delete().neq("term", "placeholder_value_safeguard");
       onUploadTermDate(termData);
       alert("Homepage calendar successfully loaded and live!");
@@ -353,7 +350,7 @@ export function StaffPortal({
                       <select
                         value={newTerm}
                         onChange={(e) => setNewTerm(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        className="w-full border rounded-md px-3 py-2 text-sm bg-white"
                       >
                         {termOptions.map((term) => (
                           <option key={term} value={term}>{term}</option>
@@ -362,25 +359,27 @@ export function StaffPortal({
                       <select
                         value={newSubject}
                         onChange={(e) => setNewSubject(e.target.value)}
-                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        className="w-full border rounded-md px-3 py-2 text-sm bg-white"
                       >
                         {lecturerSubjects.map((sub) => (
                           <option key={sub} value={sub}>{sub}</option>
                         ))}
                       </select>
                       <div className="grid grid-cols-2 gap-2">
-                        <Input
+                        <input
                           type="number"
                           placeholder="Marks (0-100)"
                           min={0}
                           max={100}
                           value={newMarks}
                           onChange={(e) => setNewMarks(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         />
-                        <Input
+                        <input
                           placeholder="Grade (auto or manual)"
                           value={newGrade}
                           onChange={(e) => setNewGrade(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         />
                       </div>
                       <Button onClick={handleUploadResult} className="bg-[#1a56a0] hover:bg-[#154a8a]">
@@ -444,7 +443,7 @@ export function StaffPortal({
                     <select
                       value={meritClass}
                       onChange={(e) => setMeritClass(e.target.value)}
-                      className="border rounded-md px-3 py-2 text-sm flex-1"
+                      className="border rounded-md px-3 py-2 text-sm flex-1 bg-white"
                     >
                       {classNames.map((cls) => (
                         <option key={cls} value={cls}>{cls}</option>
@@ -453,7 +452,7 @@ export function StaffPortal({
                     <select
                       value={meritTerm}
                       onChange={(e) => setMeritTerm(e.target.value)}
-                      className="border rounded-md px-3 py-2 text-sm flex-1"
+                      className="border rounded-md px-3 py-2 text-sm flex-1 bg-white"
                     >
                       {termOptions.map((term) => (
                         <option key={term} value={term}>{term}</option>
@@ -548,24 +547,25 @@ export function StaffPortal({
                   <h4 className="font-medium text-sm">Post New Material</h4>
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
-                      <select value={matClass} onChange={(e) => setMatClass(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
+                      <select value={matClass} onChange={(e) => setMatClass(e.target.value)} className="border rounded-md px-3 py-2 text-sm bg-white">
                         {classNames.map((cls) => <option key={cls} value={cls}>{cls}</option>)}
                         <option value="All Classes">All Classes</option>
                       </select>
-                      <select value={matSubject} onChange={(e) => setMatSubject(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
+                      <select value={matSubject} onChange={(e) => setMatSubject(e.target.value)} className="border rounded-md px-3 py-2 text-sm bg-white">
                         {lecturerSubjects.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
                       </select>
                     </div>
-                    <Input
+                    <input
                       placeholder="Title (e.g. Assignment 1 — Algebra)"
                       value={matTitle}
                       onChange={(e) => setMatTitle(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     <textarea
                       placeholder="Type notes, instructions or revision questions here... (optional if uploading a file)"
                       value={matContent}
                       onChange={(e) => setMatContent(e.target.value)}
-                      className="w-full border rounded-md px-3 py-2 text-sm min-h-[100px]"
+                      className="w-full border rounded-md px-3 py-2 text-sm min-h-[100px] bg-white"
                     />
                     <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
                       <p className="text-sm text-muted-foreground mb-2">Upload PDF or file (optional)</p>
@@ -577,10 +577,11 @@ export function StaffPortal({
                       />
                       {matFile && <p className="text-xs text-green-600 mt-1">Selected: {matFile.name}</p>}
                     </div>
-                    <Input
+                    <input
                       placeholder="Description (optional)"
                       value={matDesc}
                       onChange={(e) => setMatDesc(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     <Button onClick={handlePostMaterial} disabled={matUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
                       <Plus className="h-4 w-4 mr-2" />
@@ -594,7 +595,7 @@ export function StaffPortal({
                   ) : (
                     <div className="space-y-2">
                       {materials.filter((m) => m.teacher_name === lecturer.name).map((m) => (
-                        <div key={m.id} className="border rounded-md p-3 space-y-1">
+                        <div key={m.id} className="border rounded-md p-3 space-y-1 bg-white">
                           <div className="flex items-center justify-between">
                             <p className="font-medium text-sm">{m.title}</p>
                             <Button variant="outline" size="sm" onClick={() => onDeleteMaterial(m.id)} className="text-destructive border-destructive hover:bg-destructive/10">Delete</Button>
@@ -627,7 +628,12 @@ export function StaffPortal({
                       <select value={ttTerm} onChange={(e) => setTtTerm(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
                         {termOptions.map((term) => <option key={term} value={term}>{term}</option>)}
                       </select>
-                      <Input placeholder="Title (e.g. Form 4 Teaching Timetable)" value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} className="bg-white" />
+                      <input 
+                        placeholder="Title (e.g. Form 4 Teaching Timetable)" 
+                        value={ttTitle} 
+                        onChange={(e) => setTtTitle(e.target.value)} 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" 
+                      />
                       <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setTtFile(e.target.files?.[0] || null)} className="text-sm" />
                       {ttFile && <p className="text-xs text-green-600 font-medium">Selected: {ttFile.name}</p>}
                       <Button onClick={handleUploadTimetable} disabled={ttUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
@@ -755,33 +761,33 @@ export function StaffPortal({
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <Label className="text-xs font-semibold">Opening Date</Label>
-                          <Input placeholder="e.g. April 29, 2026" value={newOpeningDate} onChange={(e) => setNewOpeningDate(e.target.value)} />
+                          <input placeholder="e.g. April 29, 2026" value={newOpeningDate} onChange={(e) => setNewOpeningDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                         <div>
                           <Label className="text-xs font-semibold">IDD Break</Label>
-                          <Input placeholder="e.g. May 26 - May 29, 2026" value={newIddBreak} onChange={(e) => setNewIddBreak(e.target.value)} />
+                          <input placeholder="e.g. May 26 - May 29, 2026" value={newIddBreak} onChange={(e) => setNewIddBreak(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <Label className="text-xs font-semibold">Mid-Term Exam</Label>
-                          <Input placeholder="e.g. June 21 - June 23, 2026" value={newMidExam} onChange={(e) => setNewMidExam(e.target.value)} />
+                          <input placeholder="e.g. June 21 - June 23, 2026" value={newMidExam} onChange={(e) => setNewMidExam(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                         <div>
                           <Label className="text-xs font-semibold">Mid-Term Break</Label>
-                          <Input placeholder="e.g. June 24 - June 30, 2026" value={newMidBreak} onChange={(e) => setNewMidBreak(e.target.value)} />
+                          <input placeholder="e.g. June 24 - June 30, 2026" value={newMidBreak} onChange={(e) => setNewMidBreak(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <Label className="text-xs font-semibold">End-Term Exam</Label>
-                          <Input placeholder="e.g. July 27 - July 29, 2026" value={newEndExam} onChange={(e) => setNewEndExam(e.target.value)} />
+                          <input placeholder="e.g. July 27 - July 29, 2026" value={newEndExam} onChange={(e) => setNewEndExam(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                         <div>
                           <Label className="text-xs font-semibold">Closing Date</Label>
-                          <Input placeholder="e.g. July 30, 2026" value={newClosingDate} onChange={(e) => setNewClosingDate(e.target.value)} />
+                          <input placeholder="e.g. July 30, 2026" value={newClosingDate} onChange={(e) => setNewClosingDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                       </div>
 
@@ -800,11 +806,11 @@ export function StaffPortal({
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
-                          <Input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} />
+                          <input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
-                          <Input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} />
+                          <input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                         </div>
                         <div className="p-3 bg-muted rounded-md text-sm">
                           Balance:{" "}
