@@ -58,6 +58,9 @@ export function StaffPortal({
   materials,
   onPostMaterial,
   onDeleteMaterial,
+  timetables,
+  onUploadTimetable,
+  onDeleteTimetable,
 }: StaffPortalProps) {
   const classNames = Object.keys(classStudents);
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
