@@ -32,6 +32,7 @@ import {
   getGrade10Grade,
   termOptions,
 } from "@/lib/school-data";
+
 interface StaffPortalProps {
   lecturer: Lecturer;
   results: Result[];
@@ -68,6 +69,7 @@ export function StaffPortal({
 
   const [meritClass, setMeritClass] = useState(classNames[0]);
   const [meritTerm, setMeritTerm] = useState("Term 1, 2026");
+
   const [matTitle, setMatTitle] = useState("");
   const [matDesc, setMatDesc] = useState("");
   const [matClass, setMatClass] = useState(classNames[0]);
@@ -131,6 +133,22 @@ export function StaffPortal({
     alert(`Fees updated for ${selectedStudent}.`);
   };
 
+  const handlePostMaterial = () => {
+    if (!matTitle.trim()) { alert("Enter a title."); return; }
+    onPostMaterial({
+      title: matTitle,
+      description: matDesc,
+      subject: matSubject,
+      class_name: matClass,
+      teacher_name: lecturer.name,
+      type: matContent.trim() ? "text" : "note",
+      content: matContent,
+    });
+    setMatTitle("");
+    setMatDesc("");
+    setMatContent("");
+  };
+
   const getMeritList = () => {
     const students = classStudents[meritClass];
     return students
@@ -189,21 +207,6 @@ export function StaffPortal({
                     student === selectedStudent
                       ? "bg-[#e6f1fb] border-[#378add] text-[#0c447c]"
                       : "border-border hover:bg-muted"
-                    const handlePostMaterial = () => {
-    if (!matTitle.trim()) { alert("Enter a title."); return; }
-    onPostMaterial({
-      title: matTitle,
-      description: matDesc,
-      subject: matSubject,
-      class_name: matClass,
-      teacher_name: lecturer.name,
-      type: matContent.trim() ? "text" : "note",
-      content: matContent,
-    });
-    setMatTitle("");
-    setMatDesc("");
-    setMatContent("");
-  };
                   )}
                 >
                   {student}
@@ -222,8 +225,8 @@ export function StaffPortal({
                   <TabsTrigger value="merit">
                     <Trophy className="h-4 w-4 mr-1" />
                     Merit List
-                    <TabsTrigger value="materials">📚 Materials</TabsTrigger>
                   </TabsTrigger>
+                  <TabsTrigger value="materials">📚 Materials</TabsTrigger>
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="fees">Fees</TabsTrigger>
                   )}
@@ -389,14 +392,15 @@ export function StaffPortal({
                                   );
                                   return (
                                     <td key={subject} className="border border-gray-200 px-3 py-2 text-center">
-                                     {r ? (
+                                      {r ? (
                                         <span>
                                           {r.marks}<br />
                                           <span className="text-xs text-muted-foreground">
                                             {meritClass === 'Grade 10' ? getGrade10Grade(r.marks) : getGrade(r.marks)}
                                           </span>
                                         </span>
-                                      ) : (<span className="text-gray-300">—</span>
+                                      ) : (
+                                        <span className="text-gray-300">—</span>
                                       )}
                                     </td>
                                   );
@@ -424,6 +428,50 @@ export function StaffPortal({
                     );
                   })() : (
                     <p className="text-sm text-muted-foreground">No results found for {meritClass} — {meritTerm}.</p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="materials" className="space-y-4">
+                  <h4 className="font-medium text-sm">Post New Material</h4>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <select value={matClass} onChange={(e) => setMatClass(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
+                        {classNames.map((cls) => <option key={cls} value={cls}>{cls}</option>)}
+                        <option value="All Classes">All Classes</option>
+                      </select>
+                      <select value={matSubject} onChange={(e) => setMatSubject(e.target.value)} className="border rounded-md px-3 py-2 text-sm">
+                        {lecturerSubjects.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+                      </select>
+                    </div>
+                    <Input placeholder="Title (e.g. Assignment 1 — Algebra)" value={matTitle} onChange={(e) => setMatTitle(e.target.value)} />
+                    <textarea
+                      placeholder="Type notes, instructions or revision questions here..."
+                      value={matContent}
+                      onChange={(e) => setMatContent(e.target.value)}
+                      className="w-full border rounded-md px-3 py-2 text-sm min-h-[100px]"
+                    />
+                    <Input placeholder="Description (optional)" value={matDesc} onChange={(e) => setMatDesc(e.target.value)} />
+                    <Button onClick={handlePostMaterial} className="bg-[#1a56a0] hover:bg-[#154a8a]">
+                      <Plus className="h-4 w-4 mr-2" /> Post Material
+                    </Button>
+                  </div>
+
+                  <h4 className="font-medium text-sm mt-4">Posted Materials</h4>
+                  {materials.filter((m) => m.teacher_name === lecturer.name).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No materials posted yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {materials.filter((m) => m.teacher_name === lecturer.name).map((m) => (
+                        <div key={m.id} className="border rounded-md p-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm">{m.title}</p>
+                            <Button variant="outline" size="sm" onClick={() => onDeleteMaterial(m.id)} className="text-destructive border-destructive hover:bg-destructive/10">Delete</Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{m.subject} · {m.class_name} · {new Date(m.created_at).toLocaleDateString()}</p>
+                          {m.content && <p className="text-sm text-muted-foreground line-clamp-2">{m.content}</p>}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </TabsContent>
 
