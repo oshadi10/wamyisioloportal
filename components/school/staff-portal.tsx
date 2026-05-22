@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,20 +135,45 @@ export function StaffPortal({
     alert(`Fees updated for ${selectedStudent}.`);
   };
 
-  const handlePostMaterial = () => {
+  const handlePostMaterial = async () => {
     if (!matTitle.trim()) { alert("Enter a title."); return; }
+    setMatUploading(true);
+
+    let file_url = "";
+    let file_name = "";
+
+    if (matFile) {
+      const filePath = `${Date.now()}_${matFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("materials")
+        .upload(filePath, matFile);
+      if (uploadError) {
+        alert("File upload failed.");
+        setMatUploading(false);
+        return;
+      }
+      const { data } = supabase.storage.from("materials").getPublicUrl(filePath);
+      file_url = data.publicUrl;
+      file_name = matFile.name;
+    }
+
     onPostMaterial({
       title: matTitle,
       description: matDesc,
       subject: matSubject,
       class_name: matClass,
       teacher_name: lecturer.name,
-      type: matContent.trim() ? "text" : "note",
+      type: matFile ? "file" : "text",
       content: matContent,
+      file_url,
+      file_name,
     });
+
     setMatTitle("");
     setMatDesc("");
     setMatContent("");
+    setMatFile(null);
+    setMatUploading(false);
   };
 
   const getMeritList = () => {
