@@ -365,7 +365,7 @@ export default function SchoolPortal() {
   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
     
     <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/sports.png" alt="Sports & Teamwork" className="w-full h-72 object-cover" />
+      <img src="/sports.jpg" alt="Sports & Teamwork" className="w-full h-72 object-cover" />
       <div className="p-6">
         <h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3>
         <p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p>
@@ -373,7 +373,7 @@ export default function SchoolPortal() {
     </div>
 
     <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/scouts.png" alt="Scouts Movement" className="w-full h-72 object-cover" />
+      <img src="/scouts.jpg" alt="Scouts Movement" className="w-full h-72 object-cover" />
       <div className="p-6">
         <h3 className="text-2xl font-bold mb-3">Scouts Movement</h3>
         <p className="text-gray-600">Training responsible students with leadership skills and character.</p>
@@ -381,15 +381,15 @@ export default function SchoolPortal() {
     </div>
 
     <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/indoor.png" alt="Indoor Activities" className="w-full h-72 object-cover" />
+      <img src="/outdoor.jpg" alt="Indoor Activities" className="w-full h-72 object-cover" />
       <div className="p-6">
-        <h3 className="text-2xl font-bold mb-3">Indoor Activities</h3>
+        <h3 className="text-2xl font-bold mb-3">Outdoor Activities</h3>
         <p className="text-gray-600">Fostering creativity, focus and teamwork through indoor programs.</p>
       </div>
     </div>
 
     <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/firstaid.png" alt="First Aid Training" className="w-full h-72 object-cover" />
+      <img src="/firstaid.jpg" alt="First Aid Training" className="w-full h-72 object-cover" />
       <div className="p-6">
         <h3 className="text-2xl font-bold mb-3">First Aid Training</h3>
         <p className="text-gray-600">Equipping students with life-saving skills and emergency preparedness.</p>
