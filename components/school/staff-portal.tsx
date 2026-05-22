@@ -233,11 +233,12 @@ export function StaffPortal({
   };
 
   try {
-    // ✅ Delete first and WAIT for it to finish
+    // ✅ FIXED: We check for id > 0 instead of matching text UUIDs 
+    // This perfectly cleans your bigint rows without triggering type errors!
     const { error: deleteError } = await supabase
       .from("term_dates")
       .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .gt("id", 0); 
 
     if (deleteError) {
       console.error(deleteError);
@@ -245,7 +246,7 @@ export function StaffPortal({
       return;
     }
 
-    // ✅ Then insert new data and WAIT
+    // ✅ Insert the fresh row data 
     const { error: insertError } = await supabase
       .from("term_dates")
       .insert(termData);
@@ -264,7 +265,7 @@ export function StaffPortal({
     setNewEndExam("");
     setNewClosingDate("");
 
-    // ✅ Tell parent to refresh
+    // Notify the main system layout state
     onUploadTermDate(termData);
 
   } catch (e) {
@@ -272,7 +273,6 @@ export function StaffPortal({
     alert("Something went wrong.");
   }
 };
-
   const getMeritList = () => {
     const students = classStudents[meritClass];
     return students
