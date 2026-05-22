@@ -215,37 +215,63 @@ export function StaffPortal({
     setTtUploading(false);
   };
 
-  const handleAddTermRow = async () => {
-    if (!newOpeningDate.trim() || !newClosingDate.trim()) {
-      alert("Please fill out at least Opening and Closing dates.");
+ const handleAddTermRow = async () => {
+  if (!newOpeningDate.trim() || !newClosingDate.trim()) {
+    alert("Please fill out at least Opening and Closing dates.");
+    return;
+  }
+
+  const termData: any = {
+    term: "Term 2, 2026",
+    opening_date: newOpeningDate,
+    idd_date: newIddBreak || "—",
+    midterm_exam: newMidExam || "—",
+    mid_term: newMidBreak || "—",
+    end_term_exam: newEndExam || "—",
+    closing_date: newClosingDate,
+    status: "Current Term"
+  };
+
+  try {
+    // ✅ Delete first and WAIT for it to finish
+    const { error: deleteError } = await supabase
+      .from("term_dates")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (deleteError) {
+      console.error(deleteError);
+      alert("Failed to clear old dates.");
       return;
     }
 
-    const termData: any = {
-      term: "Term 2, 2026",
-      opening_date: newOpeningDate,
-      idd_date: newIddBreak || "—",
-      midterm_exam: newMidExam || "—",
-      mid_term: newMidBreak || "—",
-      end_term_exam: newEndExam || "—",
-      closing_date: newClosingDate,
-      status: "Current Term"
-    };
+    // ✅ Then insert new data and WAIT
+    const { error: insertError } = await supabase
+      .from("term_dates")
+      .insert(termData);
 
-    try {
-      await supabase.from("term_dates").delete().neq("term", "placeholder_value_safeguard");
-      onUploadTermDate(termData);
-      alert("Homepage calendar successfully loaded and live!");
-      setNewOpeningDate("");
-      setNewIddBreak("");
-      setNewMidExam("");
-      setNewMidBreak("");
-      setNewEndExam("");
-      setNewClosingDate("");
-    } catch (e) {
-      console.error(e);
+    if (insertError) {
+      console.error(insertError);
+      alert("Failed to save term dates.");
+      return;
     }
-  };
+
+    alert("Homepage calendar successfully updated!");
+    setNewOpeningDate("");
+    setNewIddBreak("");
+    setNewMidExam("");
+    setNewMidBreak("");
+    setNewEndExam("");
+    setNewClosingDate("");
+
+    // ✅ Tell parent to refresh
+    onUploadTermDate(termData);
+
+  } catch (e) {
+    console.error(e);
+    alert("Something went wrong.");
+  }
+};
 
   const getMeritList = () => {
     const students = classStudents[meritClass];
