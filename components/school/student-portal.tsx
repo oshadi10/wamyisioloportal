@@ -183,17 +183,27 @@ export function StudentPortal({ studentName, results, fees, materials }: Student
                 <p className="text-sm text-muted-foreground">No materials posted yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {myMaterials.map((m) => (
-                    <div key={m.id} className="border rounded-md p-3 space-y-1">
-                      <p className="font-medium text-sm">{m.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {m.subject} · {m.teacher_name} · {new Date(m.created_at).toLocaleDateString()}
-                      </p>
-                      {m.content && (
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{m.content}</p>
-                      )}
-                    </div>
-                  ))}
+                 {myMaterials.map((m) => (
+                <div key={m.id} className="border rounded-md p-3 space-y-1">
+                  <p className="font-medium text-sm">{m.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {m.subject} · {m.teacher_name} · {new Date(m.created_at).toLocaleDateString()}
+                  </p>
+                  {m.content && (
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{m.content}</p>
+                  )}
+                  {m.file_url && (
+                    
+                      href={m.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-1 text-xs bg-[#1a56a0] text-white px-3 py-1 rounded-md"
+                    >
+                      📎 Download {m.file_name}
+                    </a>
+                  )}
+                </div>
+              ))}
                 </div>
               )}
             </CardContent>
