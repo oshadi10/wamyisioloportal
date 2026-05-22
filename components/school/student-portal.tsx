@@ -85,7 +85,7 @@ export function StudentPortal({ studentName, results, fees, materials }: Student
 
     let logoSrc = "";
     try {
-      const response = await fetch("https://v0-wamyisioloportal.vercel.app/logo.png");
+      const response = await fetch("https://v0-wamyisioloportal.vercel.app/wamy%20logggo.png");
       const imageBlob = await response.blob();
       logoSrc = await new Promise((resolve) => {
         const reader = new FileReader();
