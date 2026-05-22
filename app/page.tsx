@@ -360,19 +360,44 @@ export default function SchoolPortal() {
           </section>
 
           {/* SCHOOL LIFE ACTIVITIES SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pb-16">
-            <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <div className="w-full h-72 bg-slate-200 flex items-center justify-center text-slate-500 font-semibold">Sports Image Placeholder</div>
-                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3><p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p></div>
-              </div>
-              <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <div className="w-full h-72 bg-slate-200 flex items-center justify-center text-slate-500 font-semibold">Scouts Image Placeholder</div>
-                <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouts Movement</h3><p className="text-gray-600">Training responsible students with leadership skills and character.</p></div>
-              </div>
-            </div>
-          </section>
+<section className="max-w-6xl mx-auto px-6 pb-16">
+  <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    
+    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+      <img src="/sports.png" alt="Sports & Teamwork" className="w-full h-72 object-cover" />
+      <div className="p-6">
+        <h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3>
+        <p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p>
+      </div>
+    </div>
+
+    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+      <img src="/scouts.png" alt="Scouts Movement" className="w-full h-72 object-cover" />
+      <div className="p-6">
+        <h3 className="text-2xl font-bold mb-3">Scouts Movement</h3>
+        <p className="text-gray-600">Training responsible students with leadership skills and character.</p>
+      </div>
+    </div>
+
+    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+      <img src="/indoor.png" alt="Indoor Activities" className="w-full h-72 object-cover" />
+      <div className="p-6">
+        <h3 className="text-2xl font-bold mb-3">Indoor Activities</h3>
+        <p className="text-gray-600">Fostering creativity, focus and teamwork through indoor programs.</p>
+      </div>
+    </div>
+
+    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+      <img src="/firstaid.png" alt="First Aid Training" className="w-full h-72 object-cover" />
+      <div className="p-6">
+        <h3 className="text-2xl font-bold mb-3">First Aid Training</h3>
+        <p className="text-gray-600">Equipping students with life-saving skills and emergency preparedness.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
 
           {/* LEADERSHIP MESSAGE SECTION */}
           <section className="bg-blue-950 text-white py-20">
