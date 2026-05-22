@@ -287,71 +287,79 @@ export default function SchoolPortal() {
           </div>
         </div>
       </section>
+          {currentPage === "Home" && (
+  <>
+    {/* WELCOME SECTION */}
+    <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
+      <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
+        <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
+        <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
+          WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
+        </p>
+      </div>
+    </section>
 
-      {currentPage === "Home" && (
-        <>
-          {/* WELCOME SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
-            <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
-              <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
-              <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
-                WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
-              </p>
+    {/* DYNAMIC TERM CALENDAR SECTION */}
+    <section className="max-w-6xl mx-auto px-6 pb-12">
+      <div className="space-y-4">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+          <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
+            <p className="text-xs text-emerald-700">
+              The school system is currently operating in <strong className="font-bold">Term 2, 2026</strong>. Please track the internal timelines outlined in the visual calendar table below.
+            </p>
+          </div>
+        </div>
+
+        <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
+          <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
+              <CalendarIcon className="h-5 w-5 text-blue-800" />
+              Official School Calendar & Term Dates — 2026
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-slate-100">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
+                    <TableHead className="font-bold text-slate-900 text-center h-11">Opening Date</TableHead>
+                    <TableHead className="font-bold text-slate-900 text-center h-11">IDD Break</TableHead>
+                    <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Exam</TableHead>
+                    <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Break</TableHead>
+                    <TableHead className="font-bold text-slate-900 text-center h-11">End-Term Exam</TableHead>
+                    <TableHead className="font-bold text-slate-900 text-center h-11">Closing Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {termDates.length === 0 ? (
+                    <TableRow>
+                      <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
+                        No academic data saved yet. Insert a row in your term_dates database table.
+                      </td>
+                    </TableRow>
+                  ) : (
+                    // We directly access the first index [0] to read your columns beautifully!
+                    <TableRow className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
+                      <TableCell className="py-4 font-bold text-slate-900">{termDates[0].opening_date || "—"}</TableCell>
+                      <TableCell className="py-4 text-amber-800 font-semibold">{termDates[0].idd_date || "—"}</TableCell>
+                      <TableCell className="py-4 text-slate-700">{termDates[0].midterm_exam || "—"}</TableCell>
+                      <TableCell className="py-4 text-blue-800 font-semibold">{termDates[0].mid_term || "—"}</TableCell>
+                      <TableCell className="py-4 text-slate-700">{termDates[0].end_term_exam || "—"}</TableCell>
+                      <TableCell className="py-4 font-bold text-emerald-800">{termDates[0].closing_date || "—"}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          </section>
-
-          {/* DYNAMIC TERM CALENDAR SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pb-12">
-            <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
-                  <p className="text-xs text-emerald-700">
-                    The school system is currently operating in <strong className="font-bold">{activeTermName}</strong>. Please ensure assignments, portal activities, and fee clearances track the schedules outlined in the visual calendar table below.
-                  </p>
-                </div>
-              </div>
-
-              <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
-                <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
-                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
-                    <CalendarIcon className="h-5 w-5 text-blue-800" />
-                    Official School Calendar & Term Dates — 2026
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-white">
-                  <div className="overflow-x-auto rounded-lg border border-slate-100">
-                    <Table>
-  <TableHeader>
-    <TableRow className="bg-slate-50/70">
-      <TableHead className="font-bold text-slate-900">Opening Date</TableHead>
-      <TableHead className="font-bold text-slate-900">IDD Break</TableHead>
-      <TableHead className="font-bold text-slate-900">Mid-Term Exam</TableHead>
-      <TableHead className="font-bold text-slate-900">Mid-Term Break</TableHead>
-      <TableHead className="font-bold text-slate-900">End-Term Exam</TableHead>
-      <TableHead className="font-bold text-slate-900">Closing Date</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    {termDates.map((item) => (
-      <TableRow key={item.id}>
-        <TableCell className="py-3 font-medium">{item.opening_date}</TableCell>
-        <TableCell className="py-3">{item.idd_date}</TableCell>
-        <TableCell className="py-3">{item.midterm_exam}</TableCell>
-        <TableCell className="py-3">{item.mid_term}</TableCell>
-        <TableCell className="py-3">{item.end_term_exam}</TableCell>
-        <TableCell className="py-3 font-semibold text-blue-900">{item.closing_date}</TableCell>
-      </TableRow>
-    ))}
-  </TableBody>
-</Table>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
-
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  </>
+)}
+     
           {/* STATS COUNTER SECTION */}
           <section className="max-w-6xl mx-auto px-6 pb-16">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
