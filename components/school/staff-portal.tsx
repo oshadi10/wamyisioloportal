@@ -215,13 +215,15 @@ export function StaffPortal({
     setTtUploading(false);
   };
 
- const handleAddTermRow = async () => {
+const handleAddTermRow = async () => {
   if (!newOpeningDate.trim() || !newClosingDate.trim()) {
     alert("Please fill out at least Opening and Closing dates.");
     return;
   }
 
+  // We set the id to 1 so it always updates the exact same row!
   const termData: any = {
+    id: 1, 
     term: "Term 2, 2026",
     opening_date: newOpeningDate,
     idd_date: newIddBreak || "—",
@@ -233,26 +235,13 @@ export function StaffPortal({
   };
 
   try {
-    // ✅ FIXED: We check for id > 0 instead of matching text UUIDs 
-    // This perfectly cleans your bigint rows without triggering type errors!
-    const { error: deleteError } = await supabase
+    // ✅ Using upsert automatically overwrites row 1 safely without needing to delete first!
+    const { error: upsertError } = await supabase
       .from("term_dates")
-      .delete()
-      .gt("id", 0); 
+      .upsert(termData);
 
-    if (deleteError) {
-      console.error(deleteError);
-      alert("Failed to clear old dates.");
-      return;
-    }
-
-    // ✅ Insert the fresh row data 
-    const { error: insertError } = await supabase
-      .from("term_dates")
-      .insert(termData);
-
-    if (insertError) {
-      console.error(insertError);
+    if (upsertError) {
+      console.error(upsertError);
       alert("Failed to save term dates.");
       return;
     }
@@ -265,7 +254,7 @@ export function StaffPortal({
     setNewEndExam("");
     setNewClosingDate("");
 
-    // Notify the main system layout state
+    // Notify the main application layout state
     onUploadTermDate(termData);
 
   } catch (e) {
