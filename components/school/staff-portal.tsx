@@ -39,6 +39,9 @@ interface StaffPortalProps {
   onUploadResult: (result: Result) => void;
   onDeleteResult: (student: string, subject: string, term: string) => void;
   onUpdateFees: (student: string, total: number, paid: number) => void;
+  materials: any[];
+  onPostMaterial: (material: any) => void;
+  onDeleteMaterial: (id: string) => void;
 }
 
 export function StaffPortal({
@@ -48,6 +51,9 @@ export function StaffPortal({
   onUploadResult,
   onDeleteResult,
   onUpdateFees,
+  materials,
+  onPostMaterial,
+  onDeleteMaterial,
 }: StaffPortalProps) {
   const classNames = Object.keys(classStudents);
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
@@ -62,6 +68,11 @@ export function StaffPortal({
 
   const [meritClass, setMeritClass] = useState(classNames[0]);
   const [meritTerm, setMeritTerm] = useState("Term 1, 2026");
+  const [matTitle, setMatTitle] = useState("");
+  const [matDesc, setMatDesc] = useState("");
+  const [matClass, setMatClass] = useState(classNames[0]);
+  const [matSubject, setMatSubject] = useState(lecturerSubjects[0]);
+  const [matContent, setMatContent] = useState("");
 
   const [feeTotal, setFeeTotal] = useState(
     (fees[selectedStudent]?.total || 45000).toString()
@@ -178,6 +189,21 @@ export function StaffPortal({
                     student === selectedStudent
                       ? "bg-[#e6f1fb] border-[#378add] text-[#0c447c]"
                       : "border-border hover:bg-muted"
+                    const handlePostMaterial = () => {
+    if (!matTitle.trim()) { alert("Enter a title."); return; }
+    onPostMaterial({
+      title: matTitle,
+      description: matDesc,
+      subject: matSubject,
+      class_name: matClass,
+      teacher_name: lecturer.name,
+      type: matContent.trim() ? "text" : "note",
+      content: matContent,
+    });
+    setMatTitle("");
+    setMatDesc("");
+    setMatContent("");
+  };
                   )}
                 >
                   {student}
@@ -196,6 +222,7 @@ export function StaffPortal({
                   <TabsTrigger value="merit">
                     <Trophy className="h-4 w-4 mr-1" />
                     Merit List
+                    <TabsTrigger value="materials">📚 Materials</TabsTrigger>
                   </TabsTrigger>
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="fees">Fees</TabsTrigger>
