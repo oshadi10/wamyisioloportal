@@ -43,7 +43,7 @@ export default function SchoolPortal() {
       const { data, error } = await supabase
         .from("term_dates")
         .select("*")
-        .order("created_at", { ascending: true });
+        
       
       if (error) { 
         console.error(error); 
