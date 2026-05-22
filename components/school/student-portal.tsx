@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download } from "lucide-react";
 import { useState } from "react";
 import {
@@ -34,10 +35,12 @@ interface StudentPortalProps {
   studentName: string;
   results: Result[];
   fees: Record<string, FeeRecord>;
+  materials: any[];
 }
 
-export function StudentPortal({ studentName, results, fees }: StudentPortalProps) {
+export function StudentPortal({ studentName, results, fees, materials }: StudentPortalProps) {
   const [selectedTerm, setSelectedTerm] = useState("Term 1, 2026");
+  const [activeTab, setActiveTab] = useState("results");
 
   const studentClass = getStudentClass(studentName);
   const admNo = studentAccounts[studentName] || "N/A";
@@ -46,6 +49,10 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
 
   const myResults = results.filter(
     (r) => r.student === studentName && r.term === selectedTerm
+  );
+
+  const myMaterials = materials.filter(
+    (m) => m.class_name === studentClass || m.class_name === "All Classes"
   );
 
   const downloadReport = async () => {
@@ -76,10 +83,9 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
 
     const feeBalance = myFees.total - myFees.paid;
 
-    // Convert logo to base64
     let logoSrc = "";
     try {
-      const response = await fetch("https://v0-wamyisioloportal.vercel.app/wamy%20logggo.png");
+      const response = await fetch("https://v0-wamyisioloportal.vercel.app/logo.png");
       const imageBlob = await response.blob();
       logoSrc = await new Promise((resolve) => {
         const reader = new FileReader();
@@ -105,91 +111,128 @@ export function StudentPortal({ studentName, results, fees }: StudentPortalProps
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-4">
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Fee Statement</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Total Fees</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Balance</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>KSh {myFees.total.toLocaleString()}</TableCell>
-                  <TableCell>KSh {myFees.paid.toLocaleString()}</TableCell>
-                  <TableCell className="text-destructive font-medium">
-                    KSh {balance.toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-            {balance > 0 ? (
-              <p className="text-xs text-muted-foreground mt-3">Please clear your fee balance.</p>
-            ) : (
-              <p className="text-xs text-[#27500a] mt-3">Fees fully paid.</p>
-            )}
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="results">Results</TabsTrigger>
+          <TabsTrigger value="materials">📚 Materials</TabsTrigger>
+          <TabsTrigger value="fees">Fee Statement</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Download Report Form</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">Select the term for your report form</p>
-            <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {termOptions.map((term) => (
-                  <SelectItem key={term} value={term}>{term}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={downloadReport} className="w-full bg-[#146f3a] hover:bg-[#0f5a2e]">
-              <Download className="h-4 w-4 mr-2" />
-              Download Report
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="results" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Download Report Form</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">Select the term for your report form</p>
+              <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {termOptions.map((term) => (
+                    <SelectItem key={term} value={term}>{term}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={downloadReport} className="w-full bg-[#146f3a] hover:bg-[#0f5a2e]">
+                <Download className="h-4 w-4 mr-2" />
+                Download Report
+              </Button>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">My Results — {selectedTerm}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {myResults.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No results for {selectedTerm} yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Marks</TableHead>
-                  <TableHead>Grade</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {myResults.map((result, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{result.subject}</TableCell>
-                    <TableCell>{result.marks}</TableCell>
-                    <TableCell className="font-semibold">{result.grade}</TableCell>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">My Results — {selectedTerm}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {myResults.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No results for {selectedTerm} yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>Marks</TableHead>
+                      <TableHead>Grade</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {myResults.map((result, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{result.subject}</TableCell>
+                        <TableCell>{result.marks}</TableCell>
+                        <TableCell className="font-semibold">{result.grade}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="materials" className="space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Materials for {studentClass}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {myMaterials.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No materials posted yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {myMaterials.map((m) => (
+                    <div key={m.id} className="border rounded-md p-3 space-y-1">
+                      <p className="font-medium text-sm">{m.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {m.subject} · {m.teacher_name} · {new Date(m.created_at).toLocaleDateString()}
+                      </p>
+                      {m.content && (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{m.content}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="fees">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Fee Statement</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Total Fees</TableHead>
+                    <TableHead>Paid</TableHead>
+                    <TableHead>Balance</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>KSh {myFees.total.toLocaleString()}</TableCell>
+                    <TableCell>KSh {myFees.paid.toLocaleString()}</TableCell>
+                    <TableCell className="text-destructive font-medium">
+                      KSh {balance.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+              {balance > 0 ? (
+                <p className="text-xs text-muted-foreground mt-3">Please clear your fee balance.</p>
+              ) : (
+                <p className="text-xs text-[#27500a] mt-3">Fees fully paid.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
