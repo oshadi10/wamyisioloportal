@@ -32,13 +32,12 @@ export default function SchoolPortal() {
   
   // State for dynamic term dates
   const [termDates, setTermDates] = useState<any[]>([]);
-  const [activeTermName, setActiveTermName] = useState("Term 2, 2026");
 
   useEffect(() => {
     fetchResults();
     fetchMaterials();
     fetchTimetables();
-    fetchTermDates(); // Load calendar rows dynamically on startup
+    fetchTermDates();
   }, []);
 
   const fetchTermDates = async () => {
@@ -51,12 +50,8 @@ export default function SchoolPortal() {
       console.error(error); 
       return; 
     }
-    
-    if (data && data.length > 0) {
+    if (data) {
       setTermDates(data);
-      // Automatically detect and set the active banner term title
-      const current = data.find(t => t.status === "Current Term");
-      if (current) setActiveTermName(current.term);
     }
   };
 
@@ -161,6 +156,16 @@ export default function SchoolPortal() {
     }));
   };
 
+  const handleUploadTermDate = async (newTermRow: any) => {
+    const { error } = await supabase.from("term_dates").insert(newTermRow);
+    if (error) {
+      console.error(error);
+      alert("Failed to save term dates.");
+      return;
+    }
+    fetchTermDates();
+  };
+
   if (view === "student-portal" && loggedInStudent) {
     return (
       <main className="min-h-screen bg-background">
@@ -205,6 +210,7 @@ export default function SchoolPortal() {
           onDeleteMaterial={handleDeleteMaterial}
           onUploadTimetable={handleUploadTimetable}
           onDeleteTimetable={handleDeleteTimetable}
+          onUploadTermDate={handleUploadTermDate}
         />
       </main>
     );
@@ -287,79 +293,77 @@ export default function SchoolPortal() {
           </div>
         </div>
       </section>
-          {currentPage === "Home" && (
-  <>
-    {/* WELCOME SECTION */}
-    <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
-      <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
-        <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
-        <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
-          WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
-        </p>
-      </div>
-    </section>
 
-    {/* DYNAMIC TERM CALENDAR SECTION */}
-    <section className="max-w-6xl mx-auto px-6 pb-12">
-      <div className="space-y-4">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-          <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
-            <p className="text-xs text-emerald-700">
-              The school system is currently operating in <strong className="font-bold">Term 2, 2026</strong>. Please track the internal timelines outlined in the visual calendar table below.
-            </p>
-          </div>
-        </div>
-
-        <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
-          <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
-            <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
-              <CalendarIcon className="h-5 w-5 text-blue-800" />
-              Official School Calendar & Term Dates — 2026
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 bg-white">
-            <div className="overflow-x-auto rounded-lg border border-slate-100">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
-                    <TableHead className="font-bold text-slate-900 text-center h-11">Opening Date</TableHead>
-                    <TableHead className="font-bold text-slate-900 text-center h-11">IDD Break</TableHead>
-                    <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Exam</TableHead>
-                    <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Break</TableHead>
-                    <TableHead className="font-bold text-slate-900 text-center h-11">End-Term Exam</TableHead>
-                    <TableHead className="font-bold text-slate-900 text-center h-11">Closing Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {termDates.length === 0 ? (
-                    <TableRow>
-                      <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
-                        No academic data saved yet. Insert a row in your term_dates database table.
-                      </td>
-                    </TableRow>
-                  ) : (
-                    // We directly access the first index [0] to read your columns beautifully!
-                    <TableRow className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
-                      <TableCell className="py-4 font-bold text-slate-900">{termDates[0].opening_date || "—"}</TableCell>
-                      <TableCell className="py-4 text-amber-800 font-semibold">{termDates[0].idd_date || "—"}</TableCell>
-                      <TableCell className="py-4 text-slate-700">{termDates[0].midterm_exam || "—"}</TableCell>
-                      <TableCell className="py-4 text-blue-800 font-semibold">{termDates[0].mid_term || "—"}</TableCell>
-                      <TableCell className="py-4 text-slate-700">{termDates[0].end_term_exam || "—"}</TableCell>
-                      <TableCell className="py-4 font-bold text-emerald-800">{termDates[0].closing_date || "—"}</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+      {currentPage === "Home" && (
+        <>
+          {/* WELCOME SECTION */}
+          <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
+            <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
+              <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
+              <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
+                WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </section>
-  </>
-)}
-     
+          </section>
+
+          {/* DYNAMIC TERM CALENDAR SECTION */}
+          <section className="max-w-6xl mx-auto px-6 pb-12">
+            <div className="space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
+                  <p className="text-xs text-emerald-700">
+                    The school system is currently operating in <strong className="font-bold">Term 2, 2026</strong>. Please track the internal timelines outlined in the visual calendar table below.
+                  </p>
+                </div>
+              </div>
+
+              <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
+                <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
+                    <CalendarIcon className="h-5 w-5 text-blue-800" />
+                    Official School Calendar & Term Dates — 2026
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 bg-white">
+                  <div className="overflow-x-auto rounded-lg border border-slate-100">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
+                          <TableHead className="font-bold text-slate-900 text-center h-11">Opening Date</TableHead>
+                          <TableHead className="font-bold text-slate-900 text-center h-11">IDD Break</TableHead>
+                          <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Exam</TableHead>
+                          <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Break</TableHead>
+                          <TableHead className="font-bold text-slate-900 text-center h-11">End-Term Exam</TableHead>
+                          <TableHead className="font-bold text-slate-900 text-center h-11">Closing Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {termDates.length === 0 ? (
+                          <TableRow>
+                            <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
+                              No academic data saved yet. Insert a row in your term_dates database table.
+                            </td>
+                          </TableRow>
+                        ) : (
+                          <TableRow className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
+                            <TableCell className="py-4 font-bold text-slate-900">{termDates[0].opening_date || "—"}</TableCell>
+                            <TableCell className="py-4 text-amber-800 font-semibold">{termDates[0].idd_date || "—"}</TableCell>
+                            <TableCell className="py-4 text-slate-700">{termDates[0].midterm_exam || "—"}</TableCell>
+                            <TableCell className="py-4 text-blue-800 font-semibold">{termDates[0].mid_term || "—"}</TableCell>
+                            <TableCell className="py-4 text-slate-700">{termDates[0].end_term_exam || "—"}</TableCell>
+                            <TableCell className="py-4 font-bold text-emerald-800">{termDates[0].closing_date || "—"}</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
           {/* STATS COUNTER SECTION */}
           <section className="max-w-6xl mx-auto px-6 pb-16">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -404,7 +408,6 @@ export default function SchoolPortal() {
         </>
       )}
 
-      {/* Rest of components follow standard code definitions */}
       {currentPage === "About Us" && (
         <section className="max-w-4xl mx-auto px-6 py-16 space-y-6">
           <h2 className="text-4xl font-bold text-blue-900 text-center mb-10">About Us</h2>
@@ -413,8 +416,50 @@ export default function SchoolPortal() {
             <p className="text-gray-600 leading-8">To provide quality, inclusive, and values-based education that equips students with academic excellence, strong character, and life skills necessary to thrive in a dynamic world.</p>
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-green-700 mb-3">Our Vision</h3>
+            <h3 className="text-2xl font-bold text-green-700 mb-3">🎯 Our Vision</h3>
             <p className="text-gray-600 leading-8">To be a leading institution in Isiolo County that produces responsible, knowledgeable, and faith-grounded graduates who contribute positively to society.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-green-700 mb-3">🏫 About the School</h3>
+            <p className="text-gray-600 leading-8">WAMY Isiolo High School (World Assembly of Muslim Youth — Isiolo) is a Day and Boarding senior school in Isiolo County, Kenya. We offer STEM, Social Sciences, and Islamic classes with over 69 students, 8 dedicated staff members, and 3 classes.</p>
+          </div>
+        </section>
+      )}
+
+      {currentPage === "Academics" && (
+        <section className="max-w-6xl mx-auto px-6 py-16">
+          <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
+              <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
+                <span className="text-2xl">📚</span>
+                <p className="font-semibold text-gray-800">{s}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {currentPage === "Downloads" && (
+        <section className="max-w-4xl mx-auto px-6 py-16">
+          <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Downloads</h2>
+          <div className="space-y-4">
+            {[
+              {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
+              {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
+              {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
+              {icon:"📜", title:"School Rules & Regulations", sub:"PDF — Student Handbook"},
+              {icon:"🩺", title:"Medical / Health Form", sub:"PDF — Required for boarding students"},
+            ].map((d) => (
+              <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
+                <span className="text-3xl">{d.icon}</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800">{d.title}</p>
+                  <p className="text-sm text-gray-500">{d.sub}</p>
+                </div>
+                <button onClick={()=>alert("Contact school administration for this document.")} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Download</button>
+              </div>
+            ))}
           </div>
         </section>
       )}
