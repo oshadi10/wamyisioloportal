@@ -193,7 +193,7 @@ export function StudentPortal({ studentName, results, fees, materials }: Student
                     <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{m.content}</p>
                   )}
                   {m.file_url && (
-                    
+                    <a
                       href={m.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
