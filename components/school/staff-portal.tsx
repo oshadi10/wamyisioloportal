@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Trophy, Eye, Calendar } from "lucide-react";
+import { Trash2, Plus, Trophy, Calendar, FileText } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -234,16 +234,16 @@ export function StaffPortal({
     return acc;
   }, {} as Record<string, Result[]>);
 
-  // Helper function to check if the uploaded timetable is an image
   const isImageFile = (fileName: string) => {
     if (!fileName) return false;
     const lowerName = fileName.toLowerCase();
-    return lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg");
+    return lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") || lowerName.endsWith(".webp");
   };
 
   return (
     <div className="max-w-5xl mx-auto p-4">
       <div className="grid md:grid-cols-[280px_1fr] gap-4">
+        {/* Sidebar Class List */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Class Lists</CardTitle>
@@ -280,6 +280,7 @@ export function StaffPortal({
           </CardContent>
         </Card>
 
+        {/* Main Content Area */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -567,13 +568,13 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                {/* Timetables Tab Content - Inline Renderer */}
+                {/* Timetables Tab Content - Direct Visual Display & Delete Action */}
                 <TabsContent value="timetables" className="space-y-6">
                   {lecturer.name === "Mr. Osman Halake" && (
                     <div className="space-y-3 border rounded-md p-4 bg-muted/30">
                       <h4 className="font-medium text-sm flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-blue-600" />
-                        Upload New Timetable (Upload PNG/JPG to display directly)
+                        Upload New Timetable
                       </h4>
                       <select value={ttType} onChange={(e) => setTtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
                         <option value="teaching">Teaching Timetable</option>
@@ -583,7 +584,7 @@ export function StaffPortal({
                         {termOptions.map((term) => <option key={term} value={term}>{term}</option>)}
                       </select>
                       <Input placeholder="Title (e.g. Form 4 Teaching Timetable)" value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} className="bg-white" />
-                      <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => setTtFile(e.target.files?.[0] || null)} className="text-sm" />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setTtFile(e.target.files?.[0] || null)} className="text-sm" />
                       {ttFile && <p className="text-xs text-green-600 font-medium">Selected: {ttFile.name}</p>}
                       <Button onClick={handleUploadTimetable} disabled={ttUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
                         {ttUploading ? "Uploading..." : "Upload Timetable"}
@@ -591,47 +592,52 @@ export function StaffPortal({
                     </div>
                   )}
 
-                  {/* Teaching Timetables Block */}
-                  <div className="space-y-3">
+                  {/* Teaching Timetables Display Group */}
+                  <div className="space-y-4">
                     <h4 className="font-semibold text-base text-slate-800 border-b pb-1">Teaching Timetables</h4>
                     {timetables.filter((t) => t.type === "teaching").length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">No teaching timetables posted.</p>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {timetables.filter((t) => t.type === "teaching").map((t) => (
-                          <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
-                            <div className="flex items-start justify-between">
+                          <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
+                            <div className="flex items-center justify-between border-b pb-2">
                               <div>
                                 <p className="font-semibold text-md text-slate-900">{t.title}</p>
-                                <p className="text-xs text-muted-foreground">{t.term} · Uploaded on {new Date(t.created_at).toLocaleDateString()}</p>
+                                <p className="text-xs text-muted-foreground">{t.term} · Posted on {new Date(t.created_at).toLocaleDateString()}</p>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <a href={t.file_url} target="_blank" rel="noopener noreferrer">
-                                  <Button variant="outline" size="sm" className="text-xs">
-                                    <Eye className="h-3 w-3 mr-1" /> Open File
-                                  </Button>
-                                </a>
-                                {lecturer.name === "Mr. Osman Halake" && (
-                                  <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/5">
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
+                              {lecturer.name === "Mr. Osman Halake" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onDeleteTimetable(t.id)}
+                                  className="text-destructive border-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1"
+                                >
+                                  <Trash2 className="h-3 w-3" /> Delete
+                                </Button>
+                              )}
                             </div>
 
-                            {/* Direct View Engine */}
+                            {/* Direct View Workspace Container */}
                             {isImageFile(t.file_name) ? (
-                              <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[600px]">
+                              <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[700px] w-full">
                                 <img 
                                   src={t.file_url} 
                                   alt={t.title} 
-                                  className="object-contain max-w-full h-auto rounded"
-                                  loading="lazy"
+                                  className="object-contain max-w-full h-auto rounded-md shadow-sm"
+                                  loading="eager" 
                                 />
                               </div>
                             ) : (
-                              <div className="bg-slate-50 border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground">
-                                ℹ️ This timetable is a document file ({t.file_name.split('.').pop()?.toUpperCase()}). Click <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">Open File</a> to view.
+                              <div className="border rounded-md bg-slate-50 p-4 flex flex-col items-center justify-center text-center space-y-2 min-h-[200px]">
+                                <FileText className="h-10 w-10 text-slate-400" />
+                                <div className="text-sm font-medium text-slate-700">{t.file_name}</div>
+                                <p className="text-xs text-muted-foreground max-w-md">
+                                  This file is a document format. You can check it natively using the link below.
+                                </p>
+                                <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline font-medium">
+                                  View Document Attachment
+                                </a>
                               </div>
                             )}
                           </div>
@@ -640,47 +646,52 @@ export function StaffPortal({
                     )}
                   </div>
 
-                  {/* Exam Timetables Block */}
-                  <div className="space-y-3 pt-2">
+                  {/* Exam Timetables Display Group */}
+                  <div className="space-y-4 pt-4">
                     <h4 className="font-semibold text-base text-slate-800 border-b pb-1">Exam Timetables</h4>
                     {timetables.filter((t) => t.type === "exam").length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">No exam timetables posted.</p>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {timetables.filter((t) => t.type === "exam").map((t) => (
-                          <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
-                            <div className="flex items-start justify-between">
+                          <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3 relative">
+                            <div className="flex items-center justify-between border-b pb-2">
                               <div>
                                 <p className="font-semibold text-md text-slate-900">{t.title}</p>
-                                <p className="text-xs text-muted-foreground">{t.term} · Uploaded on {new Date(t.created_at).toLocaleDateString()}</p>
+                                <p className="text-xs text-muted-foreground">{t.term} · Posted on {new Date(t.created_at).toLocaleDateString()}</p>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <a href={t.file_url} target="_blank" rel="noopener noreferrer">
-                                  <Button variant="outline" size="sm" className="text-xs">
-                                    <Eye className="h-3 w-3 mr-1" /> Open File
-                                  </Button>
-                                </a>
-                                {lecturer.name === "Mr. Osman Halake" && (
-                                  <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/5">
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
+                              {lecturer.name === "Mr. Osman Halake" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onDeleteTimetable(t.id)}
+                                  className="text-destructive border-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1"
+                                >
+                                  <Trash2 className="h-3 w-3" /> Delete
+                                </Button>
+                              )}
                             </div>
 
-                            {/* Direct View Engine */}
+                            {/* Direct View Workspace Container */}
                             {isImageFile(t.file_name) ? (
-                              <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[600px]">
+                              <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[700px] w-full">
                                 <img 
                                   src={t.file_url} 
                                   alt={t.title} 
-                                  className="object-contain max-w-full h-auto rounded"
-                                  loading="lazy"
+                                  className="object-contain max-w-full h-auto rounded-md shadow-sm"
+                                  loading="eager"
                                 />
                               </div>
                             ) : (
-                              <div className="bg-slate-50 border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground">
-                                ℹ️ This timetable is a document file ({t.file_name.split('.').pop()?.toUpperCase()}). Click <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline font-medium">Open File</a> to view.
+                              <div className="border rounded-md bg-slate-50 p-4 flex flex-col items-center justify-center text-center space-y-2 min-h-[200px]">
+                                <FileText className="h-10 w-10 text-slate-400" />
+                                <div className="text-sm font-medium text-slate-700">{t.file_name}</div>
+                                <p className="text-xs text-muted-foreground max-w-md">
+                                  This file is a document format. You can check it natively using the link below.
+                                </p>
+                                <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline font-medium">
+                                  View Document Attachment
+                                </a>
                               </div>
                             )}
                           </div>
