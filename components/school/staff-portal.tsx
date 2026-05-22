@@ -43,6 +43,9 @@ interface StaffPortalProps {
   materials: any[];
   onPostMaterial: (material: any) => void;
   onDeleteMaterial: (id: string) => void;
+  timetables: any[];
+  onUploadTimetable: (timetable: any) => void;
+  onDeleteTimetable: (id: string) => void;
 }
 
 export function StaffPortal({
@@ -77,6 +80,11 @@ export function StaffPortal({
   const [matContent, setMatContent] = useState("");
   const [matFile, setMatFile] = useState<File | null>(null);
   const [matUploading, setMatUploading] = useState(false);
+  const [ttType, setTtType] = useState("teaching");
+  const [ttTitle, setTtTitle] = useState("");
+  const [ttTerm, setTtTerm] = useState("Term 1, 2026");
+  const [ttFile, setTtFile] = useState<File | null>(null);
+  const [ttUploading, setTtUploading] = useState(false);
 
   const [feeTotal, setFeeTotal] = useState(
     (fees[selectedStudent]?.total || 45000).toString()
@@ -175,6 +183,24 @@ export function StaffPortal({
     setMatFile(null);
     setMatUploading(false);
   };
+  const handleUploadTimetable = async () => {
+    if (!ttFile || !ttTitle.trim()) { alert("Enter title and select a file."); return; }
+    setTtUploading(true);
+    const filePath = `${Date.now()}_${ttFile.name}`;
+    const { error: uploadError } = await supabase.storage.from("timetables").upload(filePath, ttFile);
+    if (uploadError) { alert("Upload failed."); setTtUploading(false); return; }
+    const { data } = supabase.storage.from("timetables").getPublicUrl(filePath);
+    onUploadTimetable({
+      type: ttType,
+      title: ttTitle,
+      term: ttTerm,
+      file_url: data.publicUrl,
+      file_name: ttFile.name,
+    });
+    setTtTitle("");
+    setTtFile(null);
+    setTtUploading(false);
+  };
 
   const getMeritList = () => {
     const students = classStudents[meritClass];
@@ -254,6 +280,7 @@ export function StaffPortal({
                     Merit List
                   </TabsTrigger>
                   <TabsTrigger value="materials">📚 Materials</TabsTrigger>
+                  <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="fees">Fees</TabsTrigger>
                   )}
@@ -525,7 +552,66 @@ export function StaffPortal({
     </div>
   )}
 </TabsContent>
-                {lecturer.name === "Mr. Osman Halake" && (
+                {lecturer.name === "Mr. Osman Halake" && (<TabsContent value="timetables" className="space-y-4">
+                  {lecturer.name === "Mr. Osman Halake" && (
+                    <div className="space-y-3 border rounded-md p-3">
+                      <h4 className="font-medium text-sm">Upload Timetable</h4>
+                      <select value={ttType} onChange={(e) => setTtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
+                        <option value="teaching">Teaching Timetable</option>
+                        <option value="exam">Exam Timetable</option>
+                      </select>
+                      <select value={ttTerm} onChange={(e) => setTtTerm(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm">
+                        {termOptions.map((term) => <option key={term} value={term}>{term}</option>)}
+                      </select>
+                      <Input placeholder="Title (e.g. Form 4 Teaching Timetable)" value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} />
+                      <input type="file" accept=".pdf,.jpg,.png,.doc,.docx" onChange={(e) => setTtFile(e.target.files?.[0] || null)} className="text-sm" />
+                      {ttFile && <p className="text-xs text-green-600">Selected: {ttFile.name}</p>}
+                      <Button onClick={handleUploadTimetable} disabled={ttUploading} className="bg-[#1a56a0] hover:bg-[#154a8a]">
+                        {ttUploading ? "Uploading..." : "Upload Timetable"}
+                      </Button>
+                    </div>
+                  )}
+
+                  <h4 className="font-medium text-sm">Teaching Timetables</h4>
+                  {timetables.filter((t) => t.type === "teaching").length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No teaching timetables uploaded yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {timetables.filter((t) => t.type === "teaching").map((t) => (
+                        <div key={t.id} className="border rounded-md p-3 flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{t.title}</p>
+                            <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
+                            <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">📎 {t.file_name}</a>
+                          </div>
+                          {lecturer.name === "Mr. Osman Halake" && (
+                            <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive">Delete</Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <h4 className="font-medium text-sm mt-2">Exam Timetables</h4>
+                  {timetables.filter((t) => t.type === "exam").length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No exam timetables uploaded yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {timetables.filter((t) => t.type === "exam").map((t) => (
+                        <div key={t.id} className="border rounded-md p-3 flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{t.title}</p>
+                            <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
+                            <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">📎 {t.file_name}</a>
+                          </div>
+                          {lecturer.name === "Mr. Osman Halake" && (
+                            <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive">Delete</Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
                   <TabsContent value="fees" className="space-y-4">
                     <div className="space-y-3">
                       <h4 className="font-medium text-sm">Update Fees</h4>
