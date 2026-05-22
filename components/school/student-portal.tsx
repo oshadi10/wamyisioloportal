@@ -36,6 +36,7 @@ interface StudentPortalProps {
   results: Result[];
   fees: Record<string, FeeRecord>;
   materials: any[];
+  timetables: any[];
 }
 
 export function StudentPortal({ studentName, results, fees, materials }: StudentPortalProps) {
@@ -116,6 +117,7 @@ export function StudentPortal({ studentName, results, fees, materials }: Student
           <TabsTrigger value="results">Results</TabsTrigger>
           <TabsTrigger value="materials">📚 Materials</TabsTrigger>
           <TabsTrigger value="fees">Fee Statement</TabsTrigger>
+          <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
         </TabsList>
 
         <TabsContent value="results" className="space-y-4">
@@ -238,6 +240,49 @@ export function StudentPortal({ studentName, results, fees, materials }: Student
                 <p className="text-xs text-muted-foreground mt-3">Please clear your fee balance.</p>
               ) : (
                 <p className="text-xs text-[#27500a] mt-3">Fees fully paid.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="timetables" className="space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Teaching Timetables</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {timetables.filter((t) => t.type === "teaching").length === 0 ? (
+                <p className="text-sm text-muted-foreground">No teaching timetables uploaded yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {timetables.filter((t) => t.type === "teaching").map((t) => (
+                    <div key={t.id} className="border rounded-md p-3">
+                      <p className="font-medium text-sm">{t.title}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t.term}</p>
+                      <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs bg-[#1a56a0] text-white px-3 py-1 rounded-md">📎 View / Download</a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Exam Timetables</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {timetables.filter((t) => t.type === "exam").length === 0 ? (
+                <p className="text-sm text-muted-foreground">No exam timetables uploaded yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {timetables.filter((t) => t.type === "exam").map((t) => (
+                    <div key={t.id} className="border rounded-md p-3">
+                      <p className="font-medium text-sm">{t.title}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t.term}</p>
+                      <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs bg-[#146f3a] text-white px-3 py-1 rounded-md">📎 View / Download</a>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
