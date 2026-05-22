@@ -221,9 +221,8 @@ const handleAddTermRow = async () => {
     return;
   }
 
-  // We set the id to 1 so it always updates the exact same row!
+  // FIXED: We removed "id: 1" completely so your database autoincrements smoothly!
   const termData: any = {
-    id: 1, 
     term: "Term 2, 2026",
     opening_date: newOpeningDate,
     idd_date: newIddBreak || "—",
@@ -235,13 +234,25 @@ const handleAddTermRow = async () => {
   };
 
   try {
-    // ✅ Using upsert automatically overwrites row 1 safely without needing to delete first!
-    const { error: upsertError } = await supabase
+    // ✅ STEP 1: Wipe the table using the standard filter syntax
+    const { error: deleteError } = await supabase
       .from("term_dates")
-      .upsert(termData);
+      .delete()
+      .neq("term", "xyz_placeholder_safety");
 
-    if (upsertError) {
-      console.error(upsertError);
+    if (deleteError) {
+      console.error("Delete Error:", deleteError);
+      alert("Failed to clear old configurations.");
+      return;
+    }
+
+    // ✅ STEP 2: Smoothly insert the clean record
+    const { error: insertError } = await supabase
+      .from("term_dates")
+      .insert(termData);
+
+    if (insertError) {
+      console.error("Insert Error:", insertError);
       alert("Failed to save term dates.");
       return;
     }
@@ -254,7 +265,7 @@ const handleAddTermRow = async () => {
     setNewEndExam("");
     setNewClosingDate("");
 
-    // Notify the main application layout state
+    // Inform the landing page configuration state
     onUploadTermDate(termData);
 
   } catch (e) {
