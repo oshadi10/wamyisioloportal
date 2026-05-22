@@ -6,7 +6,9 @@ import { Navbar } from "@/components/school/navbar";
 import { StudentLogin, StaffLogin } from "@/components/school/login-forms";
 import { StudentPortal } from "@/components/school/student-portal";
 import { StaffPortal } from "@/components/school/staff-portal";
-import { HomeContent } from "@/components/school/home-content";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Calendar as CalendarIcon, AlertCircle } from "lucide-react";
 import {
   Lecturer,
   Result,
@@ -27,11 +29,13 @@ export default function SchoolPortal() {
   const [fees, setFees] = useState<Record<string, FeeRecord>>(initializeFees);
   const [materials, setMaterials] = useState<any[]>([]);
   const [timetables, setTimetables] = useState<any[]>([]);
-useEffect(() => {
+
+  useEffect(() => {
     fetchResults();
     fetchMaterials();
     fetchTimetables();
   }, []);
+
   const fetchMaterials = async () => {
     const { data, error } = await supabase.from("materials").select("*").order("created_at", { ascending: false });
     if (error) { console.error(error); return; }
@@ -49,6 +53,7 @@ useEffect(() => {
     if (error) { console.error(error); return; }
     fetchMaterials();
   };
+
   const fetchTimetables = async () => {
     const { data, error } = await supabase.from("timetables").select("*").order("created_at", { ascending: false });
     if (error) { console.error(error); return; }
@@ -66,6 +71,7 @@ useEffect(() => {
     if (error) { console.error(error); return; }
     fetchTimetables();
   };
+
   const fetchResults = async () => {
     const { data, error } = await supabase.from("results").select("*");
     if (error) { console.error(error); return; }
@@ -131,6 +137,32 @@ useEffect(() => {
     }));
   };
 
+  // Static Term Calendar data for display
+  const activeTerm = "Term 2, 2026";
+  const termDates = [
+    {
+      term: "Term 1, 2026",
+      opening: "January 6, 2026",
+      halfTerm: "February 16 – February 20, 2026",
+      closing: "April 3, 2026",
+      status: "Completed",
+    },
+    {
+      term: "Term 2, 2026",
+      opening: "May 4, 2026",
+      halfTerm: "June 15 – June 19, 2026",
+      closing: "August 7, 2026",
+      status: "Current Term",
+    },
+    {
+      term: "Term 3, 2026",
+      opening: "September 7, 2026",
+      halfTerm: "None",
+      closing: "November 13, 2026",
+      status: "Upcoming",
+    },
+  ];
+
   if (view === "student-portal" && loggedInStudent) {
     return (
       <main className="min-h-screen bg-background">
@@ -141,7 +173,7 @@ useEffect(() => {
           userDetails={`${getStudentClass(loggedInStudent)} - Adm: ${studentAccounts[loggedInStudent]}`}
           onLogout={handleLogout}
         />
-       <StudentPortal
+        <StudentPortal
           studentName={loggedInStudent}
           results={results}
           fees={fees}
@@ -162,7 +194,7 @@ useEffect(() => {
           userDetails={loggedInLecturer.subject}
           onLogout={handleLogout}
         />
-       <StaffPortal
+        <StaffPortal
           lecturer={loggedInLecturer}
           results={results}
           fees={fees}
@@ -248,10 +280,10 @@ useEffect(() => {
             Islamic values and holistic development.
           </p>
           <div className="flex flex-col md:flex-row justify-center gap-4">
-            <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg">
+            <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
               Student Portal
             </button>
-            <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg">
+            <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
               Staff Portal
             </button>
           </div>
@@ -260,7 +292,8 @@ useEffect(() => {
 
       {currentPage === "Home" && (
         <>
-          <section className="max-w-6xl mx-auto px-6 py-16">
+          {/* WELCOME SECTION */}
+          <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
             <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
               <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
               <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
@@ -268,6 +301,71 @@ useEffect(() => {
               </p>
             </div>
           </section>
+
+          {/* NEW: VISIBLE ACADEMIC TERM CALENDAR SECTION */}
+          <section className="max-w-6xl mx-auto px-6 pb-12">
+            <div className="space-y-4">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
+                  <p className="text-xs text-emerald-700">
+                    The school system is currently operating in <strong className="font-bold">{activeTerm}</strong>. Please ensure assignments, portal activities, and fee clearances track the schedules outlined in the visual calendar table below.
+                  </p>
+                </div>
+              </div>
+
+              <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
+                <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
+                    <CalendarIcon className="h-5 w-5 text-blue-800" />
+                    Official School Calendar & Term Dates — 2026
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 bg-white">
+                  <div className="overflow-x-auto rounded-lg border border-slate-100">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
+                          <TableHead className="font-bold text-slate-900 h-11">Academic Term</TableHead>
+                          <TableHead className="font-bold text-slate-900 h-11">Opening Date</TableHead>
+                          <TableHead className="font-bold text-slate-900 h-11">Half-Term Break</TableHead>
+                          <TableHead className="font-bold text-slate-900 h-11">Closing Date</TableHead>
+                          <TableHead className="font-bold text-slate-900 text-center h-11">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {termDates.map((item) => (
+                          <TableRow 
+                            key={item.term} 
+                            className={item.status === "Current Term" ? "bg-blue-50/60 font-medium hover:bg-blue-50/80 transition-colors" : "hover:bg-slate-50/40"}
+                          >
+                            <TableCell className="font-bold text-slate-900 py-3">{item.term}</TableCell>
+                            <TableCell className="py-3">{item.opening}</TableCell>
+                            <TableCell className="text-slate-600 py-3">{item.halfTerm}</TableCell>
+                            <TableCell className="py-3">{item.closing}</TableCell>
+                            <TableCell className="text-center py-3">
+                              <span className={`inline-block text-[11px] font-bold px-3 py-0.5 rounded-full ${
+                                item.status === "Current Term" 
+                                  ? "bg-blue-100 text-blue-800 border border-blue-200 animate-pulse" 
+                                  : item.status === "Completed"
+                                  ? "bg-slate-100 text-slate-400 line-through"
+                                  : "bg-amber-50 text-amber-800 border border-amber-200"
+                              }`}>
+                                {item.status}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* STATS COUNTER SECTION */}
           <section className="max-w-6xl mx-auto px-6 pb-16">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-blue-700 mb-2">69+</h3><p className="text-gray-600 font-semibold">Students</p></div>
@@ -276,6 +374,8 @@ useEffect(() => {
               <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-red-600 mb-2">100%</h3><p className="text-gray-600 font-semibold">Discipline</p></div>
             </div>
           </section>
+
+          {/* SCHOOL LIFE ACTIVITIES SECTION */}
           <section className="max-w-6xl mx-auto px-6 pb-16">
             <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -297,6 +397,8 @@ useEffect(() => {
               </div>
             </div>
           </section>
+
+          {/* LEADERSHIP MESSAGE SECTION */}
           <section className="bg-blue-950 text-white py-20">
             <div className="max-w-5xl mx-auto px-6 text-center">
               <h2 className="text-4xl font-bold mb-8">Message from the Principal</h2>
@@ -333,7 +435,7 @@ useEffect(() => {
             </ul>
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-green-700 mb-3">🤝 Extra-Curricular Activities</h3>
+            <h3 className="text-2xl font-bold text-green-700 mb-3">qp Extra-Curricular Activities</h3>
             <ul className="text-gray-600 space-y-2 list-disc list-inside">
               <li>Football & Sports</li>
               <li>Scout Troop</li>
@@ -348,7 +450,7 @@ useEffect(() => {
         <section className="max-w-6xl mx-auto px-6 py-16">
           <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
+            {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
               <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
                 <span className="text-2xl">📚</span>
                 <p className="font-semibold text-gray-800">{s}</p>
