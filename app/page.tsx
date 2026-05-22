@@ -158,13 +158,7 @@ export default function SchoolPortal() {
     }));
   };
 
-  const handleUploadTermDate = async (newTermRow: any) => {
-    const { error } = await supabase.from("term_dates").insert(newTermRow);
-    if (error) {
-      console.error(error);
-      alert("Failed to save term dates.");
-      return;
-    }
+  const handleUploadTermDate = async () => {
     fetchTermDates();
   };
 
