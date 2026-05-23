@@ -476,6 +476,8 @@ const handleDeleteDoc = async (id: string) => {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">No results yet for this student.</p>
+                  
+                  </TabsContent>
                   )}
                   {lecturer.name === "Mr. Osman Halake" && (<TabsContent value="students" className="space-y-6">
 
@@ -580,7 +582,7 @@ const handleDeleteDoc = async (id: string) => {
 
 </TabsContent>
 )}                                                            
-                </TabsContent>
+                
 
                 {/* MERIT LIST TAB */}
                 <TabsContent value="merit" className="space-y-4">
