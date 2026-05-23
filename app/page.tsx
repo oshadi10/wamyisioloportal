@@ -271,7 +271,7 @@ export default function SchoolPortal() {
           }
         `}</style>
         <div className="animate-marquee cursor-pointer text-sm md:text-base">
-          📢 Important Notice: Admission for new students is ongoing! Term 2 operations are running smoothly. Keep tracking official updates on this portal. 🎓
+          📢 IDD-UL FITRI Break on 26th May 2026. We wish you Idd Mubarak. 
         </div>
       </div>
 
