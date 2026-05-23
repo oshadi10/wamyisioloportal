@@ -13,6 +13,8 @@ interface NavbarProps {
   onNavigate?: (page: string) => void;
   onStudentPortal?: () => void;
   onStaffPortal?: () => void;
+  // Dynamic announcement banner properties passed from main portal layout
+  liveAnnouncement?: string;
 }
 
 const navItems = [
@@ -32,9 +34,46 @@ export function Navbar({
   onNavigate,
   onStudentPortal,
   onStaffPortal,
+  liveAnnouncement, // Read the string text parameter values smoothly
 }: NavbarProps) {
   return (
     <header>
+      {/* DYNAMIC SEAMLESS MOVING ANNOUNCEMENT BANNER */}
+      {liveAnnouncement && (
+        <div className="w-full bg-amber-400 text-slate-950 font-bold py-2 overflow-hidden relative shadow-sm z-50 select-none flex">
+          <style>{`
+            @keyframes marquee-seamless {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-100%); }
+            }
+            .marquee-container {
+              display: flex;
+              white-space: nowrap;
+              min-width: 100%;
+            }
+            .animate-marquee-loop {
+              display: flex;
+              flex-shrink: 0;
+              align-items: center;
+              animation: marquee-seamless 25s linear infinite;
+            }
+            .marquee-container:hover .animate-marquee-loop {
+              animation-play-state: paused;
+            }
+          `}</style>
+          
+          <div className="marquee-container cursor-pointer text-sm md:text-base">
+            <div className="animate-marquee-loop pr-16">
+              {liveAnnouncement}
+            </div>
+            <div className="animate-marquee-loop pr-16" aria-hidden="true">
+              {liveAnnouncement}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRIMARY SCHOOL HEADLINE BLOCK */}
       <div className="bg-[#1e3a5f] text-white px-6 py-4">
         <div className="flex items-center gap-3">
           <GraduationCap className="h-8 w-8" />
@@ -47,6 +86,7 @@ export function Navbar({
         </div>
       </div>
 
+      {/* PORTAL NAVIGATION AND CONTEXT ACTION BAR LAYOUT PANELS */}
       {isPortal ? (
         <div className="bg-[#2d4e6f] px-6 py-3 flex items-center justify-between">
           <div className="text-white">
