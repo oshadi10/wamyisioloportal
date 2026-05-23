@@ -405,7 +405,9 @@ const handleDeleteDoc = async (id: string) => {
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="events">📣 Events</TabsTrigger>
                   )}
-                  <TabsTrigger value="students">🎓 Students</TabsTrigger>
+                  {lecturer.name === "Mr. Osman Halake" && (
+  <TabsTrigger value="students">🎓 Students</TabsTrigger>
+)}
                 </TabsList>
 
                 {/* RESULTS TAB */}
@@ -469,7 +471,7 @@ const handleDeleteDoc = async (id: string) => {
                   ) : (
                     <p className="text-sm text-muted-foreground">No results yet for this student.</p>
                   )}
-                  <TabsContent value="students" className="space-y-6">
+                  {lecturer.name === "Mr. Osman Halake" && (<TabsContent value="students" className="space-y-6">
 
   {/* REGISTER NEW STUDENT */}
   <div className="border rounded-md p-4 bg-muted/30 space-y-3">
@@ -571,6 +573,7 @@ const handleDeleteDoc = async (id: string) => {
   </div>
 
 </TabsContent>
+)}                                                            
                 </TabsContent>
 
                 {/* MERIT LIST TAB */}
