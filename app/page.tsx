@@ -285,6 +285,7 @@ export default function SchoolPortal() {
             display: flex;
             flex-shrink: 0;
             align-items: center;
+            padding-left: 100%;
             animation: marquee-seamless 15s linear infinite;
           }
           .marquee-container:hover .animate-marquee-loop {
