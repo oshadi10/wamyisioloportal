@@ -16,12 +16,12 @@ export const studentAccounts: Record<string, string> = {
   'Frankline Ewoi': '417', 'Mohamed Amin': '418', 'Abdishkur Mohamed': '419', 'Ibrahim Hussein': '420',
   'Ramadhan Sabls': '406', 'Abdirizack Yussuf': '421', 'Abdirahman Ahmed': '422',
   'Hamza Halkano': '423', 'Abdi Osman': '424', 'Daniel Lemoris': '425', 'Ledula Kimlahau': '426',
-  'Kampicha Golicha': '427', 'Isack Munene': '428', 'Suleiman Mutethia': '429', 'Ahmed Noor': '430', 'Iman Hassan': '480'
+  'Kampicha Golicha': '427', 'Isack Munene': '428', 'Suleiman Mutethia': '429', 'Ahmed Noor': '430'
 };
 
 export const classStudents: Record<string, string[]> = {
   'Form 4': ['Bagayo Khalil', 'Casim Lope', 'Shahid Ali', 'Rama Said', 'Abdalla Jamal', 'Ismail Abdullahi', 'Adan Isack', 'Abdikadir Kimgol', 'Alex Ogendi', 'Abdi Ture', 'Yunis Halake', 'Ian Hamatun', 'John Diyo', 'Ibrahim Mohamed', 'Bilal Ilchagi', 'Farhan Ngurusi', 'Hassanoor Jalafow'],
-  'Form 3': ['Mamo Godana', 'Roba Kampu', 'Ismail Laranyu', 'Rob Wario', 'Kadir Adan', 'Muqsin Maqbul', 'Saidnur Rogicha', 'Wako Roba', 'Jatani Jarso', 'Dida Galma', 'Somo Galgalo', 'Ramadham Ekwom', 'Hassan Achuka', 'Yahya Hassan', 'Ramadhan Lepir', 'Talha Hussein', 'Mohamed Said', 'Tadiku Kampu', 'Alnoor Hussein', 'Dulqifli Mohamed', 'Galgesa Arigele', 'Mansur Mohamed', 'Wilson Jamal', 'Iman Hassan'],
+  'Form 3': ['Mamo Godana', 'Roba Kampu', 'Ismail Laranyu', 'Rob Wario', 'Kadir Adan', 'Muqsin Maqbul', 'Saidnur Rogicha', 'Wako Roba', 'Jatani Jarso', 'Dida Galma', 'Somo Galgalo', 'Ramadham Ekwom', 'Hassan Achuka', 'Yahya Hassan', 'Ramadhan Lepir', 'Talha Hussein', 'Mohamed Said', 'Tadiku Kampu', 'Alnoor Hussein', 'Dulqifli Mohamed', 'Galgesa Arigele', 'Mansur Mohamed', 'Wilson Jamal'],
   'Grade 10': ['Abdirahman Ekusekope', 'Abdinassir Ibrahim', 'Abubakar Halkano', 'Mohamed Galo', 'Abdulkarim Ramadhan', 'Guyo Tadicha', 'Muhidin Mohamed', 'Abdirizack Abubakar', 'Badrudin Mohamed', 'Idi Mohamed', 'Ali Kini', 'Abubakarsidiq Hassan', 'Abdikadir Ismail', 'Zakaria Jillo', 'Frankline Ewoi', 'Mohamed Amin', 'Abdishkur Mohamed', 'Ibrahim Hussein', 'Ramadhan Sabls', 'Abdirizack Yussuf', 'Abdirahman Ahmed', 'Hamza Halkano', 'Abdi Osman', 'Daniel Lemoris', 'Ledula Kimlahau', 'Kampicha Golicha', 'Isack Munene', 'Suleiman Mutethia', 'Ahmed Noor']
 };
 
