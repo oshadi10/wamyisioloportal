@@ -284,15 +284,14 @@ const fetchEvents = async () => {
           </div>
         </div>
       </section>
-
-      {currentPage === "Home" && (
+{currentPage === "Home" && (
   <>
     {/* WELCOME SECTION */}
     <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
       <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
         <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
         <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
-          WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building.
+          WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
         </p>
       </div>
     </section>
@@ -315,7 +314,6 @@ const fetchEvents = async () => {
                 </p>
               </div>
             </div>
-
             <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
               <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
                 <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
@@ -367,17 +365,18 @@ const fetchEvents = async () => {
             <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-yellow-600 mb-1">3</h3><p className="text-gray-600 font-semibold text-sm">Classes</p></div>
             <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-red-600 mb-1">100%</h3><p className="text-gray-600 font-semibold text-sm">Discipline</p></div>
           </div>
+
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <div className="w-full lg:w-80 space-y-4">
+        {/* RIGHT SIDEBAR — sticky so it stays visible while scrolling */}
+        <div className="w-full lg:w-80 space-y-4 lg:sticky lg:top-4 lg:self-start">
 
           {/* ANNOUNCEMENTS */}
           <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
             <div className="bg-blue-700 px-4 py-3">
-              <h3 className="text-white font-bold text-sm flex items-center gap-2">📢 Announcements</h3>
+              <h3 className="text-white font-bold text-sm">📢 Announcements</h3>
             </div>
-            <div className="divide-y max-h-48 overflow-y-auto">
+            <div className="divide-y max-h-52 overflow-y-auto">
               {events.filter(e => e.type === "announcement").length === 0 ? (
                 <p className="text-xs text-gray-400 italic p-4">No announcements yet.</p>
               ) : events.filter(e => e.type === "announcement").map(e => (
@@ -393,9 +392,9 @@ const fetchEvents = async () => {
           {/* UPCOMING EVENTS */}
           <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
             <div className="bg-emerald-600 px-4 py-3">
-              <h3 className="text-white font-bold text-sm flex items-center gap-2">🗓️ Upcoming Events</h3>
+              <h3 className="text-white font-bold text-sm">🗓️ Upcoming Events</h3>
             </div>
-            <div className="divide-y max-h-48 overflow-y-auto">
+            <div className="divide-y max-h-52 overflow-y-auto">
               {events.filter(e => e.type === "event").length === 0 ? (
                 <p className="text-xs text-gray-400 italic p-4">No upcoming events.</p>
               ) : events.filter(e => e.type === "event").map(e => (
@@ -411,9 +410,9 @@ const fetchEvents = async () => {
           {/* SCHOOL NOTICES */}
           <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
             <div className="bg-amber-500 px-4 py-3">
-              <h3 className="text-white font-bold text-sm flex items-center gap-2">📋 School Notices</h3>
+              <h3 className="text-white font-bold text-sm">📋 School Notices</h3>
             </div>
-            <div className="divide-y max-h-48 overflow-y-auto">
+            <div className="divide-y max-h-52 overflow-y-auto">
               {events.filter(e => e.type === "notice").length === 0 ? (
                 <p className="text-xs text-gray-400 italic p-4">No notices posted.</p>
               ) : events.filter(e => e.type === "notice").map(e => (
@@ -430,66 +429,39 @@ const fetchEvents = async () => {
       </div>
     </section>
 
-          {/* STATS COUNTER SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pb-16">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-blue-700 mb-2">69+</h3><p className="text-gray-600 font-semibold">Students</p></div>
-              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-green-700 mb-2">8</h3><p className="text-gray-600 font-semibold">Staff Members</p></div>
-              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-yellow-600 mb-2">3</h3><p className="text-gray-600 font-semibold">Classes</p></div>
-              <div className="bg-white rounded-2xl shadow-lg p-8 text-center"><h3 className="text-5xl font-bold text-red-600 mb-2">100%</h3><p className="text-gray-600 font-semibold">Discipline</p></div>
-            </div>
-          </section>
-
-          {/* SCHOOL LIFE ACTIVITIES SECTION */}
-<section className="max-w-6xl mx-auto px-6 pb-16">
-  <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-    
-    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/sports.jpg" alt="Sports & Teamwork" className="w-full h-72 object-cover" />
-      <div className="p-6">
-        <h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3>
-        <p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p>
+    {/* SCHOOL LIFE ACTIVITIES */}
+    <section className="max-w-6xl mx-auto px-6 pb-16">
+      <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">School Life & Activities</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+          <img src="/sports.jpg" alt="Sports & Teamwork" className="w-full h-72 object-cover" />
+          <div className="p-6"><h3 className="text-2xl font-bold mb-3">Sports & Teamwork</h3><p className="text-gray-600">Building discipline, teamwork and leadership through sports.</p></div>
+        </div>
+        <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+          <img src="/scouts.jpg" alt="Scouts Movement" className="w-full h-72 object-cover" />
+          <div className="p-6"><h3 className="text-2xl font-bold mb-3">Scouts Movement</h3><p className="text-gray-600">Training responsible students with leadership skills and character.</p></div>
+        </div>
+        <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+          <img src="/outdoor.jpg" alt="Outdoor Activities" className="w-full h-72 object-cover" />
+          <div className="p-6"><h3 className="text-2xl font-bold mb-3">Outdoor Activities</h3><p className="text-gray-600">Fostering resilience and teamwork through outdoor programs.</p></div>
+        </div>
+        <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
+          <img src="/firstaid.jpg" alt="First Aid Training" className="w-full h-72 object-cover" />
+          <div className="p-6"><h3 className="text-2xl font-bold mb-3">First Aid Training</h3><p className="text-gray-600">Equipping students with life-saving skills and emergency preparedness.</p></div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/scouts.jpg" alt="Scouts Movement" className="w-full h-72 object-cover" />
-      <div className="p-6">
-        <h3 className="text-2xl font-bold mb-3">Scouts Movement</h3>
-        <p className="text-gray-600">Training responsible students with leadership skills and character.</p>
+    {/* LEADERSHIP MESSAGE */}
+    <section className="bg-blue-950 text-white py-20">
+      <div className="max-w-5xl mx-auto px-6 text-center">
+        <h2 className="text-4xl font-bold mb-8">Message from the Principal</h2>
+        <p className="text-xl leading-9 text-gray-200">"At WAMY Isiolo High School, we believe in nurturing students academically, morally and spiritually. Our mission is to produce disciplined future leaders prepared for success in this world and the hereafter."</p>
+        <div className="mt-8 text-yellow-400 font-bold text-xl">— Principal Osman Halake</div>
       </div>
-    </div>
-
-    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/outdoor.jpg" alt="Indoor Activities" className="w-full h-72 object-cover" />
-      <div className="p-6">
-        <h3 className="text-2xl font-bold mb-3">Outdoor Activities</h3>
-        <p className="text-gray-600">Fostering creativity, focus and teamwork through indoor programs.</p>
-      </div>
-    </div>
-
-    <div className="bg-white rounded-3xl overflow-hidden shadow-xl">
-      <img src="/firstaid.jpg" alt="First Aid Training" className="w-full h-72 object-cover" />
-      <div className="p-6">
-        <h3 className="text-2xl font-bold mb-3">First Aid Training</h3>
-        <p className="text-gray-600">Equipping students with life-saving skills and emergency preparedness.</p>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-          {/* LEADERSHIP MESSAGE SECTION */}
-          <section className="bg-blue-950 text-white py-20">
-            <div className="max-w-5xl mx-auto px-6 text-center">
-              <h2 className="text-4xl font-bold mb-8">Message from the Principal</h2>
-              <p className="text-xl leading-9 text-gray-200">"At WAMY Isiolo High School, we believe in nurturing students academically, morally and spiritually. Our mission is to produce disciplined future leaders prepared for success in this world and the hereafter."</p>
-              <div className="mt-8 text-yellow-400 font-bold text-xl">— Principal Osman Halake</div>
-            </div>
-          </section>
-        </>
-      )}
+    </section>
+  </>
+)}
 
       {currentPage === "About Us" && (
         <section className="max-w-4xl mx-auto px-6 py-16 space-y-6">
