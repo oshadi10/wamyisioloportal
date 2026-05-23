@@ -2,35 +2,14 @@
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus, Trophy, Calendar, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import {
-  classStudents,
-  Lecturer,
-  Result,
-  FeeRecord,
-  getGrade,
-  getGrade10Grade,
-  termOptions,
-} from "@/lib/school-data";
+import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
 
 interface StaffPortalProps {
   lecturer: Lecturer;
@@ -49,34 +28,21 @@ interface StaffPortalProps {
 }
 
 export function StaffPortal({
-  lecturer,
-  results,
-  fees,
-  onUploadResult,
-  onDeleteResult,
-  onUpdateFees,
-  materials,
-  onPostMaterial,
-  onDeleteMaterial,
-  timetables,
-  onUploadTimetable,
-  onDeleteTimetable,
-  onUploadTermDate,
+  lecturer, results, fees, onUploadResult, onDeleteResult, onUpdateFees,
+  materials, onPostMaterial, onDeleteMaterial, timetables, onUploadTimetable,
+  onDeleteTimetable, onUploadTermDate,
 }: StaffPortalProps) {
   const classNames = Object.keys(classStudents);
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
   const [selectedStudent, setSelectedStudent] = useState(classStudents[classNames[0]][0]);
   const [activeTab, setActiveTab] = useState("results");
-
   const lecturerSubjects = lecturer.subject.split(" / ");
   const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
   const [newTerm, setNewTerm] = useState("Term 1, 2026");
-
   const [meritClass, setMeritClass] = useState(classNames[0]);
   const [meritTerm, setMeritTerm] = useState("Term 1, 2026");
-
   const [matTitle, setMatTitle] = useState("");
   const [matDesc, setMatDesc] = useState("");
   const [matClass, setMatClass] = useState(classNames[0]);
@@ -84,49 +50,38 @@ export function StaffPortal({
   const [matContent, setMatContent] = useState("");
   const [matFile, setMatFile] = useState<File | null>(null);
   const [matUploading, setMatUploading] = useState(false);
-
   const [ttType, setTtType] = useState("teaching");
   const [ttTitle, setTtTitle] = useState("");
   const [ttTerm, setTtTerm] = useState("Term 1, 2026");
   const [ttFile, setTtFile] = useState<File | null>(null);
   const [ttUploading, setTtUploading] = useState(false);
-
   const [evtType, setEvtType] = useState("announcement");
   const [evtTitle, setEvtTitle] = useState("");
   const [evtDesc, setEvtDesc] = useState("");
   const [evtDate, setEvtDate] = useState("");
-
   const [newOpeningDate, setNewOpeningDate] = useState("");
   const [newIddBreak, setNewIddBreak] = useState("");
   const [newMidExam, setNewMidExam] = useState("");
   const [newMidBreak, setNewMidBreak] = useState("");
   const [newEndExam, setNewEndExam] = useState("");
   const [newClosingDate, setNewClosingDate] = useState("");
-
-  const [feeTotal, setFeeTotal] = useState(
-    (fees[selectedStudent]?.total || 45000).toString()
-  );
-  const [feePaid, setFeePaid] = useState(
-    (fees[selectedStudent]?.paid || 30000).toString()
-  );
-
+  const [feeTotal, setFeeTotal] = useState((fees[selectedStudent]?.total || 45000).toString());
+  const [feePaid, setFeePaid] = useState((fees[selectedStudent]?.paid || 30000).toString());
   const [students, setStudents] = useState<any[]>([]);
-const [stdName, setStdName] = useState("");
-const [stdClass, setStdClass] = useState(classNames[0]);
-const [stdAdmNo, setStdAdmNo] = useState("");
-const [stdParent, setStdParent] = useState("");
-const [stdRegistering, setStdRegistering] = useState(false);
-const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-const [docType, setDocType] = useState("Birth Certificate");
-const [docFile, setDocFile] = useState<File | null>(null);
-const [docUploading, setDocUploading] = useState(false);
-const [studentDocs, setStudentDocs] = useState<any[]>([]);
-  
-useEffect(() => {
-  if (activeTab === "students") {
-    fetchStudents();
-  }
-}, [activeTab]);
+  const [stdName, setStdName] = useState("");
+  const [stdClass, setStdClass] = useState(classNames[0]);
+  const [stdAdmNo, setStdAdmNo] = useState("");
+  const [stdParent, setStdParent] = useState("");
+  const [stdRegistering, setStdRegistering] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [docType, setDocType] = useState("Birth Certificate");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docUploading, setDocUploading] = useState(false);
+  const [studentDocs, setStudentDocs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (activeTab === "students") fetchStudents();
+  }, [activeTab]);
 
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
@@ -145,158 +100,99 @@ useEffect(() => {
   };
 
   const handleUploadResult = () => {
-    if (!newSubject.trim() || !newMarks.trim()) {
-      alert("Enter subject and marks.");
-      return;
-    }
+    if (!newSubject.trim() || !newMarks.trim()) { alert("Enter subject and marks."); return; }
     const marks = Number(newMarks);
     const grade = newGrade.trim() || (selectedClass === 'Grade 10' ? getGrade10Grade(marks) : getGrade(marks));
-    onUploadResult({
-      student: selectedStudent,
-      className: selectedClass,
-      subject: newSubject.trim(),
-      marks,
-      grade,
-      term: newTerm,
-    });
-    setNewMarks("");
-    setNewGrade("");
+    onUploadResult({ student: selectedStudent, className: selectedClass, subject: newSubject.trim(), marks, grade, term: newTerm });
+    setNewMarks(""); setNewGrade("");
   };
 
   const handleUpdateFees = () => {
     const total = Number(feeTotal);
     const paid = Number(feePaid);
-    if (isNaN(total) || isNaN(paid) || total < 0 || paid < 0) {
-      alert("Enter valid fee amounts.");
-      return;
-    }
-    if (paid > total) {
-      alert("Amount paid cannot exceed total fees.");
-      return;
-    }
+    if (isNaN(total) || isNaN(paid) || total < 0 || paid < 0) { alert("Enter valid fee amounts."); return; }
+    if (paid > total) { alert("Amount paid cannot exceed total fees."); return; }
     onUpdateFees(selectedStudent, total, paid);
     alert(`Fees updated for ${selectedStudent}.`);
   };
 
   const handlePostEvent = async () => {
     if (!evtTitle.trim()) { alert("Enter a title."); return; }
-    const { error } = await supabase.from("events").insert({
-      type: evtType,
-      title: evtTitle,
-      description: evtDesc,
-      date: evtDate,
-    });
+    const { error } = await supabase.from("events").insert({ type: evtType, title: evtTitle, description: evtDesc, date: evtDate });
     if (error) { alert("Failed to post."); return; }
-    setEvtTitle("");
-    setEvtDesc("");
-    setEvtDate("");
+    setEvtTitle(""); setEvtDesc(""); setEvtDate("");
     alert("Posted successfully!");
   };
 
   const handleDeleteEvent = async (id: string) => {
     await supabase.from("events").delete().eq("id", id);
   };
+
   const fetchStudents = async () => {
-  const { data, error } = await supabase
-    .from("students")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) { console.error(error); return; }
-  setStudents(data || []);
-};
+    const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
+    if (error) { console.error(error); return; }
+    setStudents(data || []);
+  };
 
-const fetchStudentDocs = async (studentId: string) => {
-  const { data, error } = await supabase
-    .from("student_documents")
-    .select("*")
-    .eq("student_id", studentId)
-    .order("created_at", { ascending: false });
-  if (error) { console.error(error); return; }
-  setStudentDocs(data || []);
-};
+  const fetchStudentDocs = async (studentId: string) => {
+    const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", studentId).order("created_at", { ascending: false });
+    if (error) { console.error(error); return; }
+    setStudentDocs(data || []);
+  };
 
-const handleRegisterStudent = async () => {
-  if (!stdName.trim() || !stdAdmNo.trim()) {
-    alert("Enter student name and admission number.");
-    return;
-  }
-  setStdRegistering(true);
-  const { error } = await supabase.from("students").insert({
-    name: stdName,
-    class_name: stdClass,
-    admission_no: stdAdmNo,
-    parent_contact: stdParent,
-  });
-  if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
-  alert(`${stdName} registered successfully!`);
-  setStdName("");
-  setStdAdmNo("");
-  setStdParent("");
-  setStdRegistering(false);
-  fetchStudents();
-};
+  const handleRegisterStudent = async () => {
+    if (!stdName.trim() || !stdAdmNo.trim()) { alert("Enter student name and admission number."); return; }
+    setStdRegistering(true);
+    const { error } = await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmNo, parent_contact: stdParent });
+    if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
+    alert(`${stdName} registered successfully!`);
+    setStdName(""); setStdAdmNo(""); setStdParent("");
+    setStdRegistering(false);
+    fetchStudents();
+  };
 
-const handleDeleteStudent = async (id: string) => {
-  if (!confirm("Delete this student and all their documents?")) return;
-  await supabase.from("students").delete().eq("id", id);
-  fetchStudents();
-  setSelectedStudentId(null);
-  setStudentDocs([]);
-};
+  const handleDeleteStudent = async (id: string) => {
+    if (!confirm("Delete this student and all their documents?")) return;
+    await supabase.from("students").delete().eq("id", id);
+    fetchStudents();
+    setSelectedStudentId(null);
+    setStudentDocs([]);
+  };
 
-const handleUploadDoc = async () => {
-  if (!selectedStudentId) { alert("Select a student first."); return; }
-  if (!docFile) { alert("Select a file to upload."); return; }
-  setDocUploading(true);
-  const filePath = `${selectedStudentId}/${Date.now()}_${docFile.name}`;
-  const { error: uploadError } = await supabase.storage
-    .from("student-documents")
-    .upload(filePath, docFile);
-  if (uploadError) { alert("Upload failed."); setDocUploading(false); return; }
-  const { data } = supabase.storage.from("student-documents").getPublicUrl(filePath);
-  const { error: insertError } = await supabase.from("student_documents").insert({
-    student_id: selectedStudentId,
-    document_name: docType,
-    document_type: docType,
-    file_url: data.publicUrl,
-    file_name: docFile.name,
-  });
-  if (insertError) { alert("Failed to save document."); setDocUploading(false); return; }
-  alert("Document uploaded!");
-  setDocFile(null);
-  setDocUploading(false);
-  fetchStudentDocs(selectedStudentId);
-};
+  const handleUploadDoc = async () => {
+    if (!selectedStudentId) { alert("Select a student first."); return; }
+    if (!docFile) { alert("Select a file to upload."); return; }
+    setDocUploading(true);
+    const filePath = `${selectedStudentId}/${Date.now()}_${docFile.name}`;
+    const { error: uploadError } = await supabase.storage.from("student-documents").upload(filePath, docFile);
+    if (uploadError) { alert("Upload failed."); setDocUploading(false); return; }
+    const { data } = supabase.storage.from("student-documents").getPublicUrl(filePath);
+    const { error: insertError } = await supabase.from("student_documents").insert({
+      student_id: selectedStudentId, document_name: docType, document_type: docType, file_url: data.publicUrl, file_name: docFile.name,
+    });
+    if (insertError) { alert("Failed to save document."); setDocUploading(false); return; }
+    alert("Document uploaded!");
+    setDocFile(null); setDocUploading(false);
+    fetchStudentDocs(selectedStudentId);
+  };
 
-const handleDeleteDoc = async (id: string) => {
-  await supabase.from("student_documents").delete().eq("id", id);
-  if (selectedStudentId) fetchStudentDocs(selectedStudentId);
-};
+  const handleDeleteDoc = async (id: string) => {
+    await supabase.from("student_documents").delete().eq("id", id);
+    if (selectedStudentId) fetchStudentDocs(selectedStudentId);
+  };
 
   const handlePostMaterial = async () => {
     if (!matTitle.trim()) { alert("Enter a title."); return; }
     setMatUploading(true);
-    let file_url = "";
-    let file_name = "";
+    let file_url = ""; let file_name = "";
     if (matFile) {
       const filePath = `${Date.now()}_${matFile.name}`;
       const { error: uploadError } = await supabase.storage.from("materials").upload(filePath, matFile);
       if (uploadError) { alert("File upload failed."); setMatUploading(false); return; }
       const { data } = supabase.storage.from("materials").getPublicUrl(filePath);
-      file_url = data.publicUrl;
-      file_name = matFile.name;
+      file_url = data.publicUrl; file_name = matFile.name;
     }
-    onPostMaterial({
-      title: matTitle,
-      description: matDesc,
-      subject: matSubject,
-      class_name: matClass,
-      teacher_name: lecturer.name,
-      type: matFile ? "file" : "text",
-      content: matContent,
-      file_url,
-      file_name,
-    });
+    onPostMaterial({ title: matTitle, description: matDesc, subject: matSubject, class_name: matClass, teacher_name: lecturer.name, type: matFile ? "file" : "text", content: matContent, file_url, file_name });
     setMatTitle(""); setMatDesc(""); setMatContent(""); setMatFile(null); setMatUploading(false);
   };
 
@@ -312,20 +208,8 @@ const handleDeleteDoc = async (id: string) => {
   };
 
   const handleAddTermRow = async () => {
-    if (!newOpeningDate.trim() || !newClosingDate.trim()) {
-      alert("Please fill out at least Opening and Closing dates.");
-      return;
-    }
-    const termData: any = {
-      term: "Term 2, 2026",
-      opening_date: newOpeningDate,
-      idd_date: newIddBreak || "—",
-      midterm_exam: newMidExam || "—",
-      mid_term: newMidBreak || "—",
-      end_term_exam: newEndExam || "—",
-      closing_date: newClosingDate,
-      status: "Current Term",
-    };
+    if (!newOpeningDate.trim() || !newClosingDate.trim()) { alert("Please fill out at least Opening and Closing dates."); return; }
+    const termData: any = { term: "Term 2, 2026", opening_date: newOpeningDate, idd_date: newIddBreak || "—", midterm_exam: newMidExam || "—", mid_term: newMidBreak || "—", end_term_exam: newEndExam || "—", closing_date: newClosingDate, status: "Current Term" };
     try {
       const { error: deleteError } = await supabase.from("term_dates").delete().neq("term", "xyz_placeholder_safety");
       if (deleteError) { console.error(deleteError); alert("Failed to clear old dates."); return; }
@@ -334,18 +218,14 @@ const handleDeleteDoc = async (id: string) => {
       alert("Homepage calendar successfully updated!");
       setNewOpeningDate(""); setNewIddBreak(""); setNewMidExam(""); setNewMidBreak(""); setNewEndExam(""); setNewClosingDate("");
       onUploadTermDate(termData);
-    } catch (e) {
-      console.error(e);
-      alert("Something went wrong.");
-    }
+    } catch (e) { console.error(e); alert("Something went wrong."); }
   };
 
   const getMeritList = () => {
-    const students = classStudents[meritClass];
-    return students.map((student) => {
-      const studentTermResults = results.filter((r) => r.student === student && r.term === meritTerm);
-      const totalMarks = studentTermResults.reduce((sum, r) => sum + r.marks, 0);
-      const subjects = studentTermResults.length;
+    return classStudents[meritClass].map((student) => {
+      const r = results.filter((r) => r.student === student && r.term === meritTerm);
+      const totalMarks = r.reduce((sum, r) => sum + r.marks, 0);
+      const subjects = r.length;
       const average = subjects > 0 ? Math.round((totalMarks / subjects) * 10) / 10 : 0;
       const overallGrade = subjects > 0 ? (meritClass === 'Grade 10' ? getGrade10Grade(average) : getGrade(average)) : "-";
       return { student, totalMarks, subjects, average, overallGrade };
@@ -353,7 +233,6 @@ const handleDeleteDoc = async (id: string) => {
   };
 
   const meritList = getMeritList();
-
   const resultsByTerm = studentResults.reduce((acc, r) => {
     const t = r.term || "Unknown Term";
     if (!acc[t]) acc[t] = [];
@@ -371,17 +250,12 @@ const handleDeleteDoc = async (id: string) => {
     <div className="max-w-5xl mx-auto p-4">
       <div className="grid md:grid-cols-[280px_1fr] gap-4">
 
-        {/* Sidebar */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Class Lists</CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <Select value={selectedClass} onValueChange={handleClassChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
+              <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
             <div className="max-h-[400px] overflow-y-auto space-y-1">
               {classStudents[selectedClass].map((student) => (
@@ -395,7 +269,6 @@ const handleDeleteDoc = async (id: string) => {
           </CardContent>
         </Card>
 
-        {/* Main */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -405,22 +278,14 @@ const handleDeleteDoc = async (id: string) => {
                   <TabsTrigger value="merit"><Trophy className="h-4 w-4 mr-1" />Merit List</TabsTrigger>
                   <TabsTrigger value="materials">📚 Materials</TabsTrigger>
                   <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
-                 {lecturer.name === "Mr. Osman Halake" && (
-  <TabsTrigger value="fees">Fees</TabsTrigger>
-)}
-{lecturer.name === "Mr. Osman Halake" && (
-  <TabsTrigger value="events">📣 Events</TabsTrigger>
-)}
-{lecturer.name === "Mr. Osman Halake" && (
-  <TabsTrigger value="students">🎓 Students</TabsTrigger>
-)}
+                  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="fees">Fees</TabsTrigger>}
+                  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="events">📣 Events</TabsTrigger>}
+                  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="students">🎓 Students</TabsTrigger>}
                 </TabsList>
 
                 {/* RESULTS TAB */}
                 <TabsContent value="results" className="space-y-4">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Selected: <span className="font-medium text-foreground">{selectedStudent}</span> - {selectedClass}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">Selected: <span className="font-medium text-foreground">{selectedStudent}</span> - {selectedClass}</p>
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Feed Results</h4>
                     <div className="space-y-2">
@@ -448,10 +313,7 @@ const handleDeleteDoc = async (id: string) => {
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Subject</TableHead>
-                                <TableHead>Marks</TableHead>
-                                <TableHead>Grade</TableHead>
-                                <TableHead className="w-[80px]"></TableHead>
+                                <TableHead>Subject</TableHead><TableHead>Marks</TableHead><TableHead>Grade</TableHead><TableHead className="w-[80px]"></TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -476,119 +338,12 @@ const handleDeleteDoc = async (id: string) => {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">No results yet for this student.</p>
-                  
-                  </TabsContent>
                   )}
-                  {lecturer.name === "Mr. Osman Halake" && (<TabsContent value="students" className="space-y-6">
-
-  {/* REGISTER NEW STUDENT */}
-  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
-    <h4 className="font-semibold text-sm text-blue-900">🎓 Register New Student</h4>
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <Label className="text-xs font-semibold">Full Name</Label>
-        <input placeholder="e.g. Amina Hassan" value={stdName} onChange={(e) => setStdName(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-      <div>
-        <Label className="text-xs font-semibold">Admission No</Label>
-        <input placeholder="e.g. 433" value={stdAdmNo} onChange={(e) => setStdAdmNo(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-    </div>
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <Label className="text-xs font-semibold">Class</Label>
-        <select value={stdClass} onChange={(e) => setStdClass(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
-          {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-      <div>
-        <Label className="text-xs font-semibold">Parent Contact</Label>
-        <input placeholder="e.g. 0712345678" value={stdParent} onChange={(e) => setStdParent(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-    </div>
-    <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
-      <Plus className="h-4 w-4 mr-2" />{stdRegistering ? "Registering..." : "Register Student"}
-    </Button>
-  </div>
-
-  {/* STUDENT LIST */}
-  <div className="space-y-3">
-    <h4 className="font-semibold text-sm text-slate-800 border-b pb-1">Registered Students</h4>
-    <Button onClick={fetchStudents} variant="outline" className="text-xs">🔄 Refresh List</Button>
-    {students.length === 0 ? (
-      <p className="text-sm text-muted-foreground italic">No students registered yet. Click Refresh.</p>
-    ) : (
-      <div className="space-y-3">
-        {students.map((s) => (
-          <div key={s.id} className={`border rounded-lg p-4 bg-white shadow-sm space-y-3 cursor-pointer transition-colors ${selectedStudentId === s.id ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50"}`}
-            onClick={() => { setSelectedStudentId(s.id); fetchStudentDocs(s.id); }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-slate-900">{s.name}</p>
-                <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name} · 📞 {s.parent_contact || "N/A"}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteStudent(s.id); }} className="text-destructive border-destructive hover:bg-destructive/10">
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-
-            {/* DOCUMENTS SECTION - shows when student is selected */}
-            {selectedStudentId === s.id && (
-              <div className="space-y-3 border-t pt-3">
-                <h5 className="text-xs font-semibold text-slate-700">📎 Documents</h5>
-
-                {/* Upload new doc */}
-                <div className="space-y-2 bg-slate-50 rounded-md p-3">
-                  <select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                    <option>Birth Certificate</option>
-                    <option>JSS Result Slip</option>
-                    <option>Transfer Letter</option>
-                    <option>Medical Certificate</option>
-                    <option>Parent ID Copy</option>
-                    <option>Other</option>
-                  </select>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="text-sm" />
-                  {docFile && <p className="text-xs text-green-600">Selected: {docFile.name}</p>}
-                  <Button onClick={handleUploadDoc} disabled={docUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm">
-                    {docUploading ? "Uploading..." : "Upload Document"}
-                  </Button>
-                </div>
-
-                {/* Existing docs */}
-                {studentDocs.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">No documents uploaded yet.</p>
-                ) : (
-                  <div className="space-y-1">
-                    {studentDocs.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
-                        <div>
-                          <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
-                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{doc.file_name}</a>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)} className="text-destructive border-destructive hover:bg-destructive/10">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-
-</TabsContent>
-)}                                                            
-                
+                </TabsContent>
 
                 {/* MERIT LIST TAB */}
                 <TabsContent value="merit" className="space-y-4">
-                  <h4 className="font-medium text-sm flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-yellow-500" />Class Merit List
-                  </h4>
+                  <h4 className="font-medium text-sm flex items-center gap-2"><Trophy className="h-4 w-4 text-yellow-500" />Class Merit List</h4>
                   <div className="flex gap-2">
                     <select value={meritClass} onChange={(e) => setMeritClass(e.target.value)} className="border rounded-md px-3 py-2 text-sm flex-1 bg-white">
                       {classNames.map((cls) => <option key={cls} value={cls}>{cls}</option>)}
@@ -702,9 +457,7 @@ const handleDeleteDoc = async (id: string) => {
                 <TabsContent value="timetables" className="space-y-6">
                   {lecturer.name === "Mr. Osman Halake" && (
                     <div className="space-y-3 border rounded-md p-4 bg-muted/30">
-                      <h4 className="font-medium text-sm flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-blue-600" />Upload New Timetable
-                      </h4>
+                      <h4 className="font-medium text-sm flex items-center gap-2"><Calendar className="h-4 w-4 text-blue-600" />Upload New Timetable</h4>
                       <select value={ttType} onChange={(e) => setTtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
                         <option value="teaching">Teaching Timetable</option>
                         <option value="exam">Exam Timetable</option>
@@ -728,7 +481,7 @@ const handleDeleteDoc = async (id: string) => {
                       <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
                         <div className="flex items-center justify-between border-b pb-2">
                           <div>
-                            <p className="font-semibold text-md text-slate-900">{t.title}</p>
+                            <p className="font-semibold text-slate-900">{t.title}</p>
                             <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
                           </div>
                           {lecturer.name === "Mr. Osman Halake" && (
@@ -759,7 +512,7 @@ const handleDeleteDoc = async (id: string) => {
                       <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
                         <div className="flex items-center justify-between border-b pb-2">
                           <div>
-                            <p className="font-semibold text-md text-slate-900">{t.title}</p>
+                            <p className="font-semibold text-slate-900">{t.title}</p>
                             <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
                           </div>
                           {lecturer.name === "Mr. Osman Halake" && (
@@ -814,22 +567,20 @@ const handleDeleteDoc = async (id: string) => {
                 {/* FEES TAB */}
                 {lecturer.name === "Mr. Osman Halake" && (
                   <TabsContent value="fees" className="space-y-4">
+                    <h4 className="font-medium text-sm">Update Fees</h4>
                     <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Update Fees</h4>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
-                          <input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
-                          <input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                        </div>
-                        <div className="p-3 bg-muted rounded-md text-sm">
-                          Balance: <span className="text-destructive font-medium">KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}</span>
-                        </div>
-                        <Button onClick={handleUpdateFees} className="bg-[#1a56a0] hover:bg-[#154a8a]">Update Fees</Button>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
+                        <input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                       </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
+                        <input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                      </div>
+                      <div className="p-3 bg-muted rounded-md text-sm">
+                        Balance: <span className="text-destructive font-medium">KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}</span>
+                      </div>
+                      <Button onClick={handleUpdateFees} className="bg-[#1a56a0] hover:bg-[#154a8a]">Update Fees</Button>
                     </div>
                   </TabsContent>
                 )}
@@ -850,6 +601,105 @@ const handleDeleteDoc = async (id: string) => {
                       <Button onClick={handlePostEvent} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
                         <Plus className="h-4 w-4 mr-2" /> Post to Homepage Sidebar
                       </Button>
+                    </div>
+                  </TabsContent>
+                )}
+
+                {/* STUDENTS TAB */}
+                {lecturer.name === "Mr. Osman Halake" && (
+                  <TabsContent value="students" className="space-y-6">
+                    <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+                      <h4 className="font-semibold text-sm text-blue-900">🎓 Register New Student</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs font-semibold">Full Name</Label>
+                          <input placeholder="e.g. Amina Hassan" value={stdName} onChange={(e) => setStdName(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-semibold">Admission No</Label>
+                          <input placeholder="e.g. 433" value={stdAdmNo} onChange={(e) => setStdAdmNo(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs font-semibold">Class</Label>
+                          <select value={stdClass} onChange={(e) => setStdClass(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+                            {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-xs font-semibold">Parent Contact</Label>
+                          <input placeholder="e.g. 0712345678" value={stdParent} onChange={(e) => setStdParent(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        </div>
+                      </div>
+                      <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
+                        <Plus className="h-4 w-4 mr-2" />{stdRegistering ? "Registering..." : "Register Student"}
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-slate-800 border-b pb-1">Registered Students</h4>
+                      <Button onClick={fetchStudents} variant="outline" className="text-xs">🔄 Refresh List</Button>
+                      {students.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">No students registered yet. Click Refresh.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {students.map((s) => (
+                            <div key={s.id}
+                              className={`border rounded-lg p-4 bg-white shadow-sm space-y-3 cursor-pointer transition-colors ${selectedStudentId === s.id ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50"}`}
+                              onClick={() => { setSelectedStudentId(s.id); fetchStudentDocs(s.id); }}>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-semibold text-slate-900">{s.name}</p>
+                                  <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name} · 📞 {s.parent_contact || "N/A"}</p>
+                                </div>
+                                <Button variant="outline" size="sm"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteStudent(s.id); }}
+                                  className="text-destructive border-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              {selectedStudentId === s.id && (
+                                <div className="space-y-3 border-t pt-3">
+                                  <h5 className="text-xs font-semibold text-slate-700">📎 Documents</h5>
+                                  <div className="space-y-2 bg-slate-50 rounded-md p-3">
+                                    <select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                                      <option>Birth Certificate</option>
+                                      <option>JSS Result Slip</option>
+                                      <option>Transfer Letter</option>
+                                      <option>Medical Certificate</option>
+                                      <option>Parent ID Copy</option>
+                                      <option>Other</option>
+                                    </select>
+                                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="text-sm" />
+                                    {docFile && <p className="text-xs text-green-600">Selected: {docFile.name}</p>}
+                                    <Button onClick={handleUploadDoc} disabled={docUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm">
+                                      {docUploading ? "Uploading..." : "Upload Document"}
+                                    </Button>
+                                  </div>
+                                  {studentDocs.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground italic">No documents uploaded yet.</p>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {studentDocs.map((doc) => (
+                                        <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
+                                          <div>
+                                            <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
+                                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{doc.file_name}</a>
+                                          </div>
+                                          <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)} className="text-destructive border-destructive hover:bg-destructive/10">
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                 )}
