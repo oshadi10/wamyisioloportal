@@ -254,34 +254,40 @@ export default function SchoolPortal() {
   return (
     <main className="min-h-screen bg-gray-100">
       
-      {/* MOVING ANNOUNCEMENT BANNER */}
-      <div className="w-full bg-amber-400 text-slate-950 font-bold py-2 overflow-hidden relative shadow-sm z-50 select-none">
+     {/* DYNAMIC SEAMLESS MOVING ANNOUNCEMENT BANNER */}
+      <div className="w-full bg-amber-400 text-slate-950 font-bold py-2 overflow-hidden relative shadow-sm z-50 select-none flex">
         <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(100%); }
+          @keyframes marquee-seamless {
+            0% { transform: translateX(0%); }
             100% { transform: translateX(-100%); }
           }
-          .animate-marquee {
-            display: inline-block;
+          .marquee-container {
+            display: flex;
             white-space: nowrap;
-            padding-left: 100%;
-            animation: marquee 20s linear infinite;
+            min-width: 100%;
           }
-          .animate-marquee:hover {
+          .animate-marquee-loop {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            animation: marquee-seamless 25s linear infinite;
+          }
+          .marquee-container:hover .animate-marquee-loop {
             animation-play-state: paused;
           }
         `}</style>
-        <div className="animate-marquee cursor-pointer text-sm md:text-base">
-          📢 IDD-UL FITRI Break on 26th May 2026. We wish you Idd Mubarak. 
+        
+        <div className="marquee-container cursor-pointer text-sm md:text-base">
+          {/* First Instance */}
+          <div className="animate-marquee-loop pr-16">
+            📢 {liveAnnouncement}
+          </div>
+          {/* Second Instance (Follows immediately behind) */}
+          <div className="animate-marquee-loop pr-16" aria-hidden="true">
+            📢 {liveAnnouncement}
+          </div>
         </div>
       </div>
-
-      <Navbar
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-        onStudentPortal={() => setView("student-login")}
-        onStaffPortal={() => setView("staff-login")}
-      />
 
       {/* HERO SECTION */}
       <section className="relative text-white overflow-hidden">
