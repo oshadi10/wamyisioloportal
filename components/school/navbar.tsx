@@ -13,7 +13,6 @@ interface NavbarProps {
   onNavigate?: (page: string) => void;
   onStudentPortal?: () => void;
   onStaffPortal?: () => void;
-  // Dynamic announcement banner properties passed from main portal layout
   liveAnnouncement?: string;
 }
 
@@ -34,7 +33,7 @@ export function Navbar({
   onNavigate,
   onStudentPortal,
   onStaffPortal,
-  liveAnnouncement, // Read the string text parameter values smoothly
+  liveAnnouncement,
 }: NavbarProps) {
   return (
     <header>
@@ -73,12 +72,28 @@ export function Navbar({
         </div>
       )}
 
-      {/* PRIMARY SCHOOL HEADLINE BLOCK */}
+      {/* PRIMARY SCHOOL HEADLINE BLOCK WITH OFFICIAL LOGO */}
       <div className="bg-[#1e3a5f] text-white px-6 py-4">
-        <div className="flex items-center gap-3">
-          <GraduationCap className="h-8 w-8" />
+        <div className="flex items-center gap-4">
+          {/* Logo image rendered from the public folder path */}
+          <img 
+            src="/wamy logggo.png" 
+            alt="Wamy Isiolo High School Logo" 
+            className="h-12 w-auto object-contain rounded-md"
+            onError={(e) => {
+              // Fallback to graduation cap icon if image fails to load or path matches incorrectly
+              e.currentTarget.style.display = 'none';
+              const fallbackIcon = document.getElementById('navbar-fallback-icon');
+              if (fallbackIcon) fallbackIcon.style.display = 'block';
+            }}
+          />
+          {/* Fallback Icon (Hidden by default, shows up if image breaks) */}
+          <div id="navbar-fallback-icon" style={{ display: 'none' }}>
+            <GraduationCap className="h-8 w-8" />
+          </div>
+
           <div>
-            <h1 className="text-xl font-medium">Wamy Isiolo High School</h1>
+            <h1 className="text-xl font-medium tracking-wide">Wamy Isiolo High School</h1>
             <p className="text-xs text-white/70">
               {isPortal ? (portalType === "student" ? "Student Portal" : "Staff Portal") : "Excellence In Education"}
             </p>
