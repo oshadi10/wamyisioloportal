@@ -247,8 +247,8 @@ export function StaffPortal({
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      <div className="grid md:grid-cols-[280px_1fr] gap-4">
+    <div className="max-w-7xl mx-auto p-4">
+      <div className="grid md:grid-cols-[320px_1fr] gap-4">
 
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
