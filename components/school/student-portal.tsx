@@ -1,5 +1,13 @@
 "use client";
 
+const getKiswahiliComment = (marks: number): string => {
+  if (marks >= 75) return "Mwanafunzi amefanya vizuri sana. Endelea hivyo.";
+  if (marks >= 60) return "Kazi nzuri. Jitahidi zaidi.";
+  if (marks >= 45) return "Wastani. Jitahidi zaidi ili kuboresha.";
+  if (marks >= 30) return "Unahitaji kujitahidi zaidi.";
+  return "Matokeo mabaya sana. Tafadhali jitahidi sana.";
+};
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -101,7 +109,7 @@ const positionSuffix = classPosition === 1 ? "st" : classPosition === 2 ? "nd" :
     const rows = myResults
       .map(
         (r) =>
-          `<tr><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px">${r.marks}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px;font-weight:bold">${r.grade}</td><td style="border:1px solid #444;padding:10px;font-size:16px">${getComment(r.marks)}</td></tr>`
+          `<tr><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px">${r.marks}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px;font-weight:bold">${r.grade}</td><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject === 'Kiswahili' ? getKiswahiliComment(r.marks) : getComment(r.marks)}</td></tr>`
       )
       .join("");
 
