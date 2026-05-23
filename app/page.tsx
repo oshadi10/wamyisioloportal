@@ -30,6 +30,7 @@ export default function SchoolPortal() {
   const [materials, setMaterials] = useState<any[]>([]);
   const [timetables, setTimetables] = useState<any[]>([]);
   const [termDates, setTermDates] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     fetchResults();
@@ -39,8 +40,6 @@ export default function SchoolPortal() {
     fetchEvents();
   }, []);
 
-  const [events, setEvents] = useState<any[]>([]);
-
   const fetchEvents = async () => {
     const { data, error } = await supabase
       .from("events")
@@ -48,6 +47,16 @@ export default function SchoolPortal() {
       .order("created_at", { ascending: false });
     if (error) { console.error(error); return; }
     setEvents(data || []);
+  };
+
+  const handleUpdateMovingAnnouncement = async (newText: string) => {
+    await supabase.from("events").delete().eq("type", "moving_announcement");
+    const { error } = await supabase.from("events").insert({
+      type: "moving_announcement",
+      title: newText,
+    });
+    if (error) { console.error(error); return; }
+    fetchEvents();
   };
 
   const fetchTermDates = async () => {
@@ -173,6 +182,10 @@ export default function SchoolPortal() {
     fetchTermDates();
   };
 
+  // FIX: This variable is now declared before any portal conditional returns
+  const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title 
+    || "📢 Welcome to WAMY Isiolo High School Portal. Continuous updates will appear here.";
+
   if (view === "student-portal" && loggedInStudent) {
     return (
       <main className="min-h-screen bg-background">
@@ -218,6 +231,8 @@ export default function SchoolPortal() {
           onUploadTimetable={handleUploadTimetable}
           onDeleteTimetable={handleDeleteTimetable}
           onUploadTermDate={handleUploadTermDate}
+          currentAnnouncement={liveAnnouncement}
+          onUpdateAnnouncement={handleUpdateMovingAnnouncement}
         />
       </main>
     );
@@ -254,7 +269,7 @@ export default function SchoolPortal() {
   return (
     <main className="min-h-screen bg-gray-100">
       
-     {/* DYNAMIC SEAMLESS MOVING ANNOUNCEMENT BANNER */}
+      {/* DYNAMIC SEAMLESS MOVING ANNOUNCEMENT BANNER */}
       <div className="w-full bg-amber-400 text-slate-950 font-bold py-2 overflow-hidden relative shadow-sm z-50 select-none flex">
         <style>{`
           @keyframes marquee-seamless {
@@ -278,16 +293,21 @@ export default function SchoolPortal() {
         `}</style>
         
         <div className="marquee-container cursor-pointer text-sm md:text-base">
-          {/* First Instance */}
           <div className="animate-marquee-loop pr-16">
-            📢 {liveAnnouncement}
+            {liveAnnouncement}
           </div>
-          {/* Second Instance (Follows immediately behind) */}
           <div className="animate-marquee-loop pr-16" aria-hidden="true">
-            📢 {liveAnnouncement}
+            {liveAnnouncement}
           </div>
         </div>
       </div>
+
+      <Navbar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        onStudentPortal={() => setView("student-login")}
+        onStaffPortal={() => setView("staff-login")}
+      />
 
       {/* HERO SECTION */}
       <section className="relative text-white overflow-hidden">
