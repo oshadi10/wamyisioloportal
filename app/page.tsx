@@ -36,7 +36,19 @@ export default function SchoolPortal() {
     fetchMaterials();
     fetchTimetables();
     fetchTermDates();
+    fetchEvents();
   }, []);
+
+  const [events, setEvents] = useState<any[]>([]);
+
+const fetchEvents = async () => {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+  setEvents(data || []);
+};
 
   const fetchTermDates = async () => {
     try {
@@ -274,74 +286,149 @@ export default function SchoolPortal() {
       </section>
 
       {currentPage === "Home" && (
-        <>
-          {/* WELCOME SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
-            <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
-              <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
-              <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
-                WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building. We provide quality education in a supportive Islamic environment that empowers students to succeed academically and morally.
-              </p>
-            </div>
-          </section>
+  <>
+    {/* WELCOME SECTION */}
+    <section className="max-w-6xl mx-auto px-6 pt-16 pb-8">
+      <div className="bg-white rounded-3xl shadow-xl p-10 text-center">
+        <h2 className="text-4xl font-bold text-blue-900 mb-6">Welcome to WAMY Isiolo High School</h2>
+        <p className="text-gray-700 text-lg leading-8 max-w-4xl mx-auto">
+          WAMY Isiolo High School is dedicated to academic excellence, discipline, innovation and character building.
+        </p>
+      </div>
+    </section>
 
-          {/* DYNAMIC TERM CALENDAR SECTION */}
-          <section className="max-w-6xl mx-auto px-6 pb-12">
-            <div className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
-                  <p className="text-xs text-emerald-700">
-                    The school system is currently operating in <strong className="font-bold">Term 2, 2026</strong>. Please track the internal timelines outlined in the visual calendar table below.
-                  </p>
-                </div>
+    {/* MAIN CONTENT + SIDEBAR */}
+    <section className="max-w-6xl mx-auto px-6 pb-12">
+      <div className="flex flex-col lg:flex-row gap-6">
+
+        {/* LEFT MAIN CONTENT */}
+        <div className="flex-1 space-y-6">
+
+          {/* TERM CALENDAR */}
+          <div className="space-y-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+              <AlertCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">Current Session Notification</p>
+                <p className="text-xs text-emerald-700">
+                  Currently operating in <strong>Term 2, 2026</strong>. Track timelines in the calendar below.
+                </p>
               </div>
-
-              <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
-                <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
-                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
-                    <CalendarIcon className="h-5 w-5 text-blue-800" />
-                    Official School Calendar & Term Dates — 2026
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 bg-white">
-                  <div className="overflow-x-auto rounded-lg border border-slate-100">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
-                          <TableHead className="font-bold text-slate-900 text-center h-11">Opening Date</TableHead>
-                          <TableHead className="font-bold text-slate-900 text-center h-11">IDD Break</TableHead>
-                          <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Exam</TableHead>
-                          <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Break</TableHead>
-                          <TableHead className="font-bold text-slate-900 text-center h-11">End-Term Exam</TableHead>
-                          <TableHead className="font-bold text-slate-900 text-center h-11">Closing Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {termDates && termDates.length > 0 && termDates[0] ? (
-                          <TableRow className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
-                            <TableCell className="py-4 font-bold text-slate-900">{termDates[0].opening_date || "—"}</TableCell>
-                            <TableCell className="py-4 text-amber-800 font-semibold">{termDates[0].idd_date || "—"}</TableCell>
-                            <TableCell className="py-4 text-slate-700">{termDates[0].midterm_exam || "—"}</TableCell>
-                            <TableCell className="py-4 text-blue-800 font-semibold">{termDates[0].mid_term || "—"}</TableCell>
-                            <TableCell className="py-4 text-slate-700">{termDates[0].end_term_exam || "—"}</TableCell>
-                            <TableCell className="py-4 font-bold text-emerald-800">{termDates[0].closing_date || "—"}</TableCell>
-                          </TableRow>
-                        ) : (
-                          <TableRow>
-                            <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
-                              Loading academic calendar dates from database...
-                            </td>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-          </section>
+
+            <Card className="shadow-lg border border-slate-200 rounded-3xl overflow-hidden">
+              <CardHeader className="bg-slate-50 border-b pb-4 pt-5 px-6">
+                <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-950">
+                  <CalendarIcon className="h-5 w-5 text-blue-800" />
+                  Official School Calendar & Term Dates — 2026
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 bg-white">
+                <div className="overflow-x-auto rounded-lg border border-slate-100">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
+                        <TableHead className="font-bold text-slate-900 text-center h-11">Opening Date</TableHead>
+                        <TableHead className="font-bold text-slate-900 text-center h-11">IDD Break</TableHead>
+                        <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Exam</TableHead>
+                        <TableHead className="font-bold text-slate-900 text-center h-11">Mid-Term Break</TableHead>
+                        <TableHead className="font-bold text-slate-900 text-center h-11">End-Term Exam</TableHead>
+                        <TableHead className="font-bold text-slate-900 text-center h-11">Closing Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {termDates && termDates.length > 0 && termDates[0] ? (
+                        <TableRow className="bg-blue-50/40 text-center font-medium hover:bg-blue-50/60 transition-colors">
+                          <TableCell className="py-4 font-bold text-slate-900">{termDates[0].opening_date || "—"}</TableCell>
+                          <TableCell className="py-4 text-amber-800 font-semibold">{termDates[0].idd_date || "—"}</TableCell>
+                          <TableCell className="py-4 text-slate-700">{termDates[0].midterm_exam || "—"}</TableCell>
+                          <TableCell className="py-4 text-blue-800 font-semibold">{termDates[0].mid_term || "—"}</TableCell>
+                          <TableCell className="py-4 text-slate-700">{termDates[0].end_term_exam || "—"}</TableCell>
+                          <TableCell className="py-4 font-bold text-emerald-800">{termDates[0].closing_date || "—"}</TableCell>
+                        </TableRow>
+                      ) : (
+                        <TableRow>
+                          <td colSpan={6} className="text-center py-6 text-sm text-muted-foreground italic">
+                            Loading academic calendar...
+                          </td>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* STATS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-blue-700 mb-1">69+</h3><p className="text-gray-600 font-semibold text-sm">Students</p></div>
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-green-700 mb-1">8</h3><p className="text-gray-600 font-semibold text-sm">Staff Members</p></div>
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-yellow-600 mb-1">3</h3><p className="text-gray-600 font-semibold text-sm">Classes</p></div>
+            <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-red-600 mb-1">100%</h3><p className="text-gray-600 font-semibold text-sm">Discipline</p></div>
+          </div>
+        </div>
+
+        {/* RIGHT SIDEBAR */}
+        <div className="w-full lg:w-80 space-y-4">
+
+          {/* ANNOUNCEMENTS */}
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+            <div className="bg-blue-700 px-4 py-3">
+              <h3 className="text-white font-bold text-sm flex items-center gap-2">📢 Announcements</h3>
+            </div>
+            <div className="divide-y max-h-48 overflow-y-auto">
+              {events.filter(e => e.type === "announcement").length === 0 ? (
+                <p className="text-xs text-gray-400 italic p-4">No announcements yet.</p>
+              ) : events.filter(e => e.type === "announcement").map(e => (
+                <div key={e.id} className="p-3">
+                  <p className="text-sm font-semibold text-slate-800">{e.title}</p>
+                  {e.description && <p className="text-xs text-gray-500 mt-0.5">{e.description}</p>}
+                  {e.date && <p className="text-xs text-blue-600 mt-1">📅 {e.date}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* UPCOMING EVENTS */}
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+            <div className="bg-emerald-600 px-4 py-3">
+              <h3 className="text-white font-bold text-sm flex items-center gap-2">🗓️ Upcoming Events</h3>
+            </div>
+            <div className="divide-y max-h-48 overflow-y-auto">
+              {events.filter(e => e.type === "event").length === 0 ? (
+                <p className="text-xs text-gray-400 italic p-4">No upcoming events.</p>
+              ) : events.filter(e => e.type === "event").map(e => (
+                <div key={e.id} className="p-3">
+                  <p className="text-sm font-semibold text-slate-800">{e.title}</p>
+                  {e.description && <p className="text-xs text-gray-500 mt-0.5">{e.description}</p>}
+                  {e.date && <p className="text-xs text-emerald-600 mt-1">📅 {e.date}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SCHOOL NOTICES */}
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+            <div className="bg-amber-500 px-4 py-3">
+              <h3 className="text-white font-bold text-sm flex items-center gap-2">📋 School Notices</h3>
+            </div>
+            <div className="divide-y max-h-48 overflow-y-auto">
+              {events.filter(e => e.type === "notice").length === 0 ? (
+                <p className="text-xs text-gray-400 italic p-4">No notices posted.</p>
+              ) : events.filter(e => e.type === "notice").map(e => (
+                <div key={e.id} className="p-3">
+                  <p className="text-sm font-semibold text-slate-800">{e.title}</p>
+                  {e.description && <p className="text-xs text-gray-500 mt-0.5">{e.description}</p>}
+                  {e.date && <p className="text-xs text-amber-600 mt-1">📅 {e.date}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
 
           {/* STATS COUNTER SECTION */}
           <section className="max-w-6xl mx-auto px-6 pb-16">
