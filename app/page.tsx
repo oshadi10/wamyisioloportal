@@ -546,9 +546,9 @@ export default function SchoolPortal() {
           <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Downloads</h2>
           <div className="space-y-4">
             {[
-              {icon:"📋", title:"School Fee Structure 2024/2025", sub:"PDF — Updated January 2025"},
+              {icon:"📋", title:"School Fee Structure 2025/2026", sub:"PDF — Updated January 2025"},
               {icon:"📝", title:"Admission Form", sub:"PDF — New Student Registration"},
-              {icon:"📅", title:"2025 School Calendar", sub:"PDF — Term dates & holidays"},
+              {icon:"📅", title:"2026 School Calendar", sub:"PDF — Term dates & holidays"},
             ].map((d) => (
               <div key={d.title} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
                 <span className="text-3xl">{d.icon}</span>
