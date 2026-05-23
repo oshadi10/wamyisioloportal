@@ -316,7 +316,7 @@ export default function SchoolPortal() {
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/sports.jpg')` }} />
           <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 text-center">
           <h1 className="text-5xl font-bold mb-6">WAMY Isiolo High School</h1>
           <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
             Excellence Through Education, Discipline & Leadership.
