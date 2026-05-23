@@ -121,8 +121,7 @@ const [docType, setDocType] = useState("Birth Certificate");
 const [docFile, setDocFile] = useState<File | null>(null);
 const [docUploading, setDocUploading] = useState(false);
 const [studentDocs, setStudentDocs] = useState<any[]>([]);
-  const [studentDocs, setStudentDocs] = useState<any[]>([]);
-
+  
 useEffect(() => {
   if (activeTab === "students") {
     fetchStudents();
