@@ -265,7 +265,7 @@ export default function SchoolPortal() {
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%;
-            animation: marquee 15s linear infinite;
+            animation: marquee 20s linear infinite;
           }
           .animate-marquee:hover {
             animation-play-state: paused;
