@@ -20,7 +20,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, Plus, Trophy, Calendar, FileText } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   classStudents,
@@ -121,6 +121,13 @@ const [docType, setDocType] = useState("Birth Certificate");
 const [docFile, setDocFile] = useState<File | null>(null);
 const [docUploading, setDocUploading] = useState(false);
 const [studentDocs, setStudentDocs] = useState<any[]>([]);
+  const [studentDocs, setStudentDocs] = useState<any[]>([]);
+
+useEffect(() => {
+  if (activeTab === "students") {
+    fetchStudents();
+  }
+}, [activeTab]);
 
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
