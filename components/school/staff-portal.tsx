@@ -90,6 +90,11 @@ export function StaffPortal({
   const [ttFile, setTtFile] = useState<File | null>(null);
   const [ttUploading, setTtUploading] = useState(false);
 
+  const [evtType, setEvtType] = useState("announcement");
+const [evtTitle, setEvtTitle] = useState("");
+const [evtDesc, setEvtDesc] = useState("");
+const [evtDate, setEvtDate] = useState("");
+
   // Management inputs for horizontal term dates
   const [newOpeningDate, setNewOpeningDate] = useState("");
   const [newIddBreak, setNewIddBreak] = useState("");
@@ -154,6 +159,25 @@ export function StaffPortal({
     onUpdateFees(selectedStudent, total, paid);
     alert(`Fees updated for ${selectedStudent}.`);
   };
+
+  const handlePostEvent = async () => {
+  if (!evtTitle.trim()) { alert("Enter a title."); return; }
+  const { error } = await supabase.from("events").insert({
+    type: evtType,
+    title: evtTitle,
+    description: evtDesc,
+    date: evtDate,
+  });
+  if (error) { alert("Failed to post."); return; }
+  setEvtTitle("");
+  setEvtDesc("");
+  setEvtDate("");
+  alert("Posted successfully!");
+};
+
+const handleDeleteEvent = async (id: string) => {
+  await supabase.from("events").delete().eq("id", id);
+};
 
   const handlePostMaterial = async () => {
     if (!matTitle.trim()) { alert("Enter a title."); return; }
@@ -362,6 +386,9 @@ const handleAddTermRow = async () => {
                   <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="fees">Fees</TabsTrigger>
+                  {lecturer.name === "Mr. Osman Halake" && (
+  <TabsTrigger value="events">📣 Events</TabsTrigger>
+)}
                   )}
                 </TabsList>
 
@@ -851,6 +878,43 @@ const handleAddTermRow = async () => {
                     </div>
                   </TabsContent>
                 )}
+                {lecturer.name === "Mr. Osman Halake" && (
+  <TabsContent value="events" className="space-y-4">
+    <h4 className="font-medium text-sm">Post New Announcement / Event / Notice</h4>
+    <div className="space-y-2">
+      <select
+        value={evtType}
+        onChange={(e) => setEvtType(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+      >
+        <option value="announcement">📢 Announcement</option>
+        <option value="event">🗓️ Upcoming Event</option>
+        <option value="notice">📋 School Notice</option>
+      </select>
+      <input
+        placeholder="Title"
+        value={evtTitle}
+        onChange={(e) => setEvtTitle(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
+      <textarea
+        placeholder="Description (optional)"
+        value={evtDesc}
+        onChange={(e) => setEvtDesc(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm min-h-[80px] bg-white"
+      />
+      <input
+        placeholder="Date (e.g. June 5, 2026)"
+        value={evtDate}
+        onChange={(e) => setEvtDate(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
+      <Button onClick={handlePostEvent} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
+        <Plus className="h-4 w-4 mr-2" /> Post to Homepage Sidebar
+      </Button>
+    </div>
+  </TabsContent>
+)}
               </Tabs>
             </CardContent>
           </Card>
