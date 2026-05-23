@@ -78,7 +78,9 @@ classResults.forEach((r) => {
 const sorted = Object.entries(studentTotals).sort((a, b) => b[1] - a[1]);
 const positionIndex = sorted.findIndex(([name]) => name === studentName);
 const classPosition = positionIndex >= 0 ? positionIndex + 1 : null;
-const totalStudents = sorted.length;
+import { classStudents } from "@/lib/school-data"; // make sure this is imported at top
+
+const totalStudents = classStudents[studentClass]?.length || sorted.length;
 const positionSuffix = classPosition === 1 ? "st" : classPosition === 2 ? "nd" : classPosition === 3 ? "rd" : "th";
     const teacherComment =
       Number(mean) >= 75
