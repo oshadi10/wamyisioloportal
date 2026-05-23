@@ -399,13 +399,13 @@ const handleDeleteDoc = async (id: string) => {
                   <TabsTrigger value="merit"><Trophy className="h-4 w-4 mr-1" />Merit List</TabsTrigger>
                   <TabsTrigger value="materials">📚 Materials</TabsTrigger>
                   <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
-                  {lecturer.name === "Mr. Osman Halake" && (
-                    <TabsTrigger value="fees">Fees</TabsTrigger>
-                  )}
-                  {lecturer.name === "Mr. Osman Halake" && (
-                    <TabsTrigger value="events">📣 Events</TabsTrigger>
-                  )}
-                  {lecturer.name === "Mr. Osman Halake" && (
+                 {lecturer.name === "Mr. Osman Halake" && (
+  <TabsTrigger value="fees">Fees</TabsTrigger>
+)}
+{lecturer.name === "Mr. Osman Halake" && (
+  <TabsTrigger value="events">📣 Events</TabsTrigger>
+)}
+{lecturer.name === "Mr. Osman Halake" && (
   <TabsTrigger value="students">🎓 Students</TabsTrigger>
 )}
                 </TabsList>
