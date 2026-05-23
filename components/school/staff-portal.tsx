@@ -110,6 +110,18 @@ export function StaffPortal({
     (fees[selectedStudent]?.paid || 30000).toString()
   );
 
+  const [students, setStudents] = useState<any[]>([]);
+const [stdName, setStdName] = useState("");
+const [stdClass, setStdClass] = useState(classNames[0]);
+const [stdAdmNo, setStdAdmNo] = useState("");
+const [stdParent, setStdParent] = useState("");
+const [stdRegistering, setStdRegistering] = useState(false);
+const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+const [docType, setDocType] = useState("Birth Certificate");
+const [docFile, setDocFile] = useState<File | null>(null);
+const [docUploading, setDocUploading] = useState(false);
+const [studentDocs, setStudentDocs] = useState<any[]>([]);
+
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
   const handleClassChange = (className: string) => {
@@ -178,6 +190,82 @@ export function StaffPortal({
   const handleDeleteEvent = async (id: string) => {
     await supabase.from("events").delete().eq("id", id);
   };
+  const fetchStudents = async () => {
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+  setStudents(data || []);
+};
+
+const fetchStudentDocs = async (studentId: string) => {
+  const { data, error } = await supabase
+    .from("student_documents")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  if (error) { console.error(error); return; }
+  setStudentDocs(data || []);
+};
+
+const handleRegisterStudent = async () => {
+  if (!stdName.trim() || !stdAdmNo.trim()) {
+    alert("Enter student name and admission number.");
+    return;
+  }
+  setStdRegistering(true);
+  const { error } = await supabase.from("students").insert({
+    name: stdName,
+    class_name: stdClass,
+    admission_no: stdAdmNo,
+    parent_contact: stdParent,
+  });
+  if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
+  alert(`${stdName} registered successfully!`);
+  setStdName("");
+  setStdAdmNo("");
+  setStdParent("");
+  setStdRegistering(false);
+  fetchStudents();
+};
+
+const handleDeleteStudent = async (id: string) => {
+  if (!confirm("Delete this student and all their documents?")) return;
+  await supabase.from("students").delete().eq("id", id);
+  fetchStudents();
+  setSelectedStudentId(null);
+  setStudentDocs([]);
+};
+
+const handleUploadDoc = async () => {
+  if (!selectedStudentId) { alert("Select a student first."); return; }
+  if (!docFile) { alert("Select a file to upload."); return; }
+  setDocUploading(true);
+  const filePath = `${selectedStudentId}/${Date.now()}_${docFile.name}`;
+  const { error: uploadError } = await supabase.storage
+    .from("student-documents")
+    .upload(filePath, docFile);
+  if (uploadError) { alert("Upload failed."); setDocUploading(false); return; }
+  const { data } = supabase.storage.from("student-documents").getPublicUrl(filePath);
+  const { error: insertError } = await supabase.from("student_documents").insert({
+    student_id: selectedStudentId,
+    document_name: docType,
+    document_type: docType,
+    file_url: data.publicUrl,
+    file_name: docFile.name,
+  });
+  if (insertError) { alert("Failed to save document."); setDocUploading(false); return; }
+  alert("Document uploaded!");
+  setDocFile(null);
+  setDocUploading(false);
+  fetchStudentDocs(selectedStudentId);
+};
+
+const handleDeleteDoc = async (id: string) => {
+  await supabase.from("student_documents").delete().eq("id", id);
+  if (selectedStudentId) fetchStudentDocs(selectedStudentId);
+};
 
   const handlePostMaterial = async () => {
     if (!matTitle.trim()) { alert("Enter a title."); return; }
@@ -317,6 +405,7 @@ export function StaffPortal({
                   {lecturer.name === "Mr. Osman Halake" && (
                     <TabsTrigger value="events">📣 Events</TabsTrigger>
                   )}
+                  <TabsTrigger value="students">🎓 Students</TabsTrigger>
                 </TabsList>
 
                 {/* RESULTS TAB */}
@@ -380,6 +469,108 @@ export function StaffPortal({
                   ) : (
                     <p className="text-sm text-muted-foreground">No results yet for this student.</p>
                   )}
+                  <TabsContent value="students" className="space-y-6">
+
+  {/* REGISTER NEW STUDENT */}
+  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+    <h4 className="font-semibold text-sm text-blue-900">🎓 Register New Student</h4>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Full Name</Label>
+        <input placeholder="e.g. Amina Hassan" value={stdName} onChange={(e) => setStdName(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Admission No</Label>
+        <input placeholder="e.g. 433" value={stdAdmNo} onChange={(e) => setStdAdmNo(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Class</Label>
+        <select value={stdClass} onChange={(e) => setStdClass(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+          {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Parent Contact</Label>
+        <input placeholder="e.g. 0712345678" value={stdParent} onChange={(e) => setStdParent(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
+      <Plus className="h-4 w-4 mr-2" />{stdRegistering ? "Registering..." : "Register Student"}
+    </Button>
+  </div>
+
+  {/* STUDENT LIST */}
+  <div className="space-y-3">
+    <h4 className="font-semibold text-sm text-slate-800 border-b pb-1">Registered Students</h4>
+    <Button onClick={fetchStudents} variant="outline" className="text-xs">🔄 Refresh List</Button>
+    {students.length === 0 ? (
+      <p className="text-sm text-muted-foreground italic">No students registered yet. Click Refresh.</p>
+    ) : (
+      <div className="space-y-3">
+        {students.map((s) => (
+          <div key={s.id} className={`border rounded-lg p-4 bg-white shadow-sm space-y-3 cursor-pointer transition-colors ${selectedStudentId === s.id ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50"}`}
+            onClick={() => { setSelectedStudentId(s.id); fetchStudentDocs(s.id); }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-slate-900">{s.name}</p>
+                <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name} · 📞 {s.parent_contact || "N/A"}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteStudent(s.id); }} className="text-destructive border-destructive hover:bg-destructive/10">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+
+            {/* DOCUMENTS SECTION - shows when student is selected */}
+            {selectedStudentId === s.id && (
+              <div className="space-y-3 border-t pt-3">
+                <h5 className="text-xs font-semibold text-slate-700">📎 Documents</h5>
+
+                {/* Upload new doc */}
+                <div className="space-y-2 bg-slate-50 rounded-md p-3">
+                  <select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                    <option>Birth Certificate</option>
+                    <option>JSS Result Slip</option>
+                    <option>Transfer Letter</option>
+                    <option>Medical Certificate</option>
+                    <option>Parent ID Copy</option>
+                    <option>Other</option>
+                  </select>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="text-sm" />
+                  {docFile && <p className="text-xs text-green-600">Selected: {docFile.name}</p>}
+                  <Button onClick={handleUploadDoc} disabled={docUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm">
+                    {docUploading ? "Uploading..." : "Upload Document"}
+                  </Button>
+                </div>
+
+                {/* Existing docs */}
+                {studentDocs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">No documents uploaded yet.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {studentDocs.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
+                          <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{doc.file_name}</a>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)} className="text-destructive border-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+</TabsContent>
                 </TabsContent>
 
                 {/* MERIT LIST TAB */}
