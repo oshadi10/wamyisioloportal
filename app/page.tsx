@@ -184,7 +184,7 @@ export default function SchoolPortal() {
 
   // FIX: This variable is now declared before any portal conditional returns
   const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title 
-    || "📢 Welcome to WAMY Isiolo High School Portal. Continuous updates will appear here.";
+    || "📢 IDD-UL FITRI Break on 26th May, 2026. Wish you Idd Mubarak.";
 
   if (view === "student-portal" && loggedInStudent) {
     return (
@@ -285,7 +285,7 @@ export default function SchoolPortal() {
             display: flex;
             flex-shrink: 0;
             align-items: center;
-            animation: marquee-seamless 25s linear infinite;
+            animation: marquee-seamless 15s linear infinite;
           }
           .marquee-container:hover .animate-marquee-loop {
             animation-play-state: paused;
