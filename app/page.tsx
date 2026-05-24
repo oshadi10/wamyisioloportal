@@ -38,6 +38,7 @@ export default function SchoolPortal() {
     fetchTimetables();
     fetchTermDates();
     fetchEvents();
+    fetchFees();
   }, []);
 
   const fetchEvents = async () => {
@@ -75,6 +76,16 @@ export default function SchoolPortal() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const fetchFees = async () => {
+    const { data, error } = await supabase.from("fees").select("*");
+    if (error) { console.error(error); return; }
+    const feesMap: Record<string, { total: number; paid: number }> = {};
+    (data || []).forEach((f: any) => {
+      feesMap[f.student] = { total: f.total, paid: f.paid };
+    });
+    setFees((prev) => ({ ...prev, ...feesMap }));
   };
 
   const fetchMaterials = async () => {
@@ -171,11 +182,14 @@ export default function SchoolPortal() {
     fetchResults();
   };
 
-  const handleUpdateFees = (student: string, total: number, paid: number) => {
-    setFees((prev) => ({
-      ...prev,
-      [student]: { total, paid },
-    }));
+  const handleUpdateFees = async (student: string, total: number, paid: number) => {
+    const { data } = await supabase.from("fees").select("id").eq("student", student).single();
+    if (data) {
+      await supabase.from("fees").update({ total, paid, updated_at: new Date().toISOString() }).eq("student", student);
+    } else {
+      await supabase.from("fees").insert({ student, total, paid });
+    }
+    fetchFees();
   };
 
   const handleUploadTermDate = async () => {
