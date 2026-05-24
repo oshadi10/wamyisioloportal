@@ -144,11 +144,11 @@ export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
         <CardContent className="space-y-4">
           
           <div className="space-y-2">
-            <Label htmlFor="staff-name">Full Name</Label>
+            <Label htmlFor="staff-name">Userame</Label>
             <Input
               id="staff-name"
               type="text"
-              placeholder="Include your title (e.g. Mr. Osman Halake)"
+              placeholder="username"
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
