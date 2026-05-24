@@ -57,11 +57,11 @@ export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
         <CardContent className="space-y-4">
           
           <div className="space-y-2">
-            <Label htmlFor="student-name">Full Name</Label>
+            <Label htmlFor="student-name">Username</Label>
             <Input
               id="student-name"
               type="text"
-              placeholder="Enter your full name"
+              placeholder="Enter your username"
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -74,7 +74,7 @@ export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
             <Input
               id="student-password"
               type="password"
-              placeholder="Enter your admission number"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
