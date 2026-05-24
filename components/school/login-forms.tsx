@@ -2,13 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
@@ -20,19 +13,39 @@ interface StudentLoginProps {
 }
 
 export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
-  const [selectedStudent, setSelectedStudent] = useState("");
+  const [typedName, setTypedName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = () => {
-    if (!selectedStudent) {
-      setError("Please select a student");
+    setError("");
+
+    if (!typedName.trim()) {
+      setError("Please enter your full name");
       return;
     }
-    if (studentAccounts[selectedStudent] === password) {
-      onLogin(selectedStudent);
+    if (!password.trim()) {
+      setError("Please enter your password");
+      return;
+    }
+
+    // Standardize input formatting to safely scan the data object keys
+    const inputName = typedName.trim().toLowerCase();
+
+    // Look for an account match in your school data
+    const matchedStudentName = Object.keys(studentAccounts).find(
+      (name) => name.toLowerCase() === inputName
+    );
+
+    if (matchedStudentName) {
+      // Validate the found user matching password identifier
+      if (studentAccounts[matchedStudentName] === password.trim()) {
+        onLogin(matchedStudentName);
+      } else {
+        setError("Invalid credentials. Your password is your admission number.");
+      }
     } else {
-      setError("Invalid login details. Password is your admission number.");
+      setError("Student record not found. Please double-check the spelling of your full name.");
     }
   };
 
@@ -43,20 +56,19 @@ export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
           <CardTitle className="text-lg">Student Portal Login</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          
+          {/* SAFE TEXT INPUT METHOD (NO DROPDOWN LIST) */}
           <div className="space-y-2">
-            <Label htmlFor="student-select">Select Student</Label>
-            <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-              <SelectTrigger id="student-select">
-                <SelectValue placeholder="Select Student" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {Object.keys(studentAccounts).map((name) => (
-                  <SelectItem key={name} value={name}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="student-name">Full Name</Label>
+            <Input
+              id="student-name"
+              type="text"
+              placeholder="Enter your full name"
+              value={typedName}
+              onChange={(e) => setTypedName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="text-slate-950"
+            />
           </div>
 
           <div className="space-y-2">
@@ -68,16 +80,17 @@ export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="text-slate-950"
             />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive font-medium">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <Button onClick={handleLogin} className="flex-1 bg-[#1a56a0] hover:bg-[#154a8a]">
               Login
             </Button>
-            <Button variant="outline" onClick={onBack} className="flex-1">
+            <Button variant="outline" onClick={onBack} className="flex-1 text-slate-800">
               Back
             </Button>
           </div>
@@ -93,18 +106,22 @@ interface StaffLoginProps {
 }
 
 export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
-  const [selectedEmail, setSelectedEmail] = useState("");
+  const [typedEmail, setTypedEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = () => {
-    if (!selectedEmail) {
-      setError("Please select a lecturer");
+    setError("");
+
+    if (!typedEmail.trim()) {
+      setError("Please enter your email address");
       return;
     }
+
     const lecturer = lecturers.find(
-      (l) => l.email === selectedEmail && l.password === password
+      (l) => l.email.toLowerCase() === typedEmail.trim().toLowerCase() && l.password === password
     );
+
     if (lecturer) {
       onLogin(lecturer);
     } else {
@@ -119,20 +136,19 @@ export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
           <CardTitle className="text-lg">Staff Portal Login</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          
+          {/* SECURED STAFF USERNAME/EMAIL ELEMENT TEXT BOX */}
           <div className="space-y-2">
-            <Label htmlFor="staff-select">Select Lecturer</Label>
-            <Select value={selectedEmail} onValueChange={setSelectedEmail}>
-              <SelectTrigger id="staff-select">
-                <SelectValue placeholder="Select Lecturer" />
-              </SelectTrigger>
-              <SelectContent>
-                {lecturers.map((lecturer) => (
-                  <SelectItem key={lecturer.email} value={lecturer.email}>
-                    {lecturer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="staff-email">Email Address</Label>
+            <Input
+              id="staff-email"
+              type="email"
+              placeholder="Enter your registered staff email"
+              value={typedEmail}
+              onChange={(e) => setTypedEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="text-slate-950"
+            />
           </div>
 
           <div className="space-y-2">
@@ -144,16 +160,17 @@ export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="text-slate-950"
             />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive font-medium">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <Button onClick={handleLogin} className="flex-1 bg-[#146f3a] hover:bg-[#0f5a2e]">
               Login
             </Button>
-            <Button variant="outline" onClick={onBack} className="flex-1">
+            <Button variant="outline" onClick={onBack} className="flex-1 text-slate-800">
               Back
             </Button>
           </div>
