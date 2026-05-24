@@ -144,7 +144,7 @@ export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
         <CardContent className="space-y-4">
           
           <div className="space-y-2">
-            <Label htmlFor="staff-name">Userame</Label>
+            <Label htmlFor="staff-name">Enter your Username</Label>
             <Input
               id="staff-name"
               type="text"
