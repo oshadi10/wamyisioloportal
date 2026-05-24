@@ -38,7 +38,6 @@ export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
     );
 
     if (matchedStudentName) {
-      // Validate the found user matching password identifier
       if (studentAccounts[matchedStudentName] === password.trim()) {
         onLogin(matchedStudentName);
       } else {
@@ -57,7 +56,6 @@ export function StudentLogin({ onLogin, onBack }: StudentLoginProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           
-          {/* SAFE TEXT INPUT METHOD (NO DROPDOWN LIST) */}
           <div className="space-y-2">
             <Label htmlFor="student-name">Full Name</Label>
             <Input
@@ -106,26 +104,34 @@ interface StaffLoginProps {
 }
 
 export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
-  const [typedEmail, setTypedEmail] = useState("");
+  const [typedName, setTypedName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = () => {
     setError("");
 
-    if (!typedEmail.trim()) {
-      setError("Please enter your email address");
+    if (!typedName.trim()) {
+      setError("Please enter your full name");
+      return;
+    }
+    if (!password.trim()) {
+      setError("Please enter your password");
       return;
     }
 
+    // Clean up outer spaces but keep the exact letters, titles, and dots intact
+    const inputName = typedName.trim().toLowerCase();
+
+    // Strict direct match checking against the exact database strings
     const lecturer = lecturers.find(
-      (l) => l.email.toLowerCase() === typedEmail.trim().toLowerCase() && l.password === password
+      (l) => l.name.toLowerCase().trim() === inputName && l.password === password.trim()
     );
 
     if (lecturer) {
       onLogin(lecturer);
     } else {
-      setError("Invalid login details");
+      setError("Invalid login details. Please ensure you include your title (e.g., 'Mr. Osman Halake') and check your password.");
     }
   };
 
@@ -137,15 +143,14 @@ export function StaffLogin({ onLogin, onBack }: StaffLoginProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           
-          {/* SECURED STAFF USERNAME/EMAIL ELEMENT TEXT BOX */}
           <div className="space-y-2">
-            <Label htmlFor="staff-email">Email Address</Label>
+            <Label htmlFor="staff-name">Full Name</Label>
             <Input
-              id="staff-email"
-              type="email"
-              placeholder="Enter your registered staff email"
-              value={typedEmail}
-              onChange={(e) => setTypedEmail(e.target.value)}
+              id="staff-name"
+              type="text"
+              placeholder="Include your title (e.g. Mr. Osman Halake)"
+              value={typedName}
+              onChange={(e) => setTypedName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               className="text-slate-950"
             />
