@@ -198,7 +198,7 @@ export default function SchoolPortal() {
 
   // FIX: This variable is now declared before any portal conditional returns
   const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title 
-    || "📢 IDD-UL FITRI Break on 26th May, 2026. Wish you Idd Mubarak.";
+    || "📢 IDD-UL ADHA Break on 26th May, 2026. Wish you Idd Mubarak.";
 
   if (view === "student-portal" && loggedInStudent) {
     return (
