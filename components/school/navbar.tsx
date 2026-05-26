@@ -24,11 +24,23 @@ const navItems = [
   { name: "Downloads", icon: Download },
 ];
 
-// Mock background photos for the hero image cycle switcher
-const sliderImages = [
-  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200",
-  "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1200",
-  "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200"
+// 1. BUNDLE YOUR PICTURES WITH SPECIFIC INFORMATION HERE
+const sliderData = [
+  {
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200",
+    title: "Wamy Isiolo High School",
+    subtitle: "Excellence Through Education, Discipline & Leadership. Nurturing future leaders through Islamic values."
+  },
+  {
+    image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1200",
+    title: "Admissions Are Ongoing!",
+    subtitle: "Join our vibrant academic community for the 2026 academic year. Secure your child's future today."
+  },
+  {
+    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200",
+    title: "Modern Science Laboratories",
+    subtitle: "Equipping students with practical, hands-on skills in Chemistry, Physics, and Biology."
+  }
 ];
 
 export function Navbar({
@@ -43,20 +55,20 @@ export function Navbar({
   onStaffPortal,
   liveAnnouncement,
 }: NavbarProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Background Image Cycle Slider Timer
+  // Automatically cycles both text and image simultaneously every 6 seconds
   useEffect(() => {
-    if (isPortal) return; // Only cycle background photos on the public website layout
+    if (isPortal) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
-    }, 5000); // Transitions to a new image every 5 seconds
+      setCurrentIndex((prev) => (prev + 1) % sliderData.length);
+    }, 6000);
     return () => clearInterval(interval);
   }, [isPortal]);
 
   return (
     <header className="relative w-full overflow-hidden">
-      {/* 1. DYNAMIC SEAMLESS MOVING ANNOUNCEMENT BANNER */}
+      {/* SEAMLESS MOVING ANNOUNCEMENT BANNER */}
       {liveAnnouncement && (
         <div className="w-full bg-amber-400 text-slate-950 font-bold py-2 overflow-hidden relative shadow-sm z-50 select-none flex">
           <style>{`
@@ -64,114 +76,92 @@ export function Navbar({
               0% { transform: translateX(0%); }
               100% { transform: translateX(-100%); }
             }
-            .marquee-container {
-              display: flex;
-              white-space: nowrap;
-              min-width: 100%;
-            }
-            .animate-marquee-loop {
-              display: flex;
-              flex-shrink: 0;
-              align-items: center;
-              animation: marquee-seamless 25s linear infinite;
-            }
-            .marquee-container:hover .animate-marquee-loop {
-              animation-play-state: paused;
-            }
+            .marquee-container { display: flex; white-space: nowrap; min-width: 100%; }
+            .animate-marquee-loop { display: flex; flex-shrink: 0; align-items: center; animation: marquee-seamless 25s linear infinite; }
+            .marquee-container:hover .animate-marquee-loop { animation-play-state: paused; }
           `}</style>
-          
           <div className="marquee-container cursor-pointer text-sm md:text-base">
-            <div className="animate-marquee-loop pr-16">
-              {liveAnnouncement}
-            </div>
-            <div className="animate-marquee-loop pr-16" aria-hidden="true">
-              {liveAnnouncement}
-            </div>
+            <div className="animate-marquee-loop pr-16">{liveAnnouncement}</div>
+            <div className="animate-marquee-loop pr-16" aria-hidden="true">{liveAnnouncement}</div>
           </div>
         </div>
       )}
 
-      {/* 2. MAIN BRANDING HEADER & HERO BACKGROUND SECTION */}
-      <div className="relative w-full min-h-[160px] md:min-h-[200px] flex items-center justify-between px-6 md:px-12 py-6 overflow-hidden bg-slate-900">
+      {/* PRIMARY HERO BANNER WITH SYNCED CONTENT */}
+      <div className="relative w-full min-h-[220px] md:min-h-[260px] flex items-center justify-between px-6 md:px-12 py-8 overflow-hidden bg-slate-900">
         
-        {/* Background Image Layer (Public Site handles sliding carousels; Portal falls back to solid tint) */}
+        {/* Dynamic Background Image Layers */}
         {!isPortal ? (
           <div className="absolute inset-0 w-full h-full z-0">
-            {sliderImages.map((imgUrl, index) => (
+            {sliderData.map((slide, index) => (
               <div
-                key={imgUrl}
+                key={slide.image}
                 className="absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out"
                 style={{
-                  backgroundImage: `url('${imgUrl}')`,
-                  opacity: currentSlide === index ? 1 : 0,
+                  backgroundImage: `url('${slide.image}')`,
+                  opacity: currentIndex === index ? 1 : 0,
                 }}
               />
             ))}
-            {/* Elegant deep green overlay tint ensuring textual legibility across contrasting photo changes */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#112a47]/95 via-[#1e3a5f]/90 to-[#144227]/75 mix-blend-multiply" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
+            {/* Dark green/blue tint layer to ensure text readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#112a47]/95 via-[#1e3a5f]/90 to-[#144227]/80 mix-blend-multiply" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-[#1e3a5f] z-0" /> // Clean corporate fallback for student/staff internal layouts
+          <div className="absolute inset-0 bg-[#1e3a5f] z-0" />
         )}
 
-        {/* School Crest, Heading Texts, and Core Brand Values */}
-        <div className="flex items-center gap-5 z-10 relative max-w-2xl text-white">
-          <div className="relative group">
-            <img 
-              src="/wamy logggo.png" 
-              alt="Wamy Isiolo High School Logo" 
-              className="h-16 w-auto object-contain rounded-xl bg-white/10 p-1.5 backdrop-blur-sm shadow-md border border-white/10"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const fallbackIcon = document.getElementById('navbar-fallback-icon');
-                if (fallbackIcon) fallbackIcon.style.display = 'block';
-              }}
-            />
-            <div id="navbar-fallback-icon" style={{ display: 'none' }}>
-              <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10">
-                <GraduationCap className="h-9 w-9 text-white" />
-              </div>
-            </div>
-          </div>
+        {/* Brand Crest + DYNAMIC Changing Text Content */}
+        <div className="flex items-start gap-5 z-10 relative max-w-2xl text-white">
+          <img 
+            src="/wamy logggo.png" 
+            alt="Logo" 
+            className="h-16 w-auto object-contain rounded-xl bg-white/10 p-1.5 backdrop-blur-sm mt-1"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
 
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow-md bg-clip-text bg-gradient-to-b from-white to-slate-200">
-              Wamy Isiolo High School
-            </h1>
-            <p className="text-xs md:text-sm font-medium tracking-wider text-amber-300 drop-shadow mt-0.5 uppercase">
-              {isPortal ? (portalType === "student" ? "🌟 Student Portal" : "💼 Staff Portal") : "Excellence Through Education, Discipline & Leadership"}
-            </p>
+          {/* Text transitions fluidly alongside the active index state */}
+          <div className="transition-all duration-500 ease-in-out">
+            {isPortal ? (
+              <>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide">Wamy Isiolo High School</h1>
+                <p className="text-sm font-medium text-amber-300 mt-1 uppercase">
+                  {portalType === "student" ? "🌟 Student Portal" : "💼 Staff Portal"}
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide drop-shadow-md animate-fadeIn">
+                  {sliderData[currentIndex].title}
+                </h1>
+                <p className="text-xs md:text-sm text-slate-200 mt-2 max-w-xl leading-relaxed drop-shadow-sm">
+                  {sliderData[currentIndex].subtitle}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Modern Curvetured Secondary Image Mask Cut-Out Frame */}
+        {/* Modern Curved Image Cut-Out (Shows the NEXT slide's image ahead of time) */}
         {!isPortal && (
           <div 
-            className="hidden lg:block absolute right-0 top-0 bottom-0 w-[35%] h-full bg-cover bg-center shadow-2xl transition-all duration-700 ease-in-out border-l border-white/10"
+            className="hidden lg:block absolute right-0 top-0 bottom-0 w-[35%] h-full bg-cover bg-center shadow-2xl transition-all duration-1000 ease-in-out border-l border-white/10"
             style={{
-              backgroundImage: `url('${sliderImages[(currentSlide + 1) % sliderImages.length]}')`,
+              backgroundImage: `url('${sliderData[(currentIndex + 1) % sliderData.length].image}')`,
               clipPath: "ellipse(95% 100% at 100% 50%)",
             }}
           />
         )}
       </div>
 
-      {/* 3. PORTAL NAVIGATION AND CONTEXT ACTION BAR LAYOUT PANELS */}
+      {/* PORTAL NAVIGATION AND ACTION BAR */}
       {isPortal ? (
         <div className="bg-[#2d4e6f] border-t border-white/10 px-6 py-3 flex items-center justify-between relative z-20 shadow-md">
           <div className="text-white">
-            <p className="text-sm font-semibold tracking-wide">{userName}</p>
-            <p className="text-xs text-slate-300/90 font-medium">{userDetails}</p>
+            <p className="text-sm font-semibold">{userName}</p>
+            <p className="text-xs text-slate-300">{userDetails}</p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLogout}
-            className="text-white hover:bg-white/10 hover:text-white border border-white/5 transition-all"
-          >
-            <LogOut className="h-4 w-4 mr-2 text-rose-400" />
-            Logout
+          <Button variant="ghost" size="sm" onClick={onLogout} className="text-white hover:bg-white/10">
+            <LogOut className="h-4 w-4 mr-2 text-rose-400" /> Logout
           </Button>
         </div>
       ) : (
@@ -188,19 +178,11 @@ export function Navbar({
             </button>
           ))}
           <div className="flex items-center ml-auto flex-wrap">
-            <button
-              onClick={onStudentPortal}
-              className="px-5 py-3 text-sm font-bold text-white bg-[#1a56a0] hover:bg-[#154a8a] active:bg-[#113d73] transition-colors flex items-center gap-2 border-l border-white/5"
-            >
-              <Users className="h-4 w-4 text-amber-300" />
-              Student Portal
+            <button onClick={onStudentPortal} className="px-5 py-3 text-sm font-bold text-white bg-[#1a56a0] hover:bg-[#154a8a] flex items-center gap-2">
+              <Users className="h-4 w-4 text-amber-300" /> Student Portal
             </button>
-            <button
-              onClick={onStaffPortal}
-              className="px-5 py-3 text-sm font-bold text-white bg-[#146f3a] hover:bg-[#0f5a2e] active:bg-[#0b4422] transition-colors flex items-center gap-2 border-l border-white/5"
-            >
-              <GraduationCap className="h-4 w-4 text-amber-300" />
-              Staff Portal
+            <button onClick={onStaffPortal} className="px-5 py-3 text-sm font-bold text-white bg-[#146f3a] hover:bg-[#0f5a2e] flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-amber-300" /> Staff Portal
             </button>
           </div>
         </nav>
