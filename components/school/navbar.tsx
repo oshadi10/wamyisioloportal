@@ -32,7 +32,7 @@ const sliderData = [
     subtitle: "Excellence Through Education, Discipline & Leadership. Nurturing future leaders through Islamic values."
   },
   {
-    image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1200",
+    image: "scout.png",
     title: "Admissions Are Ongoing!",
     subtitle: "Join our vibrant academic community for the 2026 academic year. Secure your child's future today."
   },
