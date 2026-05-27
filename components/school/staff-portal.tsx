@@ -273,15 +273,17 @@ export function StaffPortal({
           <Card>
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="mb-4 flex-wrap">
-                  <TabsTrigger value="results">Results</TabsTrigger>
-                  <TabsTrigger value="merit"><Trophy className="h-4 w-4 mr-1" />Merit List</TabsTrigger>
-                  <TabsTrigger value="materials">📚 Materials</TabsTrigger>
-                  <TabsTrigger value="timetables">📅 Timetables</TabsTrigger>
-                  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="fees">Fees</TabsTrigger>}
-                  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="events">📣 Events</TabsTrigger>}
-                  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="students">🎓 Students</TabsTrigger>}
-                </TabsList>
+                <TabsList className="mb-4 flex flex-wrap gap-1 h-auto">
+  <TabsTrigger value="results" className="flex-shrink-0 text-xs px-2 py-1.5">Results</TabsTrigger>
+  <TabsTrigger value="merit" className="flex-shrink-0 text-xs px-2 py-1.5">
+    <Trophy className="h-3 w-3 mr-1" />Merit List
+  </TabsTrigger>
+  <TabsTrigger value="materials" className="flex-shrink-0 text-xs px-2 py-1.5">📚 Materials</TabsTrigger>
+  <TabsTrigger value="timetables" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Timetables</TabsTrigger>
+  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
+  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
+  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
+</TabsList>
 
                 {/* RESULTS TAB */}
                 <TabsContent value="results" className="space-y-4">
