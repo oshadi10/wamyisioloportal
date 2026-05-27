@@ -14,10 +14,10 @@ import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, 
 interface StaffPortalProps {
   lecturer: Lecturer;
   results: Result[];
-  fees: Record<string, FeeRecord>;
+  fees: Record<string, any>; // Flexible configuration mapping to year structures smoothly
   onUploadResult: (result: Result) => void;
   onDeleteResult: (student: string, subject: string, term: string) => void;
-  onUpdateFees: (student: string, total: number, paid: number) => void;
+  onUpdateFees: (student: string, total: number, paid: number, term1?: number, term2?: number, term3?: number, year?: string) => void;
   materials: any[];
   onPostMaterial: (material: any) => void;
   onDeleteMaterial: (id: string) => void;
@@ -65,8 +65,14 @@ export function StaffPortal({
   const [newMidBreak, setNewMidBreak] = useState("");
   const [newEndExam, setNewEndExam] = useState("");
   const [newClosingDate, setNewClosingDate] = useState("");
-  const [feeTotal, setFeeTotal] = useState((fees[selectedStudent]?.total || 45000).toString());
-  const [feePaid, setFeePaid] = useState((fees[selectedStudent]?.paid || 30000).toString());
+
+  // --- NEW STATES INTEGRATED FOR ACADEMIC TERM BREAKDOWNS ---
+  const [selectedYear, setSelectedYear] = useState("2026");
+  const [feeTerm1, setFeeTerm1] = useState("15000");
+  const [feeTerm2, setFeeTerm2] = useState("15000");
+  const [feeTerm3, setFeeTerm3] = useState("15000");
+  const [feePaid, setFeePaid] = useState("30000");
+
   const [students, setStudents] = useState<any[]>([]);
   const [stdName, setStdName] = useState("");
   const [stdClass, setStdClass] = useState(classNames[0]);
@@ -83,20 +89,39 @@ export function StaffPortal({
     if (activeTab === "students") fetchStudents();
   }, [activeTab]);
 
+  // Hook to handle reloading term data if a user toggles selection layers dynamically
+  useEffect(() => {
+    const studentData = fees[selectedStudent]?.[selectedYear] || fees[selectedStudent];
+    if (studentData) {
+      setFeeTerm1((studentData.term1 ?? 15000).toString());
+      setFeeTerm2((studentData.term2 ?? 15000).toString());
+      setFeeTerm3((studentData.term3 ?? 15000).toString());
+      setFeePaid((studentData.paid ?? 30000).toString());
+    }
+  }, [selectedYear, selectedStudent, fees]);
+
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
   const handleClassChange = (className: string) => {
     setSelectedClass(className);
     const firstStudent = classStudents[className][0];
     setSelectedStudent(firstStudent);
-    setFeeTotal((fees[firstStudent]?.total || 45000).toString());
-    setFeePaid((fees[firstStudent]?.paid || 30000).toString());
+    
+    const studentData = fees[firstStudent]?.[selectedYear] || fees[firstStudent];
+    setFeeTerm1((studentData?.term1 || 15000).toString());
+    setFeeTerm2((studentData?.term2 || 15000).toString());
+    setFeeTerm3((studentData?.term3 || 15000).toString());
+    setFeePaid((studentData?.paid || 30000).toString());
   };
 
   const handleStudentSelect = (student: string) => {
     setSelectedStudent(student);
-    setFeeTotal((fees[student]?.total || 45000).toString());
-    setFeePaid((fees[student]?.paid || 30000).toString());
+    
+    const studentData = fees[student]?.[selectedYear] || fees[student];
+    setFeeTerm1((studentData?.term1 || 15000).toString());
+    setFeeTerm2((studentData?.term2 || 15000).toString());
+    setFeeTerm3((studentData?.term3 || 15000).toString());
+    setFeePaid((studentData?.paid || 30000).toString());
   };
 
   const handleUploadResult = () => {
@@ -108,12 +133,20 @@ export function StaffPortal({
   };
 
   const handleUpdateFees = () => {
-    const total = Number(feeTotal);
+    const t1 = Number(feeTerm1);
+    const t2 = Number(feeTerm2);
+    const t3 = Number(feeTerm3);
+    const total = t1 + t2 + t3;
     const paid = Number(feePaid);
-    if (isNaN(total) || isNaN(paid) || total < 0 || paid < 0) { alert("Enter valid fee amounts."); return; }
-    if (paid > total) { alert("Amount paid cannot exceed total fees."); return; }
-    onUpdateFees(selectedStudent, total, paid);
-    alert(`Fees updated for ${selectedStudent}.`);
+
+    if (isNaN(t1) || isNaN(t2) || isNaN(t3) || isNaN(paid) || t1 < 0 || t2 < 0 || t3 < 0 || paid < 0) { 
+      alert("Enter valid numerical fee parameters."); 
+      return; 
+    }
+    if (paid > total) { alert("Amount paid cannot exceed the auto-calculated total fees."); return; }
+    
+    onUpdateFees(selectedStudent, total, paid, t1, t2, t3, selectedYear);
+    alert(`Fees successfully updated for ${selectedStudent} [${selectedYear} Academic Cycle].`);
   };
 
   const handlePostEvent = async () => {
@@ -245,6 +278,9 @@ export function StaffPortal({
     const n = fileName.toLowerCase();
     return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
   };
+
+  // Total fees sum tracker logic compute engine
+  const accumulatedTotalSum = (Number(feeTerm1) || 0) + (Number(feeTerm2) || 0) + (Number(feeTerm3) || 0);
 
   return (
     <div className="max-w-7xl mx-auto p-4">
@@ -564,23 +600,93 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                {/* FEES TAB */}
+                {/* UPDATED FEES TAB CONTROLS */}
                 {lecturer.name === "Mr. Osman Halake" && (
                   <TabsContent value="fees" className="space-y-4">
-                    <h4 className="font-medium text-sm">Update Fees</h4>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h4 className="font-bold text-sm text-slate-900">Update Fees</h4>
+                      
+                      {/* ACADEMIC YEAR SPECIFIER CONTROLS */}
+                      <select 
+                        value={selectedYear} 
+                        onChange={(e) => setSelectedYear(e.target.value)} 
+                        className="px-2 py-1 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                      >
+                        <option value="2026">2026 Academic Year</option>
+                        <option value="2025">2025 Academic Year</option>
+                        <option value="2024">2024 Academic Year</option>
+                      </select>
+                    </div>
+
                     <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        Selected Student: <span className="font-bold text-slate-800">{selectedStudent}</span>
+                      </p>
+
+                      {/* SIDE-BY-SIDE TERM INPUT PARAMETERS GRID */}
+                      <div className="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block text-center">Term 1</Label>
+                          <input 
+                            type="number" 
+                            value={feeTerm1} 
+                            onChange={(e) => setFeeTerm1(e.target.value)} 
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-center font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block text-center">Term 2</Label>
+                          <input 
+                            type="number" 
+                            value={feeTerm2} 
+                            onChange={(e) => setFeeTerm2(e.target.value)} 
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-center font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block text-center">Term 3</Label>
+                          <input 
+                            type="number" 
+                            value={feeTerm3} 
+                            onChange={(e) => setFeeTerm3(e.target.value)} 
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-center font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                          />
+                        </div>
+                      </div>
+
+                      {/* AUTO CALCULATED TOTAL VALUE ROW DISPLAY */}
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
-                        <input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        <Label className="text-xs text-muted-foreground font-medium">Total Fees (KSh)</Label>
+                        <input 
+                          type="text" 
+                          value={accumulatedTotalSum.toLocaleString()} 
+                          disabled 
+                          className="flex h-10 w-full rounded-md border border-input bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 cursor-not-allowed shadow-inner" 
+                        />
                       </div>
+
+                      {/* FEE AMOUNT PAID BLOCK */}
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
-                        <input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        <Label className="text-xs text-muted-foreground font-medium">Amount Paid (KSh)</Label>
+                        <input 
+                          type="number" 
+                          value={feePaid} 
+                          onChange={(e) => setFeePaid(e.target.value)} 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" 
+                        />
                       </div>
-                      <div className="p-3 bg-muted rounded-md text-sm">
-                        Balance: <span className="text-destructive font-medium">KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}</span>
+
+                      {/* BALANCE DYNAMIC STRIP FRAME */}
+                      <div className="p-3 bg-muted rounded-md text-sm flex items-center justify-between">
+                        <span className="font-medium text-slate-600">Balance:</span>
+                        <span className="text-destructive font-bold">
+                          KSh {(accumulatedTotalSum - (Number(feePaid) || 0)).toLocaleString()}
+                        </span>
                       </div>
-                      <Button onClick={handleUpdateFees} className="bg-[#1a56a0] hover:bg-[#154a8a]">Update Fees</Button>
+
+                      <Button onClick={handleUpdateFees} className="bg-[#1a56a0] hover:bg-[#154a8a] w-full font-bold">
+                        Update Fees
+                      </Button>
                     </div>
                   </TabsContent>
                 )}
