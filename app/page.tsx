@@ -27,9 +27,9 @@ const heroSlides = [
     image: "/winners.jpeg",
   },
   {
-    title: "Academic Excellence",
-    subtitle: "Offering 11 subjects including Mathematics, Sciences, Languages and more. Empowering students with knowledge for a brighter future.",
-    image: "/scouts.jpg",
+    title: "TROPHY WINNERS",
+    subtitle: "Happy to celebrate our first trophy in Wamy Isiolo high school.",
+    image: "/trophy.jpeg",
   },
   {
     title: "Holistic Development",
