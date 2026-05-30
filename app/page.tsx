@@ -361,24 +361,27 @@ useEffect(() => {
         onStaffPortal={() => setView("staff-login")}
       />
 
-    {/* HERO SECTION */}
-<section className="relative text-white overflow-hidden min-h-[420px] md:min-h-[650px] flex items-center">
-  <div className="absolute inset-0 z-0">
-    <div
-      className="absolute inset-0 bg-cover bg-center"
+   {/* HERO SECTION */}
+<section className="relative text-white overflow-hidden min-h-[550px] md:min-h-[650px] flex items-center">
+  
+  {/* Background Image */}
+  <div className="absolute inset-0 z-0 bg-black">
+    <img
+      src={heroSlides[heroIndex].image}
+      alt={heroSlides[heroIndex].title}
+      className="w-full h-full object-contain"
       style={{
-        backgroundImage: `url('${heroSlides[heroIndex].image}')`,
-        transition: "background-image 0.5s ease",
         opacity: heroFade ? 1 : 0,
-        transitionProperty: "opacity",
-        transitionDuration: "0.5s",
+        transition: "opacity 0.5s ease",
       }}
     />
-    <div className="absolute inset-0 bg-gradient-to-r from-blue-950/40 via-green-900/30 to-green-700/20" />
+    <div className="absolute inset-0 bg-black/30" />
   </div>
-  <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-24 text-center min-h-[420px] md:min-h-[650px] flex flex-col justify-center">
 
-    {/* Animated text block */}
+  {/* Hero Content */}
+  <div className="relative z-10 w-full px-4 py-8 md:py-24 text-center flex flex-col justify-center items-center min-h-[550px] md:min-h-[650px]">
+
+    {/* Animated Text */}
     <div
       style={{
         transition: "opacity 0.5s ease, transform 0.5s ease",
@@ -386,18 +389,23 @@ useEffect(() => {
         transform: heroFade ? "translateY(0)" : "translateY(12px)",
       }}
     >
-      <h1 className="text-2xl md:text-5xl font-bold mb-6">{heroSlides[heroIndex].title}</h1>
-      <p className="text-sm md:text-xl max-w-3xl mx-auto mb-4 text-gray-200">
+      <h1 className="text-2xl md:text-5xl font-bold mb-3">
+        {heroSlides[heroIndex].title}
+      </h1>
+      <p className="text-sm md:text-xl max-w-2xl mx-auto mb-4 text-gray-200">
         {heroSlides[heroIndex].subtitle}
       </p>
     </div>
 
-    {/* Dot indicators */}
-    <div className="flex justify-center gap-2 mb-6">
+    {/* Dot Indicators */}
+    <div className="flex justify-center gap-2 mb-4">
       {heroSlides.map((_, i) => (
         <button
           key={i}
-          onClick={() => { setHeroFade(false); setTimeout(() => { setHeroIndex(i); setHeroFade(true); }, 500); }}
+          onClick={() => {
+            setHeroFade(false);
+            setTimeout(() => { setHeroIndex(i); setHeroFade(true); }, 500);
+          }}
           className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
             i === heroIndex ? "bg-white scale-125" : "bg-white/40"
           }`}
@@ -405,15 +413,22 @@ useEffect(() => {
       ))}
     </div>
 
+    {/* Portal Buttons */}
     <div className="flex flex-row justify-center gap-3">
-  
-      <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
+      <button
+        onClick={() => setView("student-login")}
+        className="bg-blue-600 hover:bg-blue-700 px-5 py-2 md:px-8 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-colors"
+      >
         Student Portal
       </button>
-      <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
+      <button
+        onClick={() => setView("staff-login")}
+        className="bg-green-600 hover:bg-green-700 px-5 py-2 md:px-8 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-colors"
+      >
         Staff Portal
       </button>
     </div>
+
   </div>
 </section>
       
