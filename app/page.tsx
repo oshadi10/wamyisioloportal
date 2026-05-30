@@ -32,9 +32,9 @@ const heroSlides = [
     image: "/trophy.jpeg",
   },
   {
-    title: "Holistic Development",
-    subtitle: "Sports, Scouts, First Aid and outdoor activities build character, teamwork and resilience in every student.",
-    image: "/outdoor.jpg",
+    title: "SPORTS",
+    subtitle: "One team, one dream! Our sports team takes their last group photo before heading to the competition",
+    image: "/sports.jpg",
   },
   {
     title: "Islamic Values & Leadership",
