@@ -406,13 +406,7 @@ useEffect(() => {
     </div>
 
     <div className="flex flex-row justify-center gap-3">
-  <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-5 py-2 md:px-8 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-colors">
-    Student Portal
-  </button>
-  <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-5 py-2 md:px-8 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-colors">
-    Staff Portal
-  </button>
-</div>
+  
       <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
         Student Portal
       </button>
