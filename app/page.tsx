@@ -376,7 +376,7 @@ useEffect(() => {
     />
     <div className="absolute inset-0 bg-gradient-to-r from-blue-950/40 via-green-900/30 to-green-700/20" />
   </div>
-  <div className="relative z-10 max-w-7xl mx-auto px-6 py-10 text-center">
+  <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 text-center">
 
     {/* Animated text block */}
     <div
