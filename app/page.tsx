@@ -372,7 +372,7 @@ useEffect(() => {
       className="absolute inset-0 bg-cover bg-center scale-110"
       style={{
         backgroundImage: `url('${heroSlides[heroIndex].image}')`,
-        filter: "blur(12px) brightness(0.35)",
+        filter: "blur(6px) brightness(0.6)",
         transition: "background-image 0.5s ease",
       }}
     />
