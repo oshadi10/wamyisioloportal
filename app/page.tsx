@@ -362,7 +362,7 @@ useEffect(() => {
       />
 
     {/* HERO SECTION */}
-<section className="relative text-white overflow-hidden">
+<section className="relative text-white overflow-hidden min-h-[420px] md:min-h-[650px] flex items-center">
   <div className="absolute inset-0 z-0">
     <div
       className="absolute inset-0 bg-cover bg-center"
@@ -376,7 +376,7 @@ useEffect(() => {
     />
     <div className="absolute inset-0 bg-gradient-to-r from-blue-950/40 via-green-900/30 to-green-700/20" />
   </div>
-  <div className="relative z-10 max-w-7xl mx-auto px-6 py-40 text-center">
+  <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-24 text-center min-h-[420px] md:min-h-[650px] flex flex-col justify-center">
 
     {/* Animated text block */}
     <div
@@ -386,8 +386,8 @@ useEffect(() => {
         transform: heroFade ? "translateY(0)" : "translateY(12px)",
       }}
     >
-      <h1 className="text-5xl font-bold mb-6">{heroSlides[heroIndex].title}</h1>
-      <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
+      <h1 className="text-2xl md:text-5xl font-bold mb-6">{heroSlides[heroIndex].title}</h1>
+      <p className="text-sm md:text-xl max-w-3xl mx-auto mb-4 text-gray-200">
         {heroSlides[heroIndex].subtitle}
       </p>
     </div>
@@ -405,7 +405,14 @@ useEffect(() => {
       ))}
     </div>
 
-    <div className="flex flex-col md:flex-row justify-center gap-4">
+    <div className="flex flex-row justify-center gap-3">
+  <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-5 py-2 md:px-8 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-colors">
+    Student Portal
+  </button>
+  <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-5 py-2 md:px-8 md:py-3 rounded-xl text-sm md:text-base font-semibold shadow-lg transition-colors">
+    Staff Portal
+  </button>
+</div>
       <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
         Student Portal
       </button>
