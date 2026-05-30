@@ -365,7 +365,15 @@ useEffect(() => {
 <section className="relative text-white overflow-hidden min-h-[550px] md:min-h-[650px] flex items-center">
   
   {/* Background Image */}
-  <div className="absolute inset-0 z-0 bg-black">
+  <div className="absolute inset-0 z-0">
+  {/* Blurred background filler */}
+  <div
+    className="absolute inset-0 bg-cover bg-center scale-110"
+    style={{
+      backgroundImage: `url('${heroSlides[heroIndex].image}')`,
+      filter: "blur(12px) brightness(0.4)",
+    }}
+  />
     <img
       src={heroSlides[heroIndex].image}
       alt={heroSlides[heroIndex].title}
