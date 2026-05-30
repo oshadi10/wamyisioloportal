@@ -22,9 +22,9 @@ type ViewType = "home" | "student-login" | "staff-login" | "student-portal" | "s
 // Add this near your other useState hooks at the top of SchoolPortal()
 const heroSlides = [
   {
-    title: "WAMY Isiolo High School",
-    subtitle: "Excellence Through Education, Discipline & Leadership. Nurturing future leaders through quality education, Islamic values and holistic development.",
-    image: "/sports.jpg",
+    title: "COUNTY CHAMPION",
+    subtitle: "Our Scout Team achieved a remarkable milestone by securing first position in the county and bringing home our first trophy.",
+    image: "/winners.jpeg",
   },
   {
     title: "Academic Excellence",
