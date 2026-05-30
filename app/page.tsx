@@ -361,7 +361,7 @@ useEffect(() => {
 <section className="relative text-white overflow-hidden">
   <div className="absolute inset-0 z-0">
     <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/sports.jpg')` }} />
-    <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-950/40 via-green-900/30 to-green-700/20" />
   </div>
   <div className="relative z-10 max-w-7xl mx-auto px-6 py-10 text-center">
 
