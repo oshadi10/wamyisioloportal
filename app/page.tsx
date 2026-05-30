@@ -38,7 +38,9 @@ const heroSlides = [
     subtitle: "Grounded in faith and discipline, we produce graduates ready for success in this world and the hereafter.",
   },
 ];
-const [heroIndex, setHeroIndex] = useState(0);
+
+export default function SchoolPortal() {
+  const [heroIndex, setHeroIndex] = useState(0);
 const [heroFade, setHeroFade] = useState(true);
 
 useEffect(() => {
@@ -52,8 +54,6 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-export default function SchoolPortal() {
-  
   const [view, setView] = useState<ViewType>("home");
   const [currentPage, setCurrentPage] = useState("Home");
   const [loggedInStudent, setLoggedInStudent] = useState<string | null>(null);
