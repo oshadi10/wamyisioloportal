@@ -19,9 +19,7 @@ import {
 } from "@/lib/school-data";
 
 type ViewType = "home" | "student-login" | "staff-login" | "student-portal" | "staff-portal";
-
-export default function SchoolPortal() {
-  // Add this near your other useState hooks at the top of SchoolPortal()
+// Add this near your other useState hooks at the top of SchoolPortal()
 const heroSlides = [
   {
     title: "WAMY Isiolo High School",
@@ -40,7 +38,6 @@ const heroSlides = [
     subtitle: "Grounded in faith and discipline, we produce graduates ready for success in this world and the hereafter.",
   },
 ];
-
 const [heroIndex, setHeroIndex] = useState(0);
 const [heroFade, setHeroFade] = useState(true);
 
@@ -54,6 +51,9 @@ useEffect(() => {
   }, 4000);
   return () => clearInterval(interval);
 }, []);
+
+export default function SchoolPortal() {
+  
   const [view, setView] = useState<ViewType>("home");
   const [currentPage, setCurrentPage] = useState("Home");
   const [loggedInStudent, setLoggedInStudent] = useState<string | null>(null);
@@ -357,29 +357,51 @@ useEffect(() => {
         onStaffPortal={() => setView("staff-login")}
       />
 
-      {/* HERO SECTION */}
-      <section className="relative text-white overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/sports.jpg')` }} />
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-10 text-center">
-          <h1 className="text-5xl font-bold mb-6">WAMY Isiolo High School</h1>
-          <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
-            Excellence Through Education, Discipline & Leadership.
-            Nurturing future leaders through quality education,
-            Islamic values and holistic development.
-          </p>
-          <div className="flex flex-col md:flex-row justify-center gap-4">
-            <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
-              Student Portal
-            </button>
-            <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
-              Staff Portal
-            </button>
-          </div>
-        </div>
-      </section>
+     {/* HERO SECTION */}
+<section className="relative text-white overflow-hidden">
+  <div className="absolute inset-0 z-0">
+    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('/sports.jpg')` }} />
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-green-900/80 to-green-700/80" />
+  </div>
+  <div className="relative z-10 max-w-7xl mx-auto px-6 py-10 text-center">
+
+    {/* Animated text block */}
+    <div
+      style={{
+        transition: "opacity 0.5s ease, transform 0.5s ease",
+        opacity: heroFade ? 1 : 0,
+        transform: heroFade ? "translateY(0)" : "translateY(12px)",
+      }}
+    >
+      <h1 className="text-5xl font-bold mb-6">{heroSlides[heroIndex].title}</h1>
+      <p className="text-xl max-w-3xl mx-auto mb-8 text-gray-200">
+        {heroSlides[heroIndex].subtitle}
+      </p>
+    </div>
+
+    {/* Dot indicators */}
+    <div className="flex justify-center gap-2 mb-6">
+      {heroSlides.map((_, i) => (
+        <button
+          key={i}
+          onClick={() => { setHeroFade(false); setTimeout(() => { setHeroIndex(i); setHeroFade(true); }, 500); }}
+          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+            i === heroIndex ? "bg-white scale-125" : "bg-white/40"
+          }`}
+        />
+      ))}
+    </div>
+
+    <div className="flex flex-col md:flex-row justify-center gap-4">
+      <button onClick={() => setView("student-login")} className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
+        Student Portal
+      </button>
+      <button onClick={() => setView("staff-login")} className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-semibold shadow-lg transition-colors">
+        Staff Portal
+      </button>
+    </div>
+  </div>
+</section>
       
       {currentPage === "Home" && (
         <>
