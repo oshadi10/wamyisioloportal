@@ -363,27 +363,33 @@ useEffect(() => {
 
    {/* HERO SECTION */}
 <section className="relative text-white overflow-hidden min-h-[550px] md:min-h-[650px] flex items-center">
-  
-  {/* Background Image */}
+
+  {/* Background */}
   <div className="absolute inset-0 z-0">
-  {/* Blurred background filler */}
-  <div
-    className="absolute inset-0 bg-cover bg-center scale-110"
-    style={{
-      backgroundImage: `url('${heroSlides[heroIndex].image}')`,
-      filter: "blur(12px) brightness(0.4)",
-    }}
-  />
+
+    {/* Blurred background — fills left/right gaps */}
+    <div
+      className="absolute inset-0 bg-cover bg-center scale-110"
+      style={{
+        backgroundImage: `url('${heroSlides[heroIndex].image}')`,
+        filter: "blur(12px) brightness(0.35)",
+        transition: "background-image 0.5s ease",
+      }}
+    />
+
+    {/* Clear full photo centered on top */}
     <img
       src={heroSlides[heroIndex].image}
       alt={heroSlides[heroIndex].title}
-      className="w-full h-full object-contain"
+      className="absolute inset-0 w-full h-full object-contain"
       style={{
         opacity: heroFade ? 1 : 0,
         transition: "opacity 0.5s ease",
       }}
     />
-    <div className="absolute inset-0 bg-black/30" />
+
+    {/* Light overlay for text readability */}
+    <div className="absolute inset-0 bg-black/20" />
   </div>
 
   {/* Hero Content */}
