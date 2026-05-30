@@ -54,7 +54,7 @@ useEffect(() => {
       setHeroIndex((prev) => (prev + 1) % heroSlides.length);
       setHeroFade(true);
     }, 500);
-  }, 4000);
+  }, 8000);
   return () => clearInterval(interval);
 }, []);
 
