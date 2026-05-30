@@ -21,6 +21,39 @@ import {
 type ViewType = "home" | "student-login" | "staff-login" | "student-portal" | "staff-portal";
 
 export default function SchoolPortal() {
+  // Add this near your other useState hooks at the top of SchoolPortal()
+const heroSlides = [
+  {
+    title: "WAMY Isiolo High School",
+    subtitle: "Excellence Through Education, Discipline & Leadership. Nurturing future leaders through quality education, Islamic values and holistic development.",
+  },
+  {
+    title: "Academic Excellence",
+    subtitle: "Offering 11 subjects including Mathematics, Sciences, Languages and more. Empowering students with knowledge for a brighter future.",
+  },
+  {
+    title: "Holistic Development",
+    subtitle: "Sports, Scouts, First Aid and outdoor activities build character, teamwork and resilience in every student.",
+  },
+  {
+    title: "Islamic Values & Leadership",
+    subtitle: "Grounded in faith and discipline, we produce graduates ready for success in this world and the hereafter.",
+  },
+];
+
+const [heroIndex, setHeroIndex] = useState(0);
+const [heroFade, setHeroFade] = useState(true);
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    setHeroFade(false);
+    setTimeout(() => {
+      setHeroIndex((prev) => (prev + 1) % heroSlides.length);
+      setHeroFade(true);
+    }, 500);
+  }, 4000);
+  return () => clearInterval(interval);
+}, []);
   const [view, setView] = useState<ViewType>("home");
   const [currentPage, setCurrentPage] = useState("Home");
   const [loggedInStudent, setLoggedInStudent] = useState<string | null>(null);
