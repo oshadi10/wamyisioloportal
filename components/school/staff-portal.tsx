@@ -108,8 +108,7 @@ export function StaffPortal({
   const isSameDay = attDate === SYSTEM_TODAY;
   
   // Combined access token evaluations
-  const canMarkAttendance = isClassTeacher && isSameDay && !isClassSubmitted;
-
+  const canMarkAttendance = isAdmin ? (isClassTeacher && isSameDay) : (isClassTeacher && isSameDay && !isClassSubmitted);
   // Render contextual warning messages in real-time inside our banner
   let lockBannerMessage = "";
   if (!isClassTeacher) {
