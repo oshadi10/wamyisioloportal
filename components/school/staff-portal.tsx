@@ -91,11 +91,20 @@ export function StaffPortal({
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
   const [isClassSubmitted, setIsClassSubmitted] = useState(false);
-
+  const [teacherLogs, setTeacherLogs] = useState<any[]>([]);
+  const [logDate, setLogDate] = useState(SYSTEM_TODAY);
+  const [timeIn, setTimeIn] = useState("");
+  const [timeOut, setTimeOut] = useState("");
+  const [logClass, setLogClass] = useState(classNames[0]);
+  const [logSubject, setLogSubject] = useState(lecturerSubjects[0]);
+  const [logTopic, setLogTopic] = useState("");
+  const [logNotes, setLogNotes] = useState("");
+  const [logSaving, setLogSaving] = useState(false);
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
     if (activeTab === "prefects") fetchPrefects();
+    if (activeTab === "mylog") fetchTeacherLogs();
   }, [activeTab, selectedClass, attDate]);
 
   // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
@@ -182,6 +191,40 @@ const handleSaveEdit = async () => {
     await fetchPrefects();
   }
   setEditingPrefectId(null);
+};
+  const fetchTeacherLogs = async () => {
+  const { data, error } = await supabase
+    .from("teacher_logs")
+    .select("*")
+    .order("log_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (!error && data) setTeacherLogs(data);
+};
+
+const handleSubmitLog = async () => {
+  if (!timeIn.trim() || !logTopic.trim()) { alert("Enter time in and topic taught."); return; }
+  setLogSaving(true);
+  const { error } = await supabase.from("teacher_logs").insert({
+    teacher_name: lecturer.name,
+    log_date: logDate,
+    time_in: timeIn,
+    time_out: timeOut || null,
+    class_name: logClass,
+    subject: logSubject,
+    topic_taught: logTopic,
+    notes: logNotes || null,
+  });
+  if (error) { alert("Failed to save log."); setLogSaving(false); return; }
+  setTimeIn(""); setTimeOut(""); setLogTopic(""); setLogNotes("");
+  setLogSaving(false);
+  fetchTeacherLogs();
+  alert("✓ Lesson log saved.");
+};
+
+const handleDeleteLog = async (id: string) => {
+  if (!confirm("Delete this log entry?")) return;
+  await supabase.from("teacher_logs").delete().eq("id", id);
+  fetchTeacherLogs();
 };
 
 // COMPONENT STATISTICAL METRIC CALCULATORS
@@ -524,6 +567,7 @@ const handleSaveEdit = async () => {
                   {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
                   <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
+                  <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
                 </TabsList>
 
                 {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
@@ -1208,6 +1252,141 @@ const handleSaveEdit = async () => {
       ))}
     </div>
   </TabsContent>
+                <TabsContent value="mylog" className="space-y-4">
+  <div className="flex items-center justify-between">
+    <h4 className="font-semibold text-sm text-slate-800">📋 My Lesson Log</h4>
+    <span className="text-xs text-muted-foreground">{lecturer.name}</span>
+  </div>
+
+  {/* LOG ENTRY FORM */}
+  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+    <h5 className="text-xs font-semibold text-blue-900">➕ Record Today's Entry</h5>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Date</Label>
+        <input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Class</Label>
+        <select value={logClass} onChange={(e) => setLogClass(e.target.value)}
+          className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+          {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+    </div>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Time In</Label>
+        <input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Time Out</Label>
+        <input type="time" value={timeOut} onChange={(e) => setTimeOut(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div>
+      <Label className="text-xs font-semibold">Subject</Label>
+      <select value={logSubject} onChange={(e) => setLogSubject(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+        {lecturerSubjects.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+    </div>
+    <div>
+      <Label className="text-xs font-semibold">Topic Taught</Label>
+      <input placeholder="e.g. Quadratic Equations" value={logTopic} onChange={(e) => setLogTopic(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <Label className="text-xs font-semibold">Notes (optional)</Label>
+      <textarea placeholder="e.g. Students struggled with factorisation..." value={logNotes} onChange={(e) => setLogNotes(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm min-h-[70px] bg-white" />
+    </div>
+    <Button onClick={handleSubmitLog} disabled={logSaving} className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+      <Plus className="h-4 w-4 mr-2" />{logSaving ? "Saving..." : "Save Log Entry"}
+    </Button>
+  </div>
+
+  {/* ADMIN VIEW — see all teachers */}
+  {isAdmin && (
+    <div className="space-y-2">
+      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">All Teacher Logs</h5>
+      {teacherLogs.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">No logs recorded yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {teacherLogs.map((log) => (
+            <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-800">{log.teacher_name}</span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground">{log.log_date}</span>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => handleDeleteLog(log.id)}
+                  className="text-destructive border-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  {log.class_name}
+                </span>
+                <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                  {log.subject}
+                </span>
+                <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
+                  ⏰ {log.time_in}{log.time_out ? ` → ${log.time_out}` : ""}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-slate-800">{log.topic_taught}</p>
+              {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* TEACHER VIEW — see only own logs */}
+  {!isAdmin && (
+    <div className="space-y-2">
+      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">My Recent Logs</h5>
+      {teacherLogs.filter(l => l.teacher_name === lecturer.name).length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">No logs recorded yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {teacherLogs.filter(l => l.teacher_name === lecturer.name).map((log) => (
+            <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{log.log_date}</span>
+                <Button size="sm" variant="outline" onClick={() => handleDeleteLog(log.id)}
+                  className="text-destructive border-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  {log.class_name}
+                </span>
+                <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                  {log.subject}
+                </span>
+                <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
+                  ⏰ {log.time_in}{log.time_out ? ` → ${log.time_out}` : ""}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-slate-800">{log.topic_taught}</p>
+              {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+</TabsContent>
 
 
               </Tabs>
