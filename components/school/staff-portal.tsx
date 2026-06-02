@@ -102,12 +102,24 @@ export function StaffPortal({
   const [logTopic, setLogTopic] = useState("");
   const [logNotes, setLogNotes] = useState("");
   const [logSaving, setLogSaving] = useState(false);
+  const [occurrences, setOccurrences] = useState<any[]>([]);
+  const [occDate, setOccDate] = useState(SYSTEM_TODAY);
+  const [occTime, setOccTime] = useState("");
+  const [occCategory, setOccCategory] = useState("discipline");
+  const [occTitle, setOccTitle] = useState("");
+  const [occDesc, setOccDesc] = useState("");
+  const [occAction, setOccAction] = useState("");
+  const [occStudents, setOccStudents] = useState("");
+  const [occSeverity, setOccSeverity] = useState("normal");
+  const [occSaving, setOccSaving] = useState(false);
+  const [occFilter, setOccFilter] = useState("all");
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
     if (activeTab === "prefects") fetchPrefects();
+    if (activeTab === "occurrence") fetchOccurrences();
   }, [activeTab, selectedClass, attDate]);
 
   // Dedicated effect listener monitoring date changes for teacher logs
@@ -234,6 +246,41 @@ export function StaffPortal({
     await supabase.from("teacher_logs").delete().eq("id", id);
     fetchTeacherLogs();
   };
+  const fetchOccurrences = async () => {
+  const { data, error } = await supabase
+    .from("daily_occurrence")
+    .select("*")
+    .order("log_date", { ascending: false })
+    .order("time_of_incident", { ascending: false });
+  if (!error && data) setOccurrences(data);
+};
+
+const handleSubmitOccurrence = async () => {
+  if (!occTitle.trim() || !occDesc.trim()) { alert("Enter title and description."); return; }
+  setOccSaving(true);
+  const { error } = await supabase.from("daily_occurrence").insert({
+    log_date: occDate,
+    tod_name: lecturer.name,
+    time_of_incident: occTime || null,
+    category: occCategory,
+    title: occTitle,
+    description: occDesc,
+    action_taken: occAction || null,
+    students_involved: occStudents || null,
+    severity: occSeverity,
+  });
+  if (error) { alert("Failed to save."); setOccSaving(false); return; }
+  setOccTitle(""); setOccDesc(""); setOccAction(""); setOccStudents(""); setOccTime("");
+  setOccSaving(false);
+  fetchOccurrences();
+  alert("✓ Occurrence recorded.");
+};
+
+const handleDeleteOccurrence = async (id: string) => {
+  if (!confirm("Delete this occurrence record?")) return;
+  await supabase.from("daily_occurrence").delete().eq("id", id);
+  fetchOccurrences();
+};
 
   // STATISTICAL METRIC CALCULATORS
   const calculateLiveClassCount = (className: string) => {
@@ -575,6 +622,7 @@ export function StaffPortal({
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
                   <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
+                  <TabsTrigger value="occurrence" className="flex-shrink-0 text-xs px-2 py-1.5">📖 Occurrence</TabsTrigger>
                 </TabsList>
 
                 {/* ATTENDANCE TAB PANEL */}
@@ -1397,6 +1445,200 @@ export function StaffPortal({
                     </div>
                   )}
                 </TabsContent>
+                <TabsContent value="occurrence" className="space-y-4">
+
+  {/* HEADER */}
+  <div className="flex items-center justify-between">
+    <div>
+      <h4 className="font-semibold text-sm text-slate-800">📖 Daily Occurrence Book</h4>
+      <p className="text-xs text-muted-foreground mt-0.5">Teacher on Duty (T.O.D) log</p>
+    </div>
+    <div className="text-right">
+      <p className="text-xs font-semibold text-slate-700">{lecturer.name}</p>
+      <p className="text-xs text-muted-foreground">T.O.D</p>
+    </div>
+  </div>
+
+  {/* ENTRY FORM */}
+  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+    <h5 className="text-xs font-semibold text-blue-900">➕ Record New Occurrence</h5>
+
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Date</Label>
+        <input type="date" value={occDate} onChange={(e) => setOccDate(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Time of Incident</Label>
+        <input type="time" value={occTime} onChange={(e) => setOccTime(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Category</Label>
+        <select value={occCategory} onChange={(e) => setOccCategory(e.target.value)}
+          className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+          <option value="discipline">⚠️ Discipline</option>
+          <option value="academic">📚 Academic</option>
+          <option value="health">🏥 Health / Medical</option>
+          <option value="security">🔒 Security</option>
+          <option value="property">🏫 School Property</option>
+          <option value="visitor">👤 Visitor</option>
+          <option value="general">📝 General</option>
+        </select>
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Severity</Label>
+        <select value={occSeverity} onChange={(e) => setOccSeverity(e.target.value)}
+          className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+          <option value="normal">🟢 Normal</option>
+          <option value="moderate">🟡 Moderate</option>
+          <option value="serious">🔴 Serious</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <Label className="text-xs font-semibold">Title / Heading</Label>
+      <input placeholder="e.g. Student found outside class during lesson"
+        value={occTitle} onChange={(e) => setOccTitle(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+    </div>
+
+    <div>
+      <Label className="text-xs font-semibold">Description</Label>
+      <textarea placeholder="Describe what happened in detail..."
+        value={occDesc} onChange={(e) => setOccDesc(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm min-h-[80px] bg-white" />
+    </div>
+
+    <div>
+      <Label className="text-xs font-semibold">Students Involved (optional)</Label>
+      <input placeholder="e.g. Bagayo Khalil, Casim Lope"
+        value={occStudents} onChange={(e) => setOccStudents(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+    </div>
+
+    <div>
+      <Label className="text-xs font-semibold">Action Taken (optional)</Label>
+      <textarea placeholder="e.g. Reported to class teacher, sent to principal..."
+        value={occAction} onChange={(e) => setOccAction(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm min-h-[60px] bg-white" />
+    </div>
+
+    <Button onClick={handleSubmitOccurrence} disabled={occSaving}
+      className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+      <Plus className="h-4 w-4 mr-2" />{occSaving ? "Saving..." : "Record Occurrence"}
+    </Button>
+  </div>
+
+  {/* FILTER & LIST */}
+  <div className="space-y-3">
+    <div className="flex items-center gap-2 flex-wrap">
+      <h5 className="text-xs font-semibold text-slate-700">
+        {isAdmin ? "All Occurrences" : "My Recorded Occurrences"}
+      </h5>
+      <select value={occFilter} onChange={(e) => setOccFilter(e.target.value)}
+        className="border rounded-md px-2 py-1 text-xs bg-white ml-auto">
+        <option value="all">All Categories</option>
+        <option value="discipline">Discipline</option>
+        <option value="academic">Academic</option>
+        <option value="health">Health</option>
+        <option value="security">Security</option>
+        <option value="property">School Property</option>
+        <option value="visitor">Visitor</option>
+        <option value="general">General</option>
+      </select>
+    </div>
+
+    {(() => {
+      const filtered = occurrences
+        .filter(o => isAdmin ? true : o.tod_name === lecturer.name)
+        .filter(o => occFilter === "all" ? true : o.category === occFilter);
+
+      if (filtered.length === 0) return (
+        <p className="text-xs text-muted-foreground italic">No occurrences recorded yet.</p>
+      );
+
+      // group by date
+      const grouped = filtered.reduce((acc, o) => {
+        if (!acc[o.log_date]) acc[o.log_date] = [];
+        acc[o.log_date].push(o);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      const severityColor = (s: string) =>
+        s === "serious" ? "bg-red-50 border-red-200" :
+        s === "moderate" ? "bg-yellow-50 border-yellow-200" :
+        "bg-white border-slate-200";
+
+      const severityBadge = (s: string) =>
+        s === "serious" ? "bg-red-100 text-red-700 border-red-200" :
+        s === "moderate" ? "bg-yellow-100 text-yellow-700 border-yellow-200" :
+        "bg-green-100 text-green-700 border-green-200";
+
+      const categoryIcon: Record<string, string> = {
+        discipline: "⚠️", academic: "📚", health: "🏥",
+        security: "🔒", property: "🏫", visitor: "👤", general: "📝"
+      };
+
+      return Object.entries(grouped).map(([date, entries]) => (
+        <div key={date} className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{date}</div>
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400">{entries.length} entr{entries.length === 1 ? "y" : "ies"}</span>
+          </div>
+          {entries.map((o) => (
+            <div key={o.id} className={`border rounded-lg p-4 shadow-sm space-y-2 ${severityColor(o.severity)}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base">{categoryIcon[o.category] || "📝"}</span>
+                  <span className="text-sm font-semibold text-slate-800">{o.title}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${severityBadge(o.severity)}`}>
+                    {o.severity}
+                  </span>
+                </div>
+                {(isAdmin || o.tod_name === lecturer.name) && (
+                  <Button size="sm" variant="outline" onClick={() => handleDeleteOccurrence(o.id)}
+                    className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
+                  👤 {o.tod_name}
+                </span>
+                {o.time_of_incident && (
+                  <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
+                    ⏰ {o.time_of_incident}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-700">{o.description}</p>
+              {o.students_involved && (
+                <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
+                  <span className="font-semibold text-slate-600">Students involved: </span>
+                  <span className="text-slate-700">{o.students_involved}</span>
+                </div>
+              )}
+              {o.action_taken && (
+                <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
+                  <span className="font-semibold text-slate-600">Action taken: </span>
+                  <span className="text-slate-700">{o.action_taken}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ));
+    })()}
+  </div>
+</TabsContent>
 
               </Tabs>
             </CardContent>
