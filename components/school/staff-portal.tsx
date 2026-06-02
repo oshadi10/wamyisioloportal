@@ -523,7 +523,7 @@ const handleSaveEdit = async () => {
                   {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
-                  {isAdmin && <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>}
+                  <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                 </TabsList>
 
                 {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
@@ -1101,7 +1101,7 @@ const handleSaveEdit = async () => {
                     </div>
                   </TabsContent>
                 )}
-                {isAdmin && (
+                
   <TabsContent value="prefects" className="space-y-4">
     <div className="flex items-center justify-between">
       <h4 className="font-semibold text-sm text-blue-900">🏅 Wamy High Prefects 2025 → 2026</h4>
@@ -1205,7 +1205,7 @@ const handleSaveEdit = async () => {
       ))}
     </div>
   </TabsContent>
-)}
+
 
               </Tabs>
             </CardContent>
