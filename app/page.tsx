@@ -235,7 +235,7 @@ useEffect(() => {
 
   // FIX: This variable is now declared before any portal conditional returns
   const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title 
-    || "📢 IDD-UL ADHA Break on 26th May, 2026. Wish you Idd Mubarak.";
+    || "📢 Mid-Term Exams will start on 21st June 2026.";
 
   if (view === "student-portal" && loggedInStudent) {
     return (
