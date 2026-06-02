@@ -100,6 +100,7 @@ export function StaffPortal({
   // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
  // This checking layer verifies class ownership by ID handle OR by text matching the logged-in name string
 const isClassTeacher = 
+  isAdmin ||
   CLASS_TEACHERS[selectedClass] === lecturer.id || 
   lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass]);
   const isSameDay = attDate === SYSTEM_TODAY;
