@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
@@ -27,7 +27,7 @@ interface StaffPortalProps {
   onUploadTermDate: (termRow: any) => void;
 }
 
-// Strict school registration master teacher assignment data map
+// Master Class-Teacher Mapping Configuration Registry
 const CLASS_TEACHERS: Record<string, string> = {
   "Form 3": "dennis",
   "Form 4": "guyo",
@@ -86,28 +86,37 @@ export function StaffPortal({
   const [docUploading, setDocUploading] = useState(false);
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
-  // DYNAMIC TRACKING STATE PARAMETERS (IMAGE_9B615F.PNG VIEW LEVEL MATCH)
+  // ==========================================
+  // ATTENDANCE & PREFECT MASTER ENGINE CODES
+  // ==========================================
   const SYSTEM_TODAY = "2026-06-02";
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
   const [isClassSubmitted, setIsClassSubmitted] = useState(false);
+  
+  // Prefect Dashboard Hook States
+  const [prefects, setPrefects] = useState<any[]>([]);
+  const [newPrefName, setNewPrefName] = useState("");
+  const [newPrefTitle, setNewPrefTitle] = useState("");
 
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
+    if (activeTab === "prefects") fetchPrefects();
   }, [activeTab, selectedClass, attDate]);
 
-  // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
- // This checking layer verifies class ownership by ID handle OR by text matching the logged-in name string
-const isClassTeacher = 
-  CLASS_TEACHERS[selectedClass] === lecturer.id || 
-  lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass]);
+  // Combined Teacher Identity Check (Checks session handles and matches name keywords fallback)
+  const isClassTeacher = 
+    CLASS_TEACHERS[selectedClass] === lecturer.id || 
+    lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass] || "");
+    
+  const isAdmin = lecturer.name === "Mr. Osman Halake";
   const isSameDay = attDate === SYSTEM_TODAY;
   
-  // Combined access token evaluations
+  // Security clearance for roll-marking operations
   const canMarkAttendance = isClassTeacher && isSameDay && !isClassSubmitted;
 
-  // Render contextual warning messages in real-time inside our banner
+  // Formulate dynamic locking explanation banners
   let lockBannerMessage = "";
   if (!isClassTeacher) {
     lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer.name}. Only the assigned Class Teacher can modify this register.`;
@@ -117,7 +126,7 @@ const isClassTeacher =
     lockBannerMessage = `🔒 LOGGED & LOCKED: Today's class registry is securely committed to cloud systems. Corrections or back-edits are prohibited.`;
   }
 
-  // COMPONENT STATISTICAL METRIC CALCULATORS
+  // Attendance Metric Counters
   const calculateLiveClassCount = (className: string) => {
     let presentCount = 0;
     classStudents[className]?.forEach(student => {
@@ -196,7 +205,6 @@ const isClassTeacher =
     
     data?.forEach((row: any) => {
       mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
-      // If any real record row values are active and confirmed, activate systemic corrections freeze flags
       if (row.am_status !== 'unmarked' || row.pm_status !== 'unmarked') {
         submittedMarker = true;
       }
@@ -253,6 +261,45 @@ const isClassTeacher =
     fetchAttendance();
   };
 
+  // Prefect Data Controllers
+  const fetchPrefects = async () => {
+    const { data, error } = await supabase
+      .from("school_prefects")
+      .select("*")
+      .order("display_order", { ascending: true });
+    if (!error && data) setPrefects(data);
+  };
+
+  const handleAddPrefect = async () => {
+    if (!isAdmin) return;
+    if (!newPrefName.trim() || !newPrefTitle.trim()) {
+      alert("Please fill out both fields.");
+      return;
+    }
+
+    const { error } = await supabase.from("school_prefects").insert({
+      student_name: newPrefName.trim(),
+      title: newPrefTitle.trim(),
+      display_order: prefects.length + 1
+    });
+
+    if (!error) {
+      setNewPrefName("");
+      setNewPrefTitle("");
+      fetchPrefects();
+    }
+  };
+
+  const handleDeletePrefect = async (id: string) => {
+    if (!isAdmin) return;
+    if (!confirm("Remove this student leadership assignment?")) return;
+    const { error } = await supabase.from("school_prefects").delete().eq("id", id);
+    if (!error) fetchPrefects();
+  };
+
+  // ==========================================
+  // CORE PORTAL COMPONENT METHODS
+  // ==========================================
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
   const handleClassChange = (className: string) => {
@@ -296,18 +343,6 @@ const isClassTeacher =
 
   const handleDeleteEvent = async (id: string) => {
     await supabase.from("events").delete().eq("id", id);
-  };
-
-  const fetchStudents = async () => {
-    const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
-    if (error) { console.error(error); return; }
-    setStudents(data || []);
-  };
-
-  const fetchStudentDocs = async (studentId: string) => {
-    const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", studentId).order("created_at", { ascending: false });
-    if (error) { console.error(error); return; }
-    setStudentDocs(data || []);
   };
 
   const handleRegisterStudent = async () => {
@@ -416,12 +451,11 @@ const isClassTeacher =
     return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
   };
 
-  const isAdmin = lecturer.name === "Mr. Osman Halake";
-
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
 
+        {/* SIDEBAR COMPONENT SELECTION LAYER */}
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -441,6 +475,7 @@ const isClassTeacher =
           </CardContent>
         </Card>
 
+        {/* MAIN PANEL CONTENT WINDOWS */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -448,6 +483,7 @@ const isClassTeacher =
                 <TabsList className="mb-4 flex flex-wrap gap-1 h-auto">
                   <TabsTrigger value="results" className="flex-shrink-0 text-xs px-2 py-1.5">Results</TabsTrigger>
                   <TabsTrigger value="attendance" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Attendance</TabsTrigger>
+                  <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="merit" className="flex-shrink-0 text-xs px-2 py-1.5">
                     <Trophy className="h-3 w-3 mr-1" />Merit List
                   </TabsTrigger>
@@ -458,10 +494,10 @@ const isClassTeacher =
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
                 </TabsList>
 
-                {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
+                {/* ATTENDANCE CONTROL LAYOUT (VISUAL ENGINE STYLING) */}
                 <TabsContent value="attendance" className="space-y-6">
                   
-                  {/* TOP CONTROL HUB */}
+                  {/* UPPER CONFIG BAR */}
                   <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-emerald-800">Target Date:</span>
@@ -475,9 +511,7 @@ const isClassTeacher =
 
                     <div className={cn(
                       "inline-flex items-center gap-1.5 text-xs font-mono tracking-wide px-3 py-1.5 rounded-full border font-semibold",
-                      canMarkAttendance 
-                        ? "bg-[#E8F5EE] border-emerald-300 text-[#006B3C]" 
-                        : "bg-[#FDF6E3] border-amber-300 text-[#C8992A]"
+                      canMarkAttendance ? "bg-[#E8F5EE] border-emerald-300 text-[#006B3C]" : "bg-[#FDF6E3] border-amber-300 text-[#C8992A]"
                     )}>
                       {canMarkAttendance ? "✏️ Editing Enabled" : "🔒 View Only"}
                     </div>
@@ -493,7 +527,7 @@ const isClassTeacher =
                     </div>
                   </div>
 
-                  {/* HIGH-LEVEL WIDGET DASHBOARD METRICS SUMMARY CARDS */}
+                  {/* VISUAL TILES RENDER LAYER */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 3</div>
@@ -531,7 +565,7 @@ const isClassTeacher =
                     </div>
                   </div>
 
-                  {/* STAGE HEADER BLOCK DISPLAY */}
+                  {/* ACTIVE TITLE AREA HEADER */}
                   <div className="space-y-2 pt-2">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <h2 className="font-serif text-2xl font-bold text-[#006B3C]">{selectedClass}</h2>
@@ -540,7 +574,7 @@ const isClassTeacher =
                       </span>
                     </div>
 
-                    {/* STRICT ENFORCEMENT BANNER LABELS */}
+                    {/* CONTEXT LOCK DOWN FEEDBACK BANNERS */}
                     {!canMarkAttendance && (
                       <div className="p-3 rounded-lg bg-[#FDF6E3] border border-amber-300 text-[#A0751A] text-xs font-medium">
                         {lockBannerMessage}
@@ -552,7 +586,7 @@ const isClassTeacher =
                     </div>
                   </div>
 
-                  {/* REGISTRATION LIVE DATA ROSTER GRID */}
+                  {/* INTERACTIVE COMPLIANCE ROSTER FRAME GRID */}
                   <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
                     <Table>
                       <TableHeader className="bg-slate-50">
@@ -572,7 +606,6 @@ const isClassTeacher =
                               <TableCell className="font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
                               <TableCell className="font-medium text-slate-700">{studentName}</TableCell>
                               
-                              {/* AM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "am")}
@@ -589,7 +622,6 @@ const isClassTeacher =
                                 </Button>
                               </TableCell>
 
-                              {/* PM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "pm")}
@@ -608,6 +640,97 @@ const isClassTeacher =
                             </TableRow>
                           );
                         })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
+                {/* PREFECTS COUNCIL MANAGEMENT VIEW (PRINCIPAL EDIT CLEARANCE ONLY) */}
+                <TabsContent value="prefects" className="space-y-6">
+                  <div className="flex flex-col gap-1 border-b pb-3">
+                    <h3 className="font-serif text-2xl font-bold text-[#006B3C]">Prefects Council Body 2025/2026</h3>
+                    <p className="text-xs text-muted-foreground">Official student leadership records for Wamy Isiolo High School.</p>
+                  </div>
+
+                  {isAdmin ? (
+                    <div className="p-4 rounded-xl border border-emerald-100 bg-white shadow-sm space-y-3">
+                      <h4 className="text-sm font-semibold text-emerald-900 flex items-center gap-1.5">
+                        <ShieldCheck className="h-4 w-4 text-[#006B3C]" /> Principal Management Board Panel
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs font-medium text-slate-600">Student Leader Full Name</Label>
+                          <input 
+                            placeholder="e.g. Alex Ogendi" 
+                            value={newPrefName} 
+                            onChange={(e) => setNewPrefName(e.target.value)} 
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#006B3C]" 
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-medium text-slate-600">Leadership Assignment Position / Title</Label>
+                          <input 
+                            placeholder="e.g. School Captain" 
+                            value={newPrefTitle} 
+                            onChange={(e) => setNewPrefTitle(e.target.value)} 
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#006B3C]" 
+                          />
+                        </div>
+                      </div>
+                      <Button onClick={handleAddPrefect} className="bg-[#006B3C] hover:bg-[#00502D] text-white font-medium text-xs">
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Append Student Leader
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-[#FDF6E3] border border-amber-300 text-[#A0751A] text-xs font-medium flex items-center gap-2">
+                      <span>🔒</span>
+                      <span>VIEW ONLY ACCESS: Authenticated as {lecturer.name}. Administration permissions are locked to the School Principal only.</span>
+                    </div>
+                  )}
+
+                  {/* Council Roster Framework Data Table */}
+                  <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="w-[60px]">#</TableHead>
+                          <TableHead>Student Name</TableHead>
+                          <TableHead>Assigned Office Position Title</TableHead>
+                          {isAdmin && <TableHead className="text-right w-[100px]">Actions</TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {prefects.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={isAdmin ? 4 : 3} className="text-center text-xs text-muted-foreground italic py-6">
+                              No records returned from storage. Fetching cluster database states...
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          prefects.map((pref, index) => (
+                            <TableRow key={pref.id} className="hover:bg-slate-50/40">
+                              <TableCell className="font-mono text-xs text-muted-foreground">{index + 1}</TableCell>
+                              <TableCell className="font-bold text-slate-800">{pref.student_name}</TableCell>
+                              <TableCell>
+                                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold bg-[#E8F5EE] text-[#006B3C] border border-emerald-100">
+                                  {pref.title}
+                                </span>
+                              </TableCell>
+                              {isAdmin && (
+                                <TableCell className="text-right">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleDeletePrefect(pref.id)}
+                                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              )}
+                            </TableRow>
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
