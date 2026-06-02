@@ -95,6 +95,7 @@ export function StaffPortal({
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
+    if (activeTab === "prefects") fetchPrefects();
   }, [activeTab, selectedClass, attDate]);
 
   // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
@@ -118,7 +119,72 @@ export function StaffPortal({
   } else if (isClassSubmitted) {
     lockBannerMessage = `🔒 LOGGED & LOCKED: Today's class registry is securely committed to cloud systems. Corrections or back-edits are prohibited.`;
   }
+   // PREFECTS STATE & HANDLERS
+const [prefects, setPrefects] = useState([
+  { id: "1", name: "Alex Ogendi", role: "School Captain" },
+  { id: "2", name: "Yahya Hassan", role: "Ass. Captain" },
+  { id: "3", name: "Ramadhan Ekwom", role: "D.H Captain" },
+  { id: "4", name: "Shahid Ali", role: "Entertainment Captain" },
+  { id: "5", name: "Galgesa Arigele", role: "Dormitory Captain" },
+  { id: "6", name: "Casim Lope", role: "Muslim League Chairman" },
+  { id: "7", name: "Abdi Ture", role: "Imam" },
+  { id: "8", name: "Dida Galma", role: "Environment Captain" },
+  { id: "9", name: "Mamo Godana", role: "Bell Ringer" },
+  { id: "10", name: "Abubakar Halkano", role: "Lab Captain" },
+  { id: "11", name: "Ramadhan Lepir", role: "Games Captain" },
+  { id: "12", name: "Bagayo Khalil", role: "Commander" },
+  { id: "13", name: "Ramadhan Sabls", role: "Patrol Leader" },
+  { id: "14", name: "Musa Mohammed", role: "Form 3 Prefect" },
+  { id: "15", name: "John Diyo", role: "Form 4 Prefect" },
+  { id: "16", name: "Abdinassir Ibrahim", role: "Grade 10 Prefect" },
+]);
+const [newPrefectName, setNewPrefectName] = useState("");
+const [newPrefectRole, setNewPrefectRole] = useState("");
+const [editingPrefectId, setEditingPrefectId] = useState<string | null>(null);
+const [editingName, setEditingName] = useState("");
+const [editingRole, setEditingRole] = useState("");
+const [prefectsSaving, setPrefectsSaving] = useState(false);
 
+const fetchPrefects = async () => {
+  const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
+  if (!error && data && data.length > 0) setPrefects(data);
+};
+
+const handleAddPrefect = async () => {
+  if (!newPrefectName.trim() || !newPrefectRole.trim()) { alert("Enter name and role."); return; }
+  setPrefectsSaving(true);
+  const { error } = await supabase.from("prefects").insert({ name: newPrefectName.trim(), role: newPrefectRole.trim() });
+  if (error) {
+    setPrefects(prev => [...prev, { id: Date.now().toString(), name: newPrefectName.trim(), role: newPrefectRole.trim() }]);
+  } else {
+    await fetchPrefects();
+  }
+  setNewPrefectName(""); setNewPrefectRole("");
+  setPrefectsSaving(false);
+};
+
+const handleDeletePrefect = async (id: string) => {
+  if (!confirm("Remove this prefect?")) return;
+  const { error } = await supabase.from("prefects").delete().eq("id", id);
+  if (error) {
+    setPrefects(prev => prev.filter(p => p.id !== id));
+  } else {
+    await fetchPrefects();
+  }
+};
+
+const handleSaveEdit = async () => {
+  if (!editingName.trim() || !editingRole.trim()) { alert("Enter name and role."); return; }
+  const { error } = await supabase.from("prefects").update({ name: editingName.trim(), role: editingRole.trim() }).eq("id", editingPrefectId);
+  if (error) {
+    setPrefects(prev => prev.map(p => p.id === editingPrefectId ? { ...p, name: editingName.trim(), role: editingRole.trim() } : p));
+  } else {
+    await fetchPrefects();
+  }
+  setEditingPrefectId(null);
+};
+
+// COMPONENT STATISTICAL METRIC CALCULATORS
   // COMPONENT STATISTICAL METRIC CALCULATORS
   const calculateLiveClassCount = (className: string) => {
     let presentCount = 0;
