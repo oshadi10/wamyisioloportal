@@ -1109,6 +1109,7 @@ const handleSaveEdit = async () => {
     </div>
 
     {/* ADD NEW PREFECT */}
+   {isAdmin && ( 
     <div className="border rounded-md p-4 bg-muted/30 space-y-3">
       <h5 className="text-xs font-semibold text-blue-900">➕ Add New Prefect</h5>
       <div className="grid grid-cols-2 gap-2">
@@ -1140,12 +1141,12 @@ const handleSaveEdit = async () => {
         {prefectsSaving ? "Saving..." : "Add Prefect"}
       </Button>
     </div>
-
+   )}
     {/* PREFECT LIST */}
     <div className="space-y-2">
       {prefects.map((p, i) => (
         <div key={p.id} className="border rounded-md bg-white shadow-sm overflow-hidden">
-          {editingPrefectId === p.id ? (
+          {editingPrefectId === p.id && isAdmin ? (
             <div className="p-3 space-y-2 bg-blue-50">
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -1181,6 +1182,7 @@ const handleSaveEdit = async () => {
                   <p className="text-xs text-muted-foreground">{p.role}</p>
                 </div>
               </div>
+            {isAdmin && (
               <div className="flex gap-2">
                 <Button
                   size="sm"
