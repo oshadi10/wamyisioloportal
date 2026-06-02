@@ -457,6 +457,7 @@ export function StaffPortal({
                   {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>}
                 </TabsList>
 
                 {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
@@ -1034,6 +1035,42 @@ export function StaffPortal({
                     </div>
                   </TabsContent>
                 )}
+                {isAdmin && (
+  <TabsContent value="prefects" className="space-y-4">
+    <h4 className="font-semibold text-sm text-blue-900">🏅 Wamy High Prefects 2025 → 2026</h4>
+    <p className="text-xs text-muted-foreground">Only the Principal can edit this list.</p>
+    <div className="space-y-2">
+      {[
+        { name: "Alex Ogendi", role: "School Captain" },
+        { name: "Yahya Hassan", role: "Ass. Captain" },
+        { name: "Ramadhan Ekwom", role: "D.H Captain" },
+        { name: "Shahid Ali", role: "Entertainment Captain" },
+        { name: "Galgesa Arigele", role: "Dormitory Captain" },
+        { name: "Casim Lope", role: "Muslim League Chairman" },
+        { name: "Abdi Ture", role: "Imam" },
+        { name: "Dida Galma", role: "Environment Captain" },
+        { name: "Mamo Godana", role: "Bell Ringer" },
+        { name: "Abubakar Halkano", role: "Lab Captain" },
+        { name: "Ramadhan Lepir", role: "Games Captain" },
+        { name: "Bagayo Khalil", role: "Commander" },
+        { name: "Ramadhan Sabls", role: "Patrol Leader" },
+        { name: "Musa Mohammed", role: "Form 3 Prefect" },
+        { name: "John Diyo", role: "Form 4 Prefect" },
+        { name: "Abdinassir Ibrahim", role: "Grade 10 Prefect" },
+      ].map((p, i) => (
+        <div key={i} className="flex items-center justify-between border rounded-md px-4 py-2.5 bg-white shadow-sm">
+          <div>
+            <p className="text-sm font-semibold text-slate-800">{p.name}</p>
+            <p className="text-xs text-muted-foreground">{p.role}</p>
+          </div>
+          <span className="text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full">
+            #{i + 1}
+          </span>
+        </div>
+      ))}
+    </div>
+  </TabsContent>
+)}
 
               </Tabs>
             </CardContent>
