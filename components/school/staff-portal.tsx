@@ -43,7 +43,9 @@ export function StaffPortal({
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
   const [selectedStudent, setSelectedStudent] = useState(classStudents[classNames[0]][0]);
   const [activeTab, setActiveTab] = useState("results");
-  const lecturerSubjects = lecturer?.subject ? lecturer.subject.split(" / ") : [];
+
+  // Safe parsing for profiles without standard subject definitions (e.g., Principal/Admin)
+  const lecturerSubjects = lecturer?.subject ? lecturer.subject.split(" / ") : ["General"];
   const [newSubject, setNewSubject] = useState(lecturerSubjects[0] || "");
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
@@ -968,7 +970,7 @@ export function StaffPortal({
                   </TabsContent>
                 )}
 
-                {/* REVENUE REGISTER STUDENT PROFILES */}
+                {/* STUDENT MANAGEMENT / PROFILE REGISTRATION */}
                 {isAdmin && (
                   <TabsContent value="students" className="space-y-6">
                     <div className="border rounded-md p-4 bg-muted/30 space-y-3">
