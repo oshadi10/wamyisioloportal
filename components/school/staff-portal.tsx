@@ -99,7 +99,9 @@ export function StaffPortal({
 
   // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
  // This checking layer verifies class ownership by ID handle OR by text matching the logged-in name string
-const isClassTeacher = 
+  const isAdmin = lecturer.name === "Mr. Osman Halake";
+
+  const isClassTeacher = 
   isAdmin ||
   CLASS_TEACHERS[selectedClass] === lecturer.id || 
   lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass]);
@@ -417,8 +419,7 @@ const isClassTeacher =
     return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
   };
 
-  const isAdmin = lecturer.name === "Mr. Osman Halake";
-
+  
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
