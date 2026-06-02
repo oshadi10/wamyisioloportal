@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Trophy, Calendar, FileText } from "lucide-react";
+import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
@@ -26,6 +26,13 @@ interface StaffPortalProps {
   onDeleteTimetable: (id: string) => void;
   onUploadTermDate: (termRow: any) => void;
 }
+
+// Map class keys cleanly to lecturer login handles
+const CLASS_TEACHERS: Record<string, string> = {
+  "Form 3": "dennis",
+  "Form 4": "guyo",
+  "Grade 10": "selina",
+};
 
 export function StaffPortal({
   lecturer, results, fees, onUploadResult, onDeleteResult, onUpdateFees,
@@ -79,9 +86,69 @@ export function StaffPortal({
   const [docUploading, setDocUploading] = useState(false);
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
+  // NEW ATTENDANCE STATES
+  const SYSTEM_TODAY = "2026-06-02";
+  const [attDate, setAttDate] = useState(SYSTEM_TODAY);
+  const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
+
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
-  }, [activeTab]);
+    if (activeTab === "attendance") fetchAttendance();
+  }, [activeTab, selectedClass, attDate]);
+
+  // Check gatekeeper access criteria
+  const isClassTeacher = CLASS_TEACHERS[selectedClass] === lecturer.id;
+  const isAdmin = lecturer.name === "Mr. Osman Halake";
+  const isSameDay = attDate === SYSTEM_TODAY;
+  const canMarkAttendance = (isAdmin || isClassTeacher) && isSameDay;
+
+  const fetchAttendance = async () => {
+    const { data, error } = await supabase
+      .from("student_attendance")
+      .select("*")
+      .eq("log_date", attDate)
+      .eq("class_name", selectedClass);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    const mapped: Record<string, { am: string; pm: string }> = {};
+    data?.forEach((row: any) => {
+      mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
+    });
+    setAttRecords(mapped);
+  };
+
+  const handleToggleAttendance = async (studentName: string, session: "am" | "pm") => {
+    if (!canMarkAttendance) return;
+
+    const currentPair = attRecords[studentName] || { am: "unmarked", pm: "unmarked" };
+    const currentStatus = currentPair[session];
+    
+    let nextStatus = "unmarked";
+    if (currentStatus === "unmarked") nextStatus = "present";
+    else if (currentStatus === "present") nextStatus = "absent";
+
+    const updatedPair = { ...currentPair, [session]: nextStatus };
+    
+    // Optimistic UI state update
+    setAttRecords(prev => ({ ...prev, [studentName]: updatedPair }));
+
+    const { error } = await supabase.from("student_attendance").upsert({
+      log_date: attDate,
+      class_name: selectedClass,
+      student_name: studentName,
+      am_status: updatedPair.am,
+      pm_status: updatedPair.pm,
+    }, { onConflict: "log_date,student_name" });
+
+    if (error) {
+      alert("Failed to sync attendance to cloud storage.");
+      fetchAttendance(); // Revert to database truth
+    }
+  };
 
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
@@ -274,16 +341,103 @@ export function StaffPortal({
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4 flex flex-wrap gap-1 h-auto">
-  <TabsTrigger value="results" className="flex-shrink-0 text-xs px-2 py-1.5">Results</TabsTrigger>
-  <TabsTrigger value="merit" className="flex-shrink-0 text-xs px-2 py-1.5">
-    <Trophy className="h-3 w-3 mr-1" />Merit List
-  </TabsTrigger>
-  <TabsTrigger value="materials" className="flex-shrink-0 text-xs px-2 py-1.5">📚 Materials</TabsTrigger>
-  <TabsTrigger value="timetables" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Timetables</TabsTrigger>
-  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
-  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
-  {lecturer.name === "Mr. Osman Halake" && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
-</TabsList>
+                  <TabsTrigger value="results" className="flex-shrink-0 text-xs px-2 py-1.5">Results</TabsTrigger>
+                  <TabsTrigger value="attendance" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Attendance</TabsTrigger>
+                  <TabsTrigger value="merit" className="flex-shrink-0 text-xs px-2 py-1.5">
+                    <Trophy className="h-3 w-3 mr-1" />Merit List
+                  </TabsTrigger>
+                  <TabsTrigger value="materials" className="flex-shrink-0 text-xs px-2 py-1.5">📚 Materials</TabsTrigger>
+                  <TabsTrigger value="timetables" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Timetables</TabsTrigger>
+                  {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
+                </TabsList>
+
+                {/* ATTENDANCE TAB */}
+                <TabsContent value="attendance" className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+                    <div>
+                      <h3 className="font-semibold text-lg text-slate-800">Daily Attendance Control</h3>
+                      <p className="text-xs text-muted-foreground">Class: {selectedClass} · Configured Teacher ID: {CLASS_TEACHERS[selectedClass] || "None"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs font-medium whitespace-nowrap">Target Date:</Label>
+                      <input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} className="border rounded-md px-2 py-1 text-sm bg-white font-mono" />
+                    </div>
+                  </div>
+
+                  {/* Dynamic Guardrail Banner System */}
+                  {!canMarkAttendance && (
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>
+                        {!isSameDay 
+                          ? `LOCKED: Attendance is configured for strict Same-Day logging. Modifying historical rows (${attDate}) is disabled.` 
+                          : `VIEW ONLY: You are authenticated as ${lecturer.name}. Only the assigned Class Teacher can modify this register.`
+                        }
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="w-[60px]">#</TableHead>
+                          <TableHead>Student Name</TableHead>
+                          <TableHead className="text-center w-[160px]">Morning (AM)</TableHead>
+                          <TableHead className="text-center w-[160px]">Afternoon (PM)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {classStudents[selectedClass].map((studentName, idx) => {
+                          const pair = attRecords[studentName] || { am: "unmarked", pm: "unmarked" };
+                          
+                          return (
+                            <TableRow key={studentName} className="hover:bg-slate-50/50">
+                              <TableCell className="font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
+                              <TableCell className="font-medium text-slate-700">{studentName}</TableCell>
+                              
+                              {/* AM Slot */}
+                              <TableCell className="text-center">
+                                <Button size="sm" variant="ghost" 
+                                  onClick={() => handleToggleAttendance(studentName, "am")}
+                                  disabled={!canMarkAttendance}
+                                  className={cn("w-28 gap-1.5 text-xs font-medium border transition-all", 
+                                    pair.am === 'present' && "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+                                    pair.am === 'absent' && "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100",
+                                    pair.am === 'unmarked' && "text-slate-400 border-dashed border-slate-200 hover:bg-slate-50"
+                                  )}>
+                                  {pair.am === 'present' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                                  {pair.am === 'absent' && <XCircle className="h-3.5 w-3.5" />}
+                                  {pair.am === 'unmarked' && <HelpCircle className="h-3.5 w-3.5" />}
+                                  {pair.am.toUpperCase()}
+                                </Button>
+                              </TableCell>
+
+                              {/* PM Slot */}
+                              <TableCell className="text-center">
+                                <Button size="sm" variant="ghost" 
+                                  onClick={() => handleToggleAttendance(studentName, "pm")}
+                                  disabled={!canMarkAttendance}
+                                  className={cn("w-28 gap-1.5 text-xs font-medium border transition-all", 
+                                    pair.pm === 'present' && "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+                                    pair.pm === 'absent' && "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100",
+                                    pair.pm === 'unmarked' && "text-slate-400 border-dashed border-slate-200 hover:bg-slate-50"
+                                  )}>
+                                  {pair.pm === 'present' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                                  {pair.pm === 'absent' && <XCircle className="h-3.5 w-3.5" />}
+                                  {pair.pm === 'unmarked' && <HelpCircle className="h-3.5 w-3.5" />}
+                                  {pair.pm.toUpperCase()}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
 
                 {/* RESULTS TAB */}
                 <TabsContent value="results" className="space-y-4">
@@ -457,7 +611,7 @@ export function StaffPortal({
 
                 {/* TIMETABLES TAB */}
                 <TabsContent value="timetables" className="space-y-6">
-                  {lecturer.name === "Mr. Osman Halake" && (
+                  {isAdmin && (
                     <div className="space-y-3 border rounded-md p-4 bg-muted/30">
                       <h4 className="font-medium text-sm flex items-center gap-2"><Calendar className="h-4 w-4 text-blue-600" />Upload New Timetable</h4>
                       <select value={ttType} onChange={(e) => setTtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
@@ -486,7 +640,7 @@ export function StaffPortal({
                             <p className="font-semibold text-slate-900">{t.title}</p>
                             <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
                           </div>
-                          {lecturer.name === "Mr. Osman Halake" && (
+                          {isAdmin && (
                             <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/10 flex items-center gap-1">
                               <Trash2 className="h-3 w-3" /> Delete
                             </Button>
@@ -517,7 +671,7 @@ export function StaffPortal({
                             <p className="font-semibold text-slate-900">{t.title}</p>
                             <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
                           </div>
-                          {lecturer.name === "Mr. Osman Halake" && (
+                          {isAdmin && (
                             <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/10 flex items-center gap-1">
                               <Trash2 className="h-3 w-3" /> Delete
                             </Button>
@@ -537,7 +691,7 @@ export function StaffPortal({
                       </div>
                     ))}
                   </div>
-                  {lecturer.name === "Mr. Osman Halake" && (
+                  {isAdmin && (
                     <div className="space-y-3 border rounded-md p-4 bg-slate-50/50 mt-6">
                       <h4 className="font-semibold text-sm text-blue-950">⚙️ Feed Public Calendar Dates to Homepage</h4>
                       <p className="text-xs text-muted-foreground">Update the visual calendar on the homepage for Term 2.</p>
@@ -567,7 +721,7 @@ export function StaffPortal({
                 </TabsContent>
 
                 {/* FEES TAB */}
-                {lecturer.name === "Mr. Osman Halake" && (
+                {isAdmin && (
                   <TabsContent value="fees" className="space-y-4">
                     <h4 className="font-medium text-sm">Update Fees</h4>
                     <div className="space-y-3">
@@ -588,7 +742,7 @@ export function StaffPortal({
                 )}
 
                 {/* EVENTS TAB */}
-                {lecturer.name === "Mr. Osman Halake" && (
+                {isAdmin && (
                   <TabsContent value="events" className="space-y-4">
                     <h4 className="font-medium text-sm">Post New Announcement / Event / Notice</h4>
                     <div className="space-y-2">
@@ -608,7 +762,7 @@ export function StaffPortal({
                 )}
 
                 {/* STUDENTS TAB */}
-                {lecturer.name === "Mr. Osman Halake" && (
+                {isAdmin && (
                   <TabsContent value="students" className="space-y-6">
                     <div className="border rounded-md p-4 bg-muted/30 space-y-3">
                       <h4 className="font-semibold text-sm text-blue-900">🎓 Register New Student</h4>
