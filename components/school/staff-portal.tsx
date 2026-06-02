@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle, ShieldCheck } from "lucide-react";
+import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
@@ -27,7 +27,7 @@ interface StaffPortalProps {
   onUploadTermDate: (termRow: any) => void;
 }
 
-// Master Class-Teacher Mapping Configuration Registry
+// Strict school registration master teacher assignment data map
 const CLASS_TEACHERS: Record<string, string> = {
   "Form 3": "dennis",
   "Form 4": "guyo",
@@ -43,10 +43,8 @@ export function StaffPortal({
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
   const [selectedStudent, setSelectedStudent] = useState(classStudents[classNames[0]][0]);
   const [activeTab, setActiveTab] = useState("results");
-
-  // Safe parsing for profiles without standard subject definitions (e.g., Principal/Admin)
-  const lecturerSubjects = lecturer?.subject ? lecturer.subject.split(" / ") : ["General"];
-  const [newSubject, setNewSubject] = useState(lecturerSubjects[0] || "");
+  const lecturerSubjects = lecturer.subject.split(" / ");
+  const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
   const [newTerm, setNewTerm] = useState("Term 1, 2026");
@@ -55,7 +53,7 @@ export function StaffPortal({
   const [matTitle, setMatTitle] = useState("");
   const [matDesc, setMatDesc] = useState("");
   const [matClass, setMatClass] = useState(classNames[0]);
-  const [matSubject, setMatSubject] = useState(lecturerSubjects[0] || "");
+  const [matSubject, setMatSubject] = useState(lecturerSubjects[0]);
   const [matContent, setMatContent] = useState("");
   const [matFile, setMatFile] = useState<File | null>(null);
   const [matUploading, setMatUploading] = useState(false);
@@ -88,48 +86,38 @@ export function StaffPortal({
   const [docUploading, setDocUploading] = useState(false);
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
-  // ==========================================
-  // ATTENDANCE & PREFECT MASTER ENGINE STATES
-  // ==========================================
+  // DYNAMIC TRACKING STATE PARAMETERS (IMAGE_9B615F.PNG VIEW LEVEL MATCH)
   const SYSTEM_TODAY = "2026-06-02";
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
   const [isClassSubmitted, setIsClassSubmitted] = useState(false);
-  
-  // Prefect Dashboard Hook States
-  const [prefects, setPrefects] = useState<any[]>([]);
-  const [newPrefName, setNewPrefName] = useState("");
-  const [newPrefTitle, setNewPrefTitle] = useState("");
 
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
-    if (activeTab === "prefects") fetchPrefects();
   }, [activeTab, selectedClass, attDate]);
 
-  // SAFE SESSION IDENTITY FALLBACK EVALUATIONS (CRASH PROTECTED)
-  const isClassTeacher = 
-    lecturer?.id && CLASS_TEACHERS[selectedClass] 
-      ? CLASS_TEACHERS[selectedClass] === lecturer.id || lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass])
-      : false;
-      
-  const isAdmin = lecturer?.name ? lecturer.name === "Mr. Osman Halake" : false;
+  // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
+ // This checking layer verifies class ownership by ID handle OR by text matching the logged-in name string
+const isClassTeacher = 
+  CLASS_TEACHERS[selectedClass] === lecturer.id || 
+  lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass]);
   const isSameDay = attDate === SYSTEM_TODAY;
   
-  // Security clearance logic engine for roll-marking operations
+  // Combined access token evaluations
   const canMarkAttendance = isClassTeacher && isSameDay && !isClassSubmitted;
 
-  // Formulate dynamic locking explanation banners
+  // Render contextual warning messages in real-time inside our banner
   let lockBannerMessage = "";
   if (!isClassTeacher) {
-    lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer?.name || "Guest"}. Only the assigned Class Teacher can modify this register.`;
+    lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer.name}. Only the assigned Class Teacher can modify this register.`;
   } else if (!isSameDay) {
     lockBannerMessage = `🔒 LOCKED: Attendance tracking is configured for strict Same-Day logging. Modifying row frames for ${attDate} is restricted.`;
   } else if (isClassSubmitted) {
     lockBannerMessage = `🔒 LOGGED & LOCKED: Today's class registry is securely committed to cloud systems. Corrections or back-edits are prohibited.`;
   }
 
-  // Attendance Metric Counters
+  // COMPONENT STATISTICAL METRIC CALCULATORS
   const calculateLiveClassCount = (className: string) => {
     let presentCount = 0;
     classStudents[className]?.forEach(student => {
@@ -208,6 +196,7 @@ export function StaffPortal({
     
     data?.forEach((row: any) => {
       mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
+      // If any real record row values are active and confirmed, activate systemic corrections freeze flags
       if (row.am_status !== 'unmarked' || row.pm_status !== 'unmarked') {
         submittedMarker = true;
       }
@@ -264,45 +253,6 @@ export function StaffPortal({
     fetchAttendance();
   };
 
-  // Prefect Data Controllers
-  const fetchPrefects = async () => {
-    const { data, error } = await supabase
-      .from("school_prefects")
-      .select("*")
-      .order("display_order", { ascending: true });
-    if (!error && data) setPrefects(data);
-  };
-
-  const handleAddPrefect = async () => {
-    if (!isAdmin) return;
-    if (!newPrefName.trim() || !newPrefTitle.trim()) {
-      alert("Please fill out both fields.");
-      return;
-    }
-
-    const { error } = await supabase.from("school_prefects").insert({
-      student_name: newPrefName.trim(),
-      title: newPrefTitle.trim(),
-      display_order: prefects.length + 1
-    });
-
-    if (!error) {
-      setNewPrefName("");
-      setNewPrefTitle("");
-      fetchPrefects();
-    }
-  };
-
-  const handleDeletePrefect = async (id: string) => {
-    if (!isAdmin) return;
-    if (!confirm("Remove this student leadership assignment?")) return;
-    const { error } = await supabase.from("school_prefects").delete().eq("id", id);
-    if (!error) fetchPrefects();
-  };
-
-  // ==========================================
-  // CORE PORTAL COMPONENT METHODS
-  // ==========================================
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
   const handleClassChange = (className: string) => {
@@ -348,6 +298,59 @@ export function StaffPortal({
     await supabase.from("events").delete().eq("id", id);
   };
 
+  const fetchStudents = async () => {
+    const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
+    if (error) { console.error(error); return; }
+    setStudents(data || []);
+  };
+
+  const fetchStudentDocs = async (studentId: string) => {
+    const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", studentId).order("created_at", { ascending: false });
+    if (error) { console.error(error); return; }
+    setStudentDocs(data || []);
+  };
+
+  const handleRegisterStudent = async () => {
+    if (!stdName.trim() || !stdAdmNo.trim()) { alert("Enter student name and admission number."); return; }
+    setStdRegistering(true);
+    const { error } = await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmNo, parent_contact: stdParent });
+    if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
+    alert(`${stdName} registered successfully!`);
+    setStdName(""); setStdAdmNo(""); setStdParent("");
+    setStdRegistering(false);
+    fetchStudents();
+  };
+
+  const handleDeleteStudent = async (id: string) => {
+    if (!confirm("Delete this student and all their documents?")) return;
+    await supabase.from("students").delete().eq("id", id);
+    fetchStudents();
+    setSelectedStudentId(null);
+    setStudentDocs([]);
+  };
+
+  const handleUploadDoc = async () => {
+    if (!selectedStudentId) { alert("Select a student first."); return; }
+    if (!docFile) { alert("Select a file to upload."); return; }
+    setDocUploading(true);
+    const filePath = `${selectedStudentId}/${Date.now()}_${docFile.name}`;
+    const { error: uploadError } = await supabase.storage.from("student-documents").upload(filePath, docFile);
+    if (uploadError) { alert("Upload failed."); setDocUploading(false); return; }
+    const { data } = supabase.storage.from("student-documents").getPublicUrl(filePath);
+    const { error: insertError } = await supabase.from("student_documents").insert({
+      student_id: selectedStudentId, document_name: docType, document_type: docType, file_url: data.publicUrl, file_name: docFile.name,
+    });
+    if (insertError) { alert("Failed to save document."); setDocUploading(false); return; }
+    alert("Document uploaded!");
+    setDocFile(null); setDocUploading(false);
+    fetchStudentDocs(selectedStudentId);
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    await supabase.from("student_documents").delete().eq("id", id);
+    if (selectedStudentId) fetchStudentDocs(selectedStudentId);
+  };
+
   const handlePostMaterial = async () => {
     if (!matTitle.trim()) { alert("Enter a title."); return; }
     setMatUploading(true);
@@ -359,7 +362,7 @@ export function StaffPortal({
       const { data } = supabase.storage.from("materials").getPublicUrl(filePath);
       file_url = data.publicUrl; file_name = matFile.name;
     }
-    onPostMaterial({ title: matTitle, description: matDesc, subject: matSubject, class_name: matClass, teacher_name: lecturer?.name || "Teacher", type: matFile ? "file" : "text", content: matContent, file_url, file_name });
+    onPostMaterial({ title: matTitle, description: matDesc, subject: matSubject, class_name: matClass, teacher_name: lecturer.name, type: matFile ? "file" : "text", content: matContent, file_url, file_name });
     setMatTitle(""); setMatDesc(""); setMatContent(""); setMatFile(null); setMatUploading(false);
   };
 
@@ -388,17 +391,37 @@ export function StaffPortal({
     } catch (e) { console.error(e); alert("Something went wrong."); }
   };
 
-  const fetchStudents = async () => {
-    const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
-    if (error) { console.error(error); return; }
-    setStudents(data || []);
+  const getMeritList = () => {
+    return classStudents[meritClass].map((student) => {
+      const r = results.filter((r) => r.student === student && r.term === meritTerm);
+      const totalMarks = r.reduce((sum, r) => sum + r.marks, 0);
+      const subjects = r.length;
+      const average = subjects > 0 ? Math.round((totalMarks / subjects) * 10) / 10 : 0;
+      const overallGrade = subjects > 0 ? (meritClass === 'Grade 10' ? getGrade10Grade(average) : getGrade(average)) : "-";
+      return { student, totalMarks, subjects, average, overallGrade };
+    }).filter((s) => s.subjects > 0).sort((a, b) => b.totalMarks - a.totalMarks);
   };
+
+  const meritList = getMeritList();
+  const resultsByTerm = studentResults.reduce((acc, r) => {
+    const t = r.term || "Unknown Term";
+    if (!acc[t]) acc[t] = [];
+    acc[t].push(r);
+    return acc;
+  }, {} as Record<string, Result[]>);
+
+  const isImageFile = (fileName: string) => {
+    if (!fileName) return false;
+    const n = fileName.toLowerCase();
+    return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
+  };
+
+  const isAdmin = lecturer.name === "Mr. Osman Halake";
 
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
 
-        {/* SIDEBAR NAVIGATION LIST */}
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -407,7 +430,7 @@ export function StaffPortal({
               <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
             <div className="max-h-[400px] overflow-y-auto space-y-1">
-              {(classStudents[selectedClass] || []).map((student) => (
+              {classStudents[selectedClass].map((student) => (
                 <button key={student} onClick={() => handleStudentSelect(student)}
                   className={cn("w-full text-left px-3 py-2 text-sm rounded-md border transition-colors",
                     student === selectedStudent ? "bg-[#e6f1fb] border-[#378add] text-[#0c447c]" : "border-border hover:bg-muted")}>
@@ -418,7 +441,6 @@ export function StaffPortal({
           </CardContent>
         </Card>
 
-        {/* MAIN MODULE DISPLAY LAYER */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -426,7 +448,6 @@ export function StaffPortal({
                 <TabsList className="mb-4 flex flex-wrap gap-1 h-auto">
                   <TabsTrigger value="results" className="flex-shrink-0 text-xs px-2 py-1.5">Results</TabsTrigger>
                   <TabsTrigger value="attendance" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Attendance</TabsTrigger>
-                  <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="merit" className="flex-shrink-0 text-xs px-2 py-1.5">
                     <Trophy className="h-3 w-3 mr-1" />Merit List
                   </TabsTrigger>
@@ -437,10 +458,10 @@ export function StaffPortal({
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
                 </TabsList>
 
-                {/* ATTENDANCE CONTROL LAYOUT */}
+                {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
                 <TabsContent value="attendance" className="space-y-6">
                   
-                  {/* UPPER CONFIGURATION HUB */}
+                  {/* TOP CONTROL HUB */}
                   <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-emerald-800">Target Date:</span>
@@ -454,7 +475,9 @@ export function StaffPortal({
 
                     <div className={cn(
                       "inline-flex items-center gap-1.5 text-xs font-mono tracking-wide px-3 py-1.5 rounded-full border font-semibold",
-                      canMarkAttendance ? "bg-[#E8F5EE] border-emerald-300 text-[#006B3C]" : "bg-[#FDF6E3] border-amber-300 text-[#C8992A]"
+                      canMarkAttendance 
+                        ? "bg-[#E8F5EE] border-emerald-300 text-[#006B3C]" 
+                        : "bg-[#FDF6E3] border-amber-300 text-[#C8992A]"
                     )}>
                       {canMarkAttendance ? "✏️ Editing Enabled" : "🔒 View Only"}
                     </div>
@@ -470,7 +493,7 @@ export function StaffPortal({
                     </div>
                   </div>
 
-                  {/* VISUAL TILES RATE STATS */}
+                  {/* HIGH-LEVEL WIDGET DASHBOARD METRICS SUMMARY CARDS */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 3</div>
@@ -508,7 +531,7 @@ export function StaffPortal({
                     </div>
                   </div>
 
-                  {/* SUB HEADER LABELS */}
+                  {/* STAGE HEADER BLOCK DISPLAY */}
                   <div className="space-y-2 pt-2">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <h2 className="font-serif text-2xl font-bold text-[#006B3C]">{selectedClass}</h2>
@@ -517,7 +540,7 @@ export function StaffPortal({
                       </span>
                     </div>
 
-                    {/* CONTEXT BANNER WARNING LOGIC */}
+                    {/* STRICT ENFORCEMENT BANNER LABELS */}
                     {!canMarkAttendance && (
                       <div className="p-3 rounded-lg bg-[#FDF6E3] border border-amber-300 text-[#A0751A] text-xs font-medium">
                         {lockBannerMessage}
@@ -529,7 +552,7 @@ export function StaffPortal({
                     </div>
                   </div>
 
-                  {/* ACTIVE STUDENT ROSTER REGISTER TABLE */}
+                  {/* REGISTRATION LIVE DATA ROSTER GRID */}
                   <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
                     <Table>
                       <TableHeader className="bg-slate-50">
@@ -549,6 +572,7 @@ export function StaffPortal({
                               <TableCell className="font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
                               <TableCell className="font-medium text-slate-700">{studentName}</TableCell>
                               
+                              {/* AM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "am")}
@@ -565,6 +589,7 @@ export function StaffPortal({
                                 </Button>
                               </TableCell>
 
+                              {/* PM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "pm")}
@@ -588,98 +613,7 @@ export function StaffPortal({
                   </div>
                 </TabsContent>
 
-                {/* PREFECTS COUNCIL BODY OVERVIEW MODULE */}
-                <TabsContent value="prefects" className="space-y-6">
-                  <div className="flex flex-col gap-1 border-b pb-3">
-                    <h3 className="font-serif text-2xl font-bold text-[#006B3C]">Prefects Council Body 2025/2026</h3>
-                    <p className="text-xs text-muted-foreground">Official student leadership records for Wamy Isiolo High School.</p>
-                  </div>
-
-                  {isAdmin ? (
-                    <div className="p-4 rounded-xl border border-emerald-100 bg-white shadow-sm space-y-3">
-                      <h4 className="text-sm font-semibold text-emerald-900 flex items-center gap-1.5">
-                        <ShieldCheck className="h-4 w-4 text-[#006B3C]" /> Principal Management Board Panel
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs font-medium text-slate-600">Student Leader Full Name</Label>
-                          <input 
-                            placeholder="e.g. Alex Ogendi" 
-                            value={newPrefName} 
-                            onChange={(e) => setNewPrefName(e.target.value)} 
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#006B3C]" 
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs font-medium text-slate-600">Leadership Assignment Position / Title</Label>
-                          <input 
-                            placeholder="e.g. School Captain" 
-                            value={newPrefTitle} 
-                            onChange={(e) => setNewPrefTitle(e.target.value)} 
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-[#006B3C]" 
-                          />
-                        </div>
-                      </div>
-                      <Button onClick={handleAddPrefect} className="bg-[#006B3C] hover:bg-[#00502D] text-white font-medium text-xs">
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Append Student Leader
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="p-3 rounded-lg bg-[#FDF6E3] border border-amber-300 text-[#A0751A] text-xs font-medium flex items-center gap-2">
-                      <span>🔒</span>
-                      <span>VIEW ONLY ACCESS: Authenticated as {lecturer?.name || "Guest"}. Administration permissions are locked to the School Principal only.</span>
-                    </div>
-                  )}
-
-                  {/* Council Leaders Table */}
-                  <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
-                    <Table>
-                      <TableHeader className="bg-slate-50">
-                        <TableRow>
-                          <TableHead className="w-[60px]">#</TableHead>
-                          <TableHead>Student Name</TableHead>
-                          <TableHead>Assigned Office Position Title</TableHead>
-                          {isAdmin && <TableHead className="text-right w-[100px]">Actions</TableHead>}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prefects.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={isAdmin ? 4 : 3} className="text-center text-xs text-muted-foreground italic py-6">
-                              No records returned from storage. Fetching cluster database states...
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          prefects.map((pref, index) => (
-                            <TableRow key={pref.id} className="hover:bg-slate-50/40">
-                              <TableCell className="font-mono text-xs text-muted-foreground">{index + 1}</TableCell>
-                              <TableCell className="font-bold text-slate-800">{pref.student_name}</TableCell>
-                              <TableCell>
-                                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold bg-[#E8F5EE] text-[#006B3C] border border-emerald-100">
-                                  {pref.title}
-                                </span>
-                              </TableCell>
-                              {isAdmin && (
-                                <TableCell className="text-right">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => handleDeletePrefect(pref.id)}
-                                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              )}
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-
-                {/* RESULTS MANAGEMENT TAB */}
+                {/* RESULTS TAB */}
                 <TabsContent value="results" className="space-y-4">
                   <p className="text-sm text-muted-foreground mb-4">Selected: <span className="font-medium text-foreground">{selectedStudent}</span> - {selectedClass}</p>
                   <div className="space-y-3">
@@ -737,7 +671,7 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                {/* MERIT LIST ACCORDION PANEL */}
+                {/* MERIT LIST TAB */}
                 <TabsContent value="merit" className="space-y-4">
                   <h4 className="font-medium text-sm flex items-center gap-2"><Trophy className="h-4 w-4 text-yellow-500" />Class Merit List</h4>
                   <div className="flex gap-2">
@@ -804,7 +738,7 @@ export function StaffPortal({
                   })() : <p className="text-sm text-muted-foreground">No results found for {meritClass} — {meritTerm}.</p>}
                 </TabsContent>
 
-                {/* MATERIALS TAB NOTES */}
+                {/* MATERIALS TAB */}
                 <TabsContent value="materials" className="space-y-4">
                   <h4 className="font-medium text-sm">Post New Material</h4>
                   <div className="space-y-2">
@@ -830,11 +764,11 @@ export function StaffPortal({
                     </Button>
                   </div>
                   <h4 className="font-medium text-sm mt-4">Posted Materials</h4>
-                  {materials.filter((m) => m.teacher_name === lecturer?.name).length === 0 ? (
+                  {materials.filter((m) => m.teacher_name === lecturer.name).length === 0 ? (
                     <p className="text-sm text-muted-foreground">No materials posted yet.</p>
                   ) : (
                     <div className="space-y-2">
-                      {materials.filter((m) => m.teacher_name === lecturer?.name).map((m) => (
+                      {materials.filter((m) => m.teacher_name === lecturer.name).map((m) => (
                         <div key={m.id} className="border rounded-md p-3 space-y-1 bg-white">
                           <div className="flex items-center justify-between">
                             <p className="font-medium text-sm">{m.title}</p>
@@ -849,7 +783,7 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                {/* TIMETABLES ACCORDION SHEET */}
+                {/* TIMETABLES TAB */}
                 <TabsContent value="timetables" className="space-y-6">
                   {isAdmin && (
                     <div className="space-y-3 border rounded-md p-4 bg-muted/30">
@@ -874,6 +808,37 @@ export function StaffPortal({
                     {timetables.filter((t) => t.type === "teaching").length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">No teaching timetables posted.</p>
                     ) : timetables.filter((t) => t.type === "teaching").map((t) => (
+                      <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{t.title}</p>
+                            <p className="text-xs text-muted-foreground">{t.term} · {new Date(t.created_at).toLocaleDateString()}</p>
+                          </div>
+                          {isAdmin && (
+                            <Button variant="outline" size="sm" onClick={() => onDeleteTimetable(t.id)} className="text-destructive border-destructive hover:bg-destructive/10 flex items-center gap-1">
+                              <Trash2 className="h-3 w-3" /> Delete
+                            </Button>
+                          )}
+                        </div>
+                        {isImageFile(t.file_name) ? (
+                          <div className="border rounded-md overflow-hidden bg-slate-50 p-2 flex justify-center max-h-[700px]">
+                            <img src={t.file_url} alt={t.title} className="object-contain max-w-full h-auto rounded-md shadow-sm" loading="eager" />
+                          </div>
+                        ) : (
+                          <div className="border rounded-md bg-slate-50 p-4 flex flex-col items-center justify-center text-center space-y-2 min-h-[200px]">
+                            <FileText className="h-10 w-10 text-slate-400" />
+                            <div className="text-sm font-medium text-slate-700">{t.file_name}</div>
+                            <a href={t.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline font-medium">View Document</a>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-4 pt-4">
+                    <h4 className="font-semibold text-base text-slate-800 border-b pb-1">Exam Timetables</h4>
+                    {timetables.filter((t) => t.type === "exam").length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">No exam timetables posted.</p>
+                    ) : timetables.filter((t) => t.type === "exam").map((t) => (
                       <div key={t.id} className="border rounded-lg bg-white p-4 shadow-sm space-y-3">
                         <div className="flex items-center justify-between border-b pb-2">
                           <div>
@@ -929,7 +894,7 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                {/* FEES VIEW SHEET LAYOUT */}
+                {/* FEES TAB */}
                 {isAdmin && (
                   <TabsContent value="fees" className="space-y-4">
                     <h4 className="font-medium text-sm">Update Fees</h4>
@@ -950,7 +915,7 @@ export function StaffPortal({
                   </TabsContent>
                 )}
 
-                {/* ANNOUNCEMENTS EVENTS MODULE SHEET */}
+                {/* EVENTS TAB */}
                 {isAdmin && (
                   <TabsContent value="events" className="space-y-4">
                     <h4 className="font-medium text-sm">Post New Announcement / Event / Notice</h4>
@@ -970,7 +935,7 @@ export function StaffPortal({
                   </TabsContent>
                 )}
 
-                {/* STUDENT MANAGEMENT / PROFILE REGISTRATION */}
+                {/* STUDENTS TAB */}
                 {isAdmin && (
                   <TabsContent value="students" className="space-y-6">
                     <div className="border rounded-md p-4 bg-muted/30 space-y-3">
@@ -998,8 +963,73 @@ export function StaffPortal({
                         </div>
                       </div>
                       <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
-                        <Plus className="h-4 w-4 mr-2" /> Register Student
+                        <Plus className="h-4 w-4 mr-2" />{stdRegistering ? "Registering..." : "Register Student"}
                       </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-slate-800 border-b pb-1">Registered Students</h4>
+                      <Button onClick={fetchStudents} variant="outline" className="text-xs">🔄 Refresh List</Button>
+                      {students.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic">No students registered yet. Click Refresh.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {students.map((s) => (
+                            <div key={s.id}
+                              className={`border rounded-lg p-4 bg-white shadow-sm space-y-3 cursor-pointer transition-colors ${selectedStudentId === s.id ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50"}`}
+                              onClick={() => { setSelectedStudentId(s.id); fetchStudentDocs(s.id); }}>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-semibold text-slate-900">{s.name}</p>
+                                  <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name} · 📞 {s.parent_contact || "N/A"}</p>
+                                </div>
+                                <Button variant="outline" size="sm"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteStudent(s.id); }}
+                                  className="text-destructive border-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              {selectedStudentId === s.id && (
+                                <div className="space-y-3 border-t pt-3">
+                                  <h5 className="text-xs font-semibold text-slate-700">📎 Documents</h5>
+                                  <div className="space-y-2 bg-slate-50 rounded-md p-3">
+                                    <select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                                      <option>Birth Certificate</option>
+                                      <option>JSS Result Slip</option>
+                                      <option>Transfer Letter</option>
+                                      <option>Medical Certificate</option>
+                                      <option>Parent ID Copy</option>
+                                      <option>Other</option>
+                                    </select>
+                                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="text-sm" />
+                                    {docFile && <p className="text-xs text-green-600">Selected: {docFile.name}</p>}
+                                    <Button onClick={handleUploadDoc} disabled={docUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm">
+                                      {docUploading ? "Uploading..." : "Upload Document"}
+                                    </Button>
+                                  </div>
+                                  {studentDocs.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground italic">No documents uploaded yet.</p>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {studentDocs.map((doc) => (
+                                        <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
+                                          <div>
+                                            <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
+                                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{doc.file_name}</a>
+                                          </div>
+                                          <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)} className="text-destructive border-destructive hover:bg-destructive/10">
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                 )}
