@@ -27,6 +27,7 @@ interface StaffPortalProps {
   onUploadTermDate: (termRow: any) => void;
 }
 
+// Strict school registration master teacher assignment data map
 const CLASS_TEACHERS: Record<string, string> = {
   "Form 3": "dennis",
   "Form 4": "guyo",
@@ -85,22 +86,35 @@ export function StaffPortal({
   const [docUploading, setDocUploading] = useState(false);
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
-  // VISUAL MATCH ENGINE FOR IMAGE_9B615F.PNG
+  // DYNAMIC TRACKING STATE PARAMETERS (IMAGE_9B615F.PNG VIEW LEVEL MATCH)
   const SYSTEM_TODAY = "2026-06-02";
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
+  const [isClassSubmitted, setIsClassSubmitted] = useState(false);
 
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
   }, [activeTab, selectedClass, attDate]);
 
+  // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
   const isClassTeacher = CLASS_TEACHERS[selectedClass] === lecturer.id;
-  const isAdmin = lecturer.name === "Mr. Osman Halake";
   const isSameDay = attDate === SYSTEM_TODAY;
-  const canMarkAttendance = (isAdmin || isClassTeacher) && isSameDay;
+  
+  // Combined access token evaluations
+  const canMarkAttendance = isClassTeacher && isSameDay && !isClassSubmitted;
 
-  // VISUAL METRICS CALCULATORS FOR SUMMARY TILES
+  // Render contextual warning messages in real-time inside our banner
+  let lockBannerMessage = "";
+  if (!isClassTeacher) {
+    lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer.name}. Only the assigned Class Teacher can modify this register.`;
+  } else if (!isSameDay) {
+    lockBannerMessage = `🔒 LOCKED: Attendance tracking is configured for strict Same-Day logging. Modifying row frames for ${attDate} is restricted.`;
+  } else if (isClassSubmitted) {
+    lockBannerMessage = `🔒 LOGGED & LOCKED: Today's class registry is securely committed to cloud systems. Corrections or back-edits are prohibited.`;
+  }
+
+  // COMPONENT STATISTICAL METRIC CALCULATORS
   const calculateLiveClassCount = (className: string) => {
     let presentCount = 0;
     classStudents[className]?.forEach(student => {
@@ -159,34 +173,7 @@ export function StaffPortal({
       if (record.am === 'present') p++; else if (record.am === 'absent') a++; else u++;
       if (record.pm === 'present') p++; else if (record.pm === 'absent') a++; else u++;
     });
-    return `${Math.round(p/2)} present, ${Math.round(a/2)} absent, ${Math.round(u/2)} not marked`;
-  };
-
-  const handleMarkAllGroup = async (status: 'present' | 'absent') => {
-    if (!canMarkAttendance) return;
-    const updated = { ...attRecords };
-    const currentStudents = classStudents[selectedClass] || [];
-    
-    currentStudents.forEach(student => {
-      updated[student] = { am: status, pm: status };
-    });
-    setAttRecords(updated);
-
-    // Save batch updates smoothly to cloud layer
-    for (const student of currentStudents) {
-      await supabase.from("student_attendance").upsert({
-        log_date: attDate,
-        class_name: selectedClass,
-        student_name: student,
-        am_status: status,
-        pm_status: status,
-      }, { onConflict: "log_date,student_name" });
-    }
-    showAttendanceToast();
-  };
-
-  const showAttendanceToast = () => {
-    alert("✓ Attendance dashboard securely synchronized with cloud infrastructure.");
+    return `${p} present, ${a} absent, ${u} not marked`;
   };
 
   const fetchAttendance = async () => {
@@ -202,13 +189,21 @@ export function StaffPortal({
     }
 
     const mapped: Record<string, { am: string; pm: string }> = {};
+    let submittedMarker = false;
+    
     data?.forEach((row: any) => {
       mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
+      // If any real record row values are active and confirmed, activate systemic corrections freeze flags
+      if (row.am_status !== 'unmarked' || row.pm_status !== 'unmarked') {
+        submittedMarker = true;
+      }
     });
+    
     setAttRecords(mapped);
+    setIsClassSubmitted(submittedMarker);
   };
 
-  const handleToggleAttendance = async (studentName: string, session: "am" | "pm") => {
+  const handleToggleAttendance = (studentName: string, session: "am" | "pm") => {
     if (!canMarkAttendance) return;
 
     const currentPair = attRecords[studentName] || { am: "unmarked", pm: "unmarked" };
@@ -218,21 +213,41 @@ export function StaffPortal({
     if (currentStatus === "unmarked") nextStatus = "present";
     else if (currentStatus === "present") nextStatus = "absent";
 
-    const updatedPair = { ...currentPair, [session]: nextStatus };
-    setAttRecords(prev => ({ ...prev, [studentName]: updatedPair }));
+    setAttRecords(prev => ({
+      ...prev,
+      [studentName]: { ...currentPair, [session]: nextStatus }
+    }));
+  };
 
-    const { error } = await supabase.from("student_attendance").upsert({
-      log_date: attDate,
-      class_name: selectedClass,
-      student_name: studentName,
-      am_status: updatedPair.am,
-      pm_status: updatedPair.pm,
-    }, { onConflict: "log_date,student_name" });
+  const handleMarkAllGroup = (status: 'present' | 'absent') => {
+    if (!canMarkAttendance) return;
+    const updated = { ...attRecords };
+    classStudents[selectedClass].forEach(student => {
+      updated[student] = { am: status, pm: status };
+    });
+    setAttRecords(updated);
+  };
 
-    if (error) {
-      alert("Failed to sync attendance to cloud storage.");
-      fetchAttendance();
+  const handleFinalSubmissionLock = async () => {
+    if (!canMarkAttendance) return;
+    if (!confirm("⚠️ WARNING: Submitting this form secures the roll framework. Changes or corrections are final and cannot be altered. Propose update?")) return;
+
+    const currentStudents = classStudents[selectedClass] || [];
+    
+    for (const student of currentStudents) {
+      const pair = attRecords[student] || { am: "unmarked", pm: "unmarked" };
+      await supabase.from("student_attendance").upsert({
+        log_date: attDate,
+        class_name: selectedClass,
+        student_name: student,
+        am_status: pair.am,
+        pm_status: pair.pm,
+      }, { onConflict: "log_date,student_name" });
     }
+
+    setIsClassSubmitted(true);
+    alert("✓ Register securely committed. Corrections lockout algorithm is now active.");
+    fetchAttendance();
   };
 
   const studentResults = results.filter((r) => r.student === selectedStudent);
@@ -398,6 +413,8 @@ export function StaffPortal({
     return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
   };
 
+  const isAdmin = lecturer.name === "Mr. Osman Halake";
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
@@ -438,10 +455,10 @@ export function StaffPortal({
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
                 </TabsList>
 
-                {/* ATTENDANCE TAB - MATCHES IMAGE_9B615F.PNG */}
+                {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
                 <TabsContent value="attendance" className="space-y-6">
                   
-                  {/* TOP CONTROL BOARD */}
+                  {/* TOP CONTROL HUB */}
                   <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-emerald-800">Target Date:</span>
@@ -454,7 +471,7 @@ export function StaffPortal({
                     </div>
 
                     <div className={cn(
-                      "inline-flex items-center gap-1.5 text-xs font-mono tracking-wide px-3 py-1.5 rounded-full border font-medium",
+                      "inline-flex items-center gap-1.5 text-xs font-mono tracking-wide px-3 py-1.5 rounded-full border font-semibold",
                       canMarkAttendance 
                         ? "bg-[#E8F5EE] border-emerald-300 text-[#006B3C]" 
                         : "bg-[#FDF6E3] border-amber-300 text-[#C8992A]"
@@ -467,13 +484,13 @@ export function StaffPortal({
                         <>
                           <Button variant="outline" size="sm" onClick={() => handleMarkAllGroup('present')} className="border-emerald-200 hover:bg-emerald-50 text-emerald-800 font-medium">✓ All Present</Button>
                           <Button variant="outline" size="sm" onClick={() => handleMarkAllGroup('absent')} className="border-rose-200 hover:bg-rose-50 text-rose-800 font-medium">✗ All Absent</Button>
-                          <Button size="sm" onClick={showAttendanceToast} className="bg-[#C8992A] hover:bg-[#b8891f] text-white font-medium flex items-center gap-1">💾 Save</Button>
+                          <Button size="sm" onClick={handleFinalSubmissionLock} className="bg-[#C8992A] hover:bg-[#b8891f] text-white font-medium flex items-center gap-1">💾 Save</Button>
                         </>
                       )}
                     </div>
                   </div>
 
-                  {/* HIGH-LEVEL STATISTICS SUMMARY WIDGET CARDS */}
+                  {/* HIGH-LEVEL WIDGET DASHBOARD METRICS SUMMARY CARDS */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 3</div>
@@ -505,13 +522,13 @@ export function StaffPortal({
                     <div className="bg-[#FDF6E3] border border-[#C8992A]/30 rounded-xl p-5 shadow-sm">
                       <div className="text-[10px] font-mono tracking-wider text-[#A0751A] uppercase font-bold mb-2">School-Wide Rate</div>
                       <div className="font-serif text-3xl font-bold text-[#C8992A]">{calculateSchoolWidePct()}%</div>
-                      <div className="text-[10px] text-[#A0751A] mt-1 font-mono uppercase font-medium">
+                      <div className="text-[10px] text-[#A0751A] mt-1 font-mono uppercase font-bold">
                         TUE, 2 JUN · {calculateSchoolWidePresent()} of 69 present
                       </div>
                     </div>
                   </div>
 
-                  {/* ACTIVE TITLE AREA */}
+                  {/* STAGE HEADER BLOCK DISPLAY */}
                   <div className="space-y-2 pt-2">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <h2 className="font-serif text-2xl font-bold text-[#006B3C]">{selectedClass}</h2>
@@ -519,13 +536,20 @@ export function StaffPortal({
                         {selectedClass === 'Grade 10' ? 'CBC' : '8-4-4'} · {classStudents[selectedClass]?.length || 0} students · TUE, 2 JUN: {getClassBreakdownStr()}
                       </span>
                     </div>
+
+                    {/* STRICT ENFORCEMENT BANNER LABELS */}
+                    {!canMarkAttendance && (
+                      <div className="p-3 rounded-lg bg-[#FDF6E3] border border-amber-300 text-[#A0751A] text-xs font-medium">
+                        {lockBannerMessage}
+                      </div>
+                    )}
                     
-                    <div className="inline-flex items-center gap-1 bg-[#E8F5EE] border border-emerald-200 text-[#006B3C] font-mono text-xs px-3 py-1 rounded-full font-medium">
+                    <div className="inline-flex items-center gap-1 bg-[#E8F5EE] border border-emerald-200 text-[#006B3C] font-mono text-xs px-3 py-1 rounded-full font-semibold">
                       👤 {CLASS_TEACHERS[selectedClass] === 'dennis' ? 'Mr. Dennis Kipkoech' : CLASS_TEACHERS[selectedClass] === 'guyo' ? 'Mr. Guyo Halake' : 'Madam Selina Ewoi'}
                     </div>
                   </div>
 
-                  {/* DATA TABLE GRID */}
+                  {/* REGISTRATION LIVE DATA ROSTER GRID */}
                   <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
                     <Table>
                       <TableHeader className="bg-slate-50">
@@ -545,11 +569,12 @@ export function StaffPortal({
                               <TableCell className="font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
                               <TableCell className="font-medium text-slate-700">{studentName}</TableCell>
                               
+                              {/* AM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "am")}
                                   disabled={!canMarkAttendance}
-                                  className={cn("w-28 gap-1.5 text-xs font-mono tracking-wider border transition-all font-semibold", 
+                                  className={cn("w-28 gap-1.5 text-xs font-mono tracking-wider border transition-all font-bold", 
                                     pair.am === 'present' && "bg-[#E8F5EE] text-[#006B3C] border-emerald-200 hover:bg-emerald-100",
                                     pair.am === 'absent' && "bg-[#FDECEA] text-[#C0392B] border-rose-200 hover:bg-rose-100",
                                     pair.am === 'unmarked' && "text-slate-400 border-dashed border-slate-200 hover:bg-slate-50"
@@ -561,11 +586,12 @@ export function StaffPortal({
                                 </Button>
                               </TableCell>
 
+                              {/* PM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "pm")}
                                   disabled={!canMarkAttendance}
-                                  className={cn("w-28 gap-1.5 text-xs font-mono tracking-wider border transition-all font-semibold", 
+                                  className={cn("w-28 gap-1.5 text-xs font-mono tracking-wider border transition-all font-bold", 
                                     pair.pm === 'present' && "bg-[#E8F5EE] text-[#006B3C] border-emerald-200 hover:bg-emerald-100",
                                     pair.pm === 'absent' && "bg-[#FDECEA] text-[#C0392B] border-rose-200 hover:bg-rose-100",
                                     pair.pm === 'unmarked' && "text-slate-400 border-dashed border-slate-200 hover:bg-slate-50"
