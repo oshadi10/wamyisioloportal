@@ -43,8 +43,10 @@ export function StaffPortal({
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
   const [selectedStudent, setSelectedStudent] = useState(classStudents[classNames[0]][0]);
   const [activeTab, setActiveTab] = useState("results");
-  const lecturerSubjects = lecturer.subject.split(" / ");
-  const [newSubject, setNewSubject] = useState(lecturerSubjects[0]);
+  
+  // Crash protection logic for admin profiles without standard teaching lines
+  const lecturerSubjects = lecturer?.subject ? lecturer.subject.split(" / ") : ["General"];
+  const [newSubject, setNewSubject] = useState(lecturerSubjects[0] || "");
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
   const [newTerm, setNewTerm] = useState("Term 1, 2026");
@@ -53,7 +55,7 @@ export function StaffPortal({
   const [matTitle, setMatTitle] = useState("");
   const [matDesc, setMatDesc] = useState("");
   const [matClass, setMatClass] = useState(classNames[0]);
-  const [matSubject, setMatSubject] = useState(lecturerSubjects[0]);
+  const [matSubject, setMatSubject] = useState(lecturerSubjects[0] || "");
   const [matContent, setMatContent] = useState("");
   const [matFile, setMatFile] = useState<File | null>(null);
   const [matUploading, setMatUploading] = useState(false);
@@ -86,7 +88,7 @@ export function StaffPortal({
   const [docUploading, setDocUploading] = useState(false);
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
-  // DYNAMIC TRACKING STATE PARAMETERS (IMAGE_9B615F.PNG VIEW LEVEL MATCH)
+  // DYNAMIC TRACKING STATE PARAMETERS
   const SYSTEM_TODAY = "2026-06-02";
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
@@ -96,139 +98,144 @@ export function StaffPortal({
   const [timeIn, setTimeIn] = useState("");
   const [timeOut, setTimeOut] = useState("");
   const [logClass, setLogClass] = useState(classNames[0]);
-  const [logSubject, setLogSubject] = useState(lecturerSubjects[0]);
+  const [logSubject, setLogSubject] = useState(lecturerSubjects[0] || "");
   const [logTopic, setLogTopic] = useState("");
   const [logNotes, setLogNotes] = useState("");
   const [logSaving, setLogSaving] = useState(false);
+
+  // Auto-fetch hook dependencies map
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
     if (activeTab === "attendance") fetchAttendance();
     if (activeTab === "prefects") fetchPrefects();
-    if (activeTab === "mylog") fetchTeacherLogs();
   }, [activeTab, selectedClass, attDate]);
 
-  // STAGE 1 RULE ENGINE: EVALUATING ACTIVE PRIVILEGES & SUBMISSION LOCKOUTS
- // This checking layer verifies class ownership by ID handle OR by text matching the logged-in name string
-  const isAdmin = lecturer.name === "Mr. Osman Halake";
+  // Dedicated effect listener monitoring date changes for teacher logs
+  useEffect(() => {
+    if (activeTab === "mylog") fetchTeacherLogs();
+  }, [activeTab, logDate]);
+
+  const isAdmin = lecturer?.name === "Mr. Osman Halake";
 
   const isClassTeacher = 
-  isAdmin ||
-  CLASS_TEACHERS[selectedClass] === lecturer.id || 
-  lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass]);
+    isAdmin ||
+    (lecturer?.id && CLASS_TEACHERS[selectedClass] === lecturer.id) || 
+    (lecturer?.name && lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass] || ""));
+    
   const isSameDay = attDate === SYSTEM_TODAY;
-  
-  // Combined access token evaluations
   const canMarkAttendance = isAdmin ? (isClassTeacher && isSameDay) : (isClassTeacher && isSameDay && !isClassSubmitted);
-  // Render contextual warning messages in real-time inside our banner
+  
   let lockBannerMessage = "";
   if (!isClassTeacher) {
-    lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer.name}. Only the assigned Class Teacher can modify this register.`;
+    lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer?.name || "Guest"}. Only the assigned Class Teacher can modify this register.`;
   } else if (!isSameDay) {
     lockBannerMessage = `🔒 LOCKED: Attendance tracking is configured for strict Same-Day logging. Modifying row frames for ${attDate} is restricted.`;
   } else if (isClassSubmitted) {
     lockBannerMessage = `🔒 LOGGED & LOCKED: Today's class registry is securely committed to cloud systems. Corrections or back-edits are prohibited.`;
   }
-   // PREFECTS STATE & HANDLERS
-const [prefects, setPrefects] = useState([
-  { id: "1", name: "Alex Ogendi", role: "School Captain" },
-  { id: "2", name: "Yahya Hassan", role: "Ass. Captain" },
-  { id: "3", name: "Ramadhan Ekwom", role: "D.H Captain" },
-  { id: "4", name: "Shahid Ali", role: "Entertainment Captain" },
-  { id: "5", name: "Galgesa Arigele", role: "Dormitory Captain" },
-  { id: "6", name: "Casim Lope", role: "Muslim League Chairman" },
-  { id: "7", name: "Abdi Ture", role: "Imam" },
-  { id: "8", name: "Dida Galma", role: "Environment Captain" },
-  { id: "9", name: "Mamo Godana", role: "Bell Ringer" },
-  { id: "10", name: "Abubakar Halkano", role: "Lab Captain" },
-  { id: "11", name: "Ramadhan Lepir", role: "Games Captain" },
-  { id: "12", name: "Bagayo Khalil", role: "Commander" },
-  { id: "13", name: "Ramadhan Sabls", role: "Patrol Leader" },
-  { id: "14", name: "Musa Mohammed", role: "Form 3 Prefect" },
-  { id: "15", name: "John Diyo", role: "Form 4 Prefect" },
-  { id: "16", name: "Abdinassir Ibrahim", role: "Grade 10 Prefect" },
-]);
-const [newPrefectName, setNewPrefectName] = useState("");
-const [newPrefectRole, setNewPrefectRole] = useState("");
-const [editingPrefectId, setEditingPrefectId] = useState<string | null>(null);
-const [editingName, setEditingName] = useState("");
-const [editingRole, setEditingRole] = useState("");
-const [prefectsSaving, setPrefectsSaving] = useState(false);
 
-const fetchPrefects = async () => {
-  const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
-  if (!error && data && data.length > 0) setPrefects(data);
-};
+  // PREFECTS STATE & HANDLERS
+  const [prefects, setPrefects] = useState([
+    { id: "1", name: "Alex Ogendi", role: "School Captain" },
+    { id: "2", name: "Yahya Hassan", role: "Ass. Captain" },
+    { id: "3", name: "Ramadhan Ekwom", role: "D.H Captain" },
+    { id: "4", name: "Shahid Ali", role: "Entertainment Captain" },
+    { id: "5", name: "Galgesa Arigele", role: "Dormitory Captain" },
+    { id: "6", name: "Casim Lope", role: "Muslim League Chairman" },
+    { id: "7", name: "Abdi Ture", role: "Imam" },
+    { id: "8", name: "Dida Galma", role: "Environment Captain" },
+    { id: "9", name: "Mamo Godana", role: "Bell Ringer" },
+    { id: "10", name: "Abubakar Halkano", role: "Lab Captain" },
+    { id: "11", name: "Ramadhan Lepir", role: "Games Captain" },
+    { id: "12", name: "Bagayo Khalil", role: "Commander" },
+    { id: "13", name: "Ramadhan Sabls", role: "Patrol Leader" },
+    { id: "14", name: "Musa Mohammed", role: "Form 3 Prefect" },
+    { id: "15", name: "John Diyo", role: "Form 4 Prefect" },
+    { id: "16", name: "Abdinassir Ibrahim", role: "Grade 10 Prefect" },
+  ]);
+  const [newPrefectName, setNewPrefectName] = useState("");
+  const [newPrefectRole, setNewPrefectRole] = useState("");
+  const [editingPrefectId, setEditingPrefectId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingRole, setEditingRole] = useState("");
+  const [prefectsSaving, setPrefectsSaving] = useState(false);
 
-const handleAddPrefect = async () => {
-  if (!newPrefectName.trim() || !newPrefectRole.trim()) { alert("Enter name and role."); return; }
-  setPrefectsSaving(true);
-  const { error } = await supabase.from("prefects").insert({ name: newPrefectName.trim(), role: newPrefectRole.trim() });
-  if (error) {
-    setPrefects(prev => [...prev, { id: Date.now().toString(), name: newPrefectName.trim(), role: newPrefectRole.trim() }]);
-  } else {
-    await fetchPrefects();
-  }
-  setNewPrefectName(""); setNewPrefectRole("");
-  setPrefectsSaving(false);
-};
+  const fetchPrefects = async () => {
+    const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
+    if (!error && data && data.length > 0) setPrefects(data);
+  };
 
-const handleDeletePrefect = async (id: string) => {
-  if (!confirm("Remove this prefect?")) return;
-  const { error } = await supabase.from("prefects").delete().eq("id", id);
-  if (error) {
-    setPrefects(prev => prev.filter(p => p.id !== id));
-  } else {
-    await fetchPrefects();
-  }
-};
+  const handleAddPrefect = async () => {
+    if (!newPrefectName.trim() || !newPrefectRole.trim()) { alert("Enter name and role."); return; }
+    setPrefectsSaving(true);
+    const { error } = await supabase.from("prefects").insert({ name: newPrefectName.trim(), role: newPrefectRole.trim() });
+    if (error) {
+      setPrefects(prev => [...prev, { id: Date.now().toString(), name: newPrefectName.trim(), role: newPrefectRole.trim() }]);
+    } else {
+      await fetchPrefects();
+    }
+    setNewPrefectName(""); setNewPrefectRole("");
+    setPrefectsSaving(false);
+  };
 
-const handleSaveEdit = async () => {
-  if (!editingName.trim() || !editingRole.trim()) { alert("Enter name and role."); return; }
-  const { error } = await supabase.from("prefects").update({ name: editingName.trim(), role: editingRole.trim() }).eq("id", editingPrefectId);
-  if (error) {
-    setPrefects(prev => prev.map(p => p.id === editingPrefectId ? { ...p, name: editingName.trim(), role: editingRole.trim() } : p));
-  } else {
-    await fetchPrefects();
-  }
-  setEditingPrefectId(null);
-};
+  const handleDeletePrefect = async (id: string) => {
+    if (!confirm("Remove this prefect?")) return;
+    const { error } = await supabase.from("prefects").delete().eq("id", id);
+    if (error) {
+      setPrefects(prev => prev.filter(p => p.id !== id));
+    } else {
+      await fetchPrefects();
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingName.trim() || !editingRole.trim()) { alert("Enter name and role."); return; }
+    const { error } = await supabase.from("prefects").update({ name: editingName.trim(), role: editingRole.trim() }).eq("id", editingPrefectId);
+    if (error) {
+      setPrefects(prev => prev.map(p => p.id === editingPrefectId ? { ...p, name: editingName.trim(), role: editingRole.trim() } : p));
+    } else {
+      await fetchPrefects();
+    }
+    setEditingPrefectId(null);
+  };
+
+  // FETCH DIAL FILTERED STATED LOG ENTRIES (FIXED FOR TARGETED DATE CAPTURE ONLY)
   const fetchTeacherLogs = async () => {
-  const { data, error } = await supabase
-    .from("teacher_logs")
-    .select("*")
-    .order("log_date", { ascending: false })
-    .order("created_at", { ascending: false });
-  if (!error && data) setTeacherLogs(data);
-};
+    const { data, error } = await supabase
+      .from("teacher_logs")
+      .select("*")
+      .eq("log_date", logDate) // Strict day isolation query parameter rule
+      .order("created_at", { ascending: false });
+    if (!error && data) setTeacherLogs(data);
+  };
 
-const handleSubmitLog = async () => {
-  if (!timeIn.trim() || !logTopic.trim()) { alert("Enter time in and topic taught."); return; }
-  setLogSaving(true);
-  const { error } = await supabase.from("teacher_logs").insert({
-    teacher_name: lecturer.name,
-    log_date: logDate,
-    time_in: timeIn,
-    time_out: timeOut || null,
-    class_name: logClass,
-    subject: logSubject,
-    topic_taught: logTopic,
-    notes: logNotes || null,
-  });
-  if (error) { alert("Failed to save log."); setLogSaving(false); return; }
-  setTimeIn(""); setTimeOut(""); setLogTopic(""); setLogNotes("");
-  setLogSaving(false);
-  fetchTeacherLogs();
-  alert("✓ Lesson log saved.");
-};
+  const handleSubmitLog = async () => {
+    if (!timeIn.trim() || !logTopic.trim()) { alert("Enter time in and topic taught."); return; }
+    setLogSaving(true);
+    const { error } = await supabase.from("teacher_logs").insert({
+      teacher_name: lecturer?.name || "Unknown Teacher",
+      log_date: logDate,
+      time_in: timeIn,
+      time_out: timeOut || null,
+      class_name: logClass,
+      subject: logSubject,
+      topic_taught: logTopic,
+      notes: logNotes || null,
+    });
+    if (error) { alert("Failed to save log."); setLogSaving(false); return; }
+    setTimeIn(""); setTimeOut(""); setLogTopic(""); setLogNotes("");
+    setLogSaving(false);
+    fetchTeacherLogs();
+    alert("✓ Lesson log saved.");
+  };
 
-const handleDeleteLog = async (id: string) => {
-  if (!confirm("Delete this log entry?")) return;
-  await supabase.from("teacher_logs").delete().eq("id", id);
-  fetchTeacherLogs();
-};
+  const handleDeleteLog = async (id: string) => {
+    if (!confirm("Delete this log entry?")) return;
+    await supabase.from("teacher_logs").delete().eq("id", id);
+    fetchTeacherLogs();
+  };
 
-// COMPONENT STATISTICAL METRIC CALCULATORS
-  // COMPONENT STATISTICAL METRIC CALCULATORS
+  // STATISTICAL METRIC CALCULATORS
   const calculateLiveClassCount = (className: string) => {
     let presentCount = 0;
     classStudents[className]?.forEach(student => {
@@ -307,7 +314,6 @@ const handleDeleteLog = async (id: string) => {
     
     data?.forEach((row: any) => {
       mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
-      // If any real record row values are active and confirmed, activate systemic corrections freeze flags
       if (row.am_status !== 'unmarked' || row.pm_status !== 'unmarked') {
         submittedMarker = true;
       }
@@ -473,7 +479,7 @@ const handleDeleteLog = async (id: string) => {
       const { data } = supabase.storage.from("materials").getPublicUrl(filePath);
       file_url = data.publicUrl; file_name = matFile.name;
     }
-    onPostMaterial({ title: matTitle, description: matDesc, subject: matSubject, class_name: matClass, teacher_name: lecturer.name, type: matFile ? "file" : "text", content: matContent, file_url, file_name });
+    onPostMaterial({ title: matTitle, description: matDesc, subject: matSubject, class_name: matClass, teacher_name: lecturer?.name || "Teacher", type: matFile ? "file" : "text", content: matContent, file_url, file_name });
     setMatTitle(""); setMatDesc(""); setMatContent(""); setMatFile(null); setMatUploading(false);
   };
 
@@ -527,11 +533,11 @@ const handleDeleteLog = async (id: string) => {
     return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
   };
 
-  
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
 
+        {/* SIDEBAR NAVIGATION SHEET LIST */}
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -551,6 +557,7 @@ const handleDeleteLog = async (id: string) => {
           </CardContent>
         </Card>
 
+        {/* MAIN PANEL VIEW SECTIONS */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -570,7 +577,7 @@ const handleDeleteLog = async (id: string) => {
                   <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
                 </TabsList>
 
-                {/* ATTENDANCE TAB - MATCH DESIGN ENGINE SPECIFICATIONS */}
+                {/* ATTENDANCE TAB PANEL */}
                 <TabsContent value="attendance" className="space-y-6">
                   
                   {/* TOP CONTROL HUB */}
@@ -605,7 +612,7 @@ const handleDeleteLog = async (id: string) => {
                     </div>
                   </div>
 
-                  {/* HIGH-LEVEL WIDGET DASHBOARD METRICS SUMMARY CARDS */}
+                  {/* SUMMARY CARDS */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 3</div>
@@ -652,7 +659,6 @@ const handleDeleteLog = async (id: string) => {
                       </span>
                     </div>
 
-                    {/* STRICT ENFORCEMENT BANNER LABELS */}
                     {!canMarkAttendance && (
                       <div className="p-3 rounded-lg bg-[#FDF6E3] border border-amber-300 text-[#A0751A] text-xs font-medium">
                         {lockBannerMessage}
@@ -664,7 +670,7 @@ const handleDeleteLog = async (id: string) => {
                     </div>
                   </div>
 
-                  {/* REGISTRATION LIVE DATA ROSTER GRID */}
+                  {/* DATA GRID */}
                   <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
                     <Table>
                       <TableHeader className="bg-slate-50">
@@ -684,7 +690,6 @@ const handleDeleteLog = async (id: string) => {
                               <TableCell className="font-mono text-xs text-muted-foreground">{idx + 1}</TableCell>
                               <TableCell className="font-medium text-slate-700">{studentName}</TableCell>
                               
-                              {/* AM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "am")}
@@ -701,7 +706,6 @@ const handleDeleteLog = async (id: string) => {
                                 </Button>
                               </TableCell>
 
-                              {/* PM Input Cell Selection Toggle */}
                               <TableCell className="text-center">
                                 <Button size="sm" variant="ghost" 
                                   onClick={() => handleToggleAttendance(studentName, "pm")}
@@ -876,11 +880,11 @@ const handleDeleteLog = async (id: string) => {
                     </Button>
                   </div>
                   <h4 className="font-medium text-sm mt-4">Posted Materials</h4>
-                  {materials.filter((m) => m.teacher_name === lecturer.name).length === 0 ? (
+                  {materials.filter((m) => m.teacher_name === lecturer?.name).length === 0 ? (
                     <p className="text-sm text-muted-foreground">No materials posted yet.</p>
                   ) : (
                     <div className="space-y-2">
-                      {materials.filter((m) => m.teacher_name === lecturer.name).map((m) => (
+                      {materials.filter((m) => m.teacher_name === lecturer?.name).map((m) => (
                         <div key={m.id} className="border rounded-md p-3 space-y-1 bg-white">
                           <div className="flex items-center justify-between">
                             <p className="font-medium text-sm">{m.title}</p>
@@ -1075,7 +1079,7 @@ const handleDeleteLog = async (id: string) => {
                         </div>
                       </div>
                       <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
-                        <Plus className="h-4 w-4 mr-2" />{stdRegistering ? "Registering..." : "Register Student"}
+                        <Plus className="h-4 w-4 mr-2" /> Register Student
                       </Button>
                     </div>
 
@@ -1146,248 +1150,253 @@ const handleDeleteLog = async (id: string) => {
                   </TabsContent>
                 )}
                 
-  <TabsContent value="prefects" className="space-y-4">
-    <div className="flex items-center justify-between">
-      <h4 className="font-semibold text-sm text-blue-900">🏅 Wamy High Prefects 2025 → 2026</h4>
-      <span className="text-xs text-muted-foreground">{prefects.length} prefects</span>
-    </div>
+                {/* PREFECTS COUNCIL MODULE */}
+                <TabsContent value="prefects" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm text-blue-900">🏅 Wamy High Prefects 2025 → 2026</h4>
+                    <span className="text-xs text-muted-foreground">{prefects.length} prefects</span>
+                  </div>
 
-    {/* ADD NEW PREFECT */}
-   {isAdmin && ( 
-    <div className="border rounded-md p-4 bg-muted/30 space-y-3">
-      <h5 className="text-xs font-semibold text-blue-900">➕ Add New Prefect</h5>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <Label className="text-xs font-semibold">Student Name</Label>
-          <input
-            placeholder="e.g. Ahmed Noor"
-            value={newPrefectName}
-            onChange={(e) => setNewPrefectName(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <Label className="text-xs font-semibold">Role / Position</Label>
-          <input
-            placeholder="e.g. Library Captain"
-            value={newPrefectRole}
-            onChange={(e) => setNewPrefectRole(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-        </div>
-      </div>
-      <Button
-        onClick={handleAddPrefect}
-        disabled={prefectsSaving}
-        className="bg-[#1a56a0] hover:bg-[#154a8a] w-full"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        {prefectsSaving ? "Saving..." : "Add Prefect"}
-      </Button>
-    </div>
-   )}
-    {/* PREFECT LIST */}
-    <div className="space-y-2">
-      {prefects.map((p, i) => (
-        <div key={p.id} className="border rounded-md bg-white shadow-sm overflow-hidden">
-          {editingPrefectId === p.id && isAdmin ? (
-            <div className="p-3 space-y-2 bg-blue-50">
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  value={editingName}
-                  onChange={(e) => setEditingName(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Name"
-                />
-                <input
-                  value={editingRole}
-                  onChange={(e) => setEditingRole(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Role"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveEdit} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  ✓ Save
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setEditingPrefectId(null)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full min-w-[32px] text-center">
-                  #{i + 1}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.role}</p>
-                </div>
-              </div>
-            {isAdmin && (
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setEditingPrefectId(p.id); setEditingName(p.name); setEditingRole(p.role); }}
-                  className="text-xs"
-                >
-                  ✏️ Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDeletePrefect(p.id)}
-                  className="text-destructive border-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  </TabsContent>
+                  {isAdmin && ( 
+                    <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+                      <h5 className="text-xs font-semibold text-blue-900">➕ Add New Prefect</h5>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs font-semibold">Student Name</Label>
+                          <input
+                            placeholder="e.g. Ahmed Noor"
+                            value={newPrefectName}
+                            onChange={(e) => setNewPrefectName(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs font-semibold">Role / Position</Label>
+                          <input
+                            placeholder="e.g. Library Captain"
+                            value={newPrefectRole}
+                            onChange={(e) => setNewPrefectRole(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handleAddPrefect}
+                        disabled={prefectsSaving}
+                        className="bg-[#1a56a0] hover:bg-[#154a8a] w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        {prefectsSaving ? "Saving..." : "Add Prefect"}
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {prefects.map((p, i) => (
+                      <div key={p.id} className="border rounded-md bg-white shadow-sm overflow-hidden">
+                        {editingPrefectId === p.id && isAdmin ? (
+                          <div className="p-3 space-y-2 bg-blue-50">
+                            <div className="grid grid-cols-2 gap-2">
+                              <input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                placeholder="Name"
+                              />
+                              <input
+                                value={editingRole}
+                                onChange={(e) => setEditingRole(e.target.value)}
+                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                placeholder="Role"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={handleSaveEdit} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                                ✓ Save
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => setEditingPrefectId(null)}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-mono bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full min-w-[32px] text-center">
+                                #{i + 1}
+                              </span>
+                              <div>
+                                <p className="text-sm font-semibold text-slate-800">{p.name}</p>
+                                <p className="text-xs text-muted-foreground">{p.role}</p>
+                              </div>
+                            </div>
+                            {isAdmin && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => { setEditingPrefectId(p.id); setEditingName(p.name); setEditingRole(p.role); }}
+                                  className="text-xs"
+                                >
+                                  ✏️ Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeletePrefect(p.id)}
+                                  className="text-destructive border-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {/* LESSON LESSON LOG COMPONENT (DYNAMIC DATE ISOLATION ACTIVE) */}
                 <TabsContent value="mylog" className="space-y-4">
-  <div className="flex items-center justify-between">
-    <h4 className="font-semibold text-sm text-slate-800">📋 My Lesson Log</h4>
-    <span className="text-xs text-muted-foreground">{lecturer.name}</span>
-  </div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm text-slate-800">📋 My Lesson Log</h4>
+                    <span className="text-xs text-muted-foreground">{lecturer?.name || "Teacher Profile"}</span>
+                  </div>
 
-  {/* LOG ENTRY FORM */}
-  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
-    <h5 className="text-xs font-semibold text-blue-900">➕ Record Today's Entry</h5>
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <Label className="text-xs font-semibold">Date</Label>
-        <input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-      <div>
-        <Label className="text-xs font-semibold">Class</Label>
-        <select value={logClass} onChange={(e) => setLogClass(e.target.value)}
-          className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
-          {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-    </div>
-    <div className="grid grid-cols-2 gap-2">
-      <div>
-        <Label className="text-xs font-semibold">Time In</Label>
-        <input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-      <div>
-        <Label className="text-xs font-semibold">Time Out</Label>
-        <input type="time" value={timeOut} onChange={(e) => setTimeOut(e.target.value)}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-    </div>
-    <div>
-      <Label className="text-xs font-semibold">Subject</Label>
-      <select value={logSubject} onChange={(e) => setLogSubject(e.target.value)}
-        className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
-        {lecturerSubjects.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
-    </div>
-    <div>
-      <Label className="text-xs font-semibold">Topic Taught</Label>
-      <input placeholder="e.g. Quadratic Equations" value={logTopic} onChange={(e) => setLogTopic(e.target.value)}
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-    </div>
-    <div>
-      <Label className="text-xs font-semibold">Notes (optional)</Label>
-      <textarea placeholder="e.g. Students struggled with factorisation..." value={logNotes} onChange={(e) => setLogNotes(e.target.value)}
-        className="w-full border rounded-md px-3 py-2 text-sm min-h-[70px] bg-white" />
-    </div>
-    <Button onClick={handleSubmitLog} disabled={logSaving} className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
-      <Plus className="h-4 w-4 mr-2" />{logSaving ? "Saving..." : "Save Log Entry"}
-    </Button>
-  </div>
+                  {/* LOG ENTRY FORM */}
+                  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+                    <h5 className="text-xs font-semibold text-blue-900">➕ Record Today's Entry</h5>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs font-semibold">Date</Label>
+                        <input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs font-semibold">Class</Label>
+                        <select value={logClass} onChange={(e) => setLogClass(e.target.value)}
+                          className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+                          {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs font-semibold">Time In</Label>
+                        <input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                      </div>
+                      <div>
+                        <Label className="text-xs font-semibold">Time Out</Label>
+                        <input type="time" value={timeOut} onChange={(e) => setTimeOut(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Subject</Label>
+                      <select value={logSubject} onChange={(e) => setLogSubject(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+                        {lecturerSubjects.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Topic Taught</Label>
+                      <input placeholder="e.g. Quadratic Equations" value={logTopic} onChange={(e) => setLogTopic(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Notes (optional)</Label>
+                      <textarea placeholder="e.g. Students struggled with factorisation..." value={logNotes} onChange={(e) => setLogNotes(e.target.value)}
+                        className="w-full border rounded-md px-3 py-2 text-sm min-h-[70px] bg-white" />
+                    </div>
+                    <Button onClick={handleSubmitLog} disabled={logSaving} className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+                      <Plus className="h-4 w-4 mr-2" />{logSaving ? "Saving..." : "Save Log Entry"}
+                    </Button>
+                  </div>
 
-  {/* ADMIN VIEW — see all teachers */}
-  {isAdmin && (
-    <div className="space-y-2">
-      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">All Teacher Logs</h5>
-      {teacherLogs.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic">No logs recorded yet.</p>
-      ) : (
-        <div className="space-y-2">
-          {teacherLogs.map((log) => (
-            <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-800">{log.teacher_name}</span>
-                  <span className="text-xs text-muted-foreground">·</span>
-                  <span className="text-xs text-muted-foreground">{log.log_date}</span>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => handleDeleteLog(log.id)}
-                  className="text-destructive border-destructive hover:bg-destructive/10">
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-                  {log.class_name}
-                </span>
-                <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
-                  {log.subject}
-                </span>
-                <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
-                  ⏰ {log.time_in}{log.time_out ? ` → ${log.time_out}` : ""}
-                </span>
-              </div>
-              <p className="text-sm font-medium text-slate-800">{log.topic_taught}</p>
-              {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )}
+                  {/* ADMIN VIEW — See all teachers matching selected logDate */}
+                  {isAdmin && (
+                    <div className="space-y-2">
+                      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">All Teacher Logs ({logDate})</h5>
+                      {teacherLogs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic p-3 text-center border border-dashed rounded-md bg-white">
+                          No logs recorded on this date.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {teacherLogs.map((log) => (
+                            <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-slate-800">{log.teacher_name}</span>
+                                  <span className="text-xs text-muted-foreground">·</span>
+                                  <span className="text-xs text-muted-foreground font-mono">{log.log_date}</span>
+                                </div>
+                                <Button size="sm" variant="outline" onClick={() => handleDeleteLog(log.id)}
+                                  className="text-destructive border-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                                  {log.class_name}
+                                </span>
+                                <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
+                                  {log.subject}
+                                </span>
+                                <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-mono text-[11px]">
+                                  ⏰ {log.time_in}{log.time_out ? ` → ${log.time_out}` : ""}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-slate-800 pt-0.5">{log.topic_taught}</p>
+                              {log.notes && <p className="text-xs text-muted-foreground bg-slate-50 p-2 rounded border border-slate-100 italic">{log.notes}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-  {/* TEACHER VIEW — see only own logs */}
-  {!isAdmin && (
-    <div className="space-y-2">
-      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">My Recent Logs</h5>
-      {teacherLogs.filter(l => l.teacher_name === lecturer.name).length === 0 ? (
-        <p className="text-xs text-muted-foreground italic">No logs recorded yet.</p>
-      ) : (
-        <div className="space-y-2">
-          {teacherLogs.filter(l => l.teacher_name === lecturer.name).map((log) => (
-            <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{log.log_date}</span>
-                <Button size="sm" variant="outline" onClick={() => handleDeleteLog(log.id)}
-                  className="text-destructive border-destructive hover:bg-destructive/10">
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-                  {log.class_name}
-                </span>
-                <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
-                  {log.subject}
-                </span>
-                <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full">
-                  ⏰ {log.time_in}{log.time_out ? ` → ${log.time_out}` : ""}
-                </span>
-              </div>
-              <p className="text-sm font-medium text-slate-800">{log.topic_taught}</p>
-              {log.notes && <p className="text-xs text-muted-foreground">{log.notes}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )}
-</TabsContent>
-
+                  {/* TEACHER VIEW — See only own logs matching selected logDate */}
+                  {!isAdmin && (
+                    <div className="space-y-2">
+                      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">My Recent Logs ({logDate})</h5>
+                      {teacherLogs.filter(l => l.teacher_name === lecturer?.name).length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic p-3 text-center border border-dashed rounded-md bg-white">
+                          You haven't recorded any entries on this date.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {teacherLogs.filter(l => l.teacher_name === lecturer?.name).map((log) => (
+                            <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground font-mono">{log.log_date}</span>
+                                <Button size="sm" variant="outline" onClick={() => handleDeleteLog(log.id)}
+                                  className="text-destructive border-destructive hover:bg-destructive/10">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                                  {log.class_name}
+                                </span>
+                                <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
+                                  {log.subject}
+                                </span>
+                                <span className="bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full font-mono text-[11px]">
+                                  ⏰ {log.time_in}{log.time_out ? ` → ${log.time_out}` : ""}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-slate-800 pt-0.5">{log.topic_taught}</p>
+                              {log.notes && <p className="text-xs text-muted-foreground bg-slate-50 p-2 rounded border border-slate-100 italic">{log.notes}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
 
               </Tabs>
             </CardContent>
