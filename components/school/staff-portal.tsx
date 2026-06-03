@@ -698,7 +698,7 @@ const handleDeleteOccurrence = async (id: string) => {
                       <div className="text-[10px] font-mono tracking-wider text-[#A0751A] uppercase font-bold mb-2">School-Wide Rate</div>
                       <div className="font-serif text-3xl font-bold text-[#C8992A]">{calculateSchoolWidePct()}%</div>
                       <div className="text-[10px] text-[#A0751A] mt-1 font-mono uppercase font-bold">
-                        TUE, 2 JUN · {calculateSchoolWidePresent()} of {Object.values(classStudents).flat().length} present
+                        {new Date(attDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()} · {calculateSchoolWidePresent()} of {Object.values(classStudents).flat().length} present
                       </div>
                     </div>
                   </div>
@@ -708,7 +708,7 @@ const handleDeleteOccurrence = async (id: string) => {
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <h2 className="font-serif text-2xl font-bold text-[#006B3C]">{selectedClass}</h2>
                       <span className="text-xs text-slate-400 font-mono font-medium">
-                        {selectedClass === 'Grade 10' ? 'CBC' : '8-4-4'} · {classStudents[selectedClass]?.length || 0} students · TUE, 2 JUN: {getClassBreakdownStr()}
+                        {selectedClass === 'Grade 10' ? 'CBC' : '8-4-4'} · {classStudents[selectedClass]?.length || 0} students · {new Date(attDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}: {getClassBreakdownStr()}
                       </span>
                     </div>
 
