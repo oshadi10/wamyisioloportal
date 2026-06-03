@@ -26,7 +26,7 @@ export function HomeContent({ currentPage }: HomeContentProps) {
               <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
                 <Users className="h-8 w-8 text-[#1a56a0]" />
                 <div>
-                  <p className="text-2xl font-semibold">69+</p>
+                  <p className="text-2xl font-semibold">70+</p>
                   <p className="text-xs text-muted-foreground">Students</p>
                 </div>
               </div>
@@ -89,6 +89,7 @@ export function HomeContent({ currentPage }: HomeContentProps) {
       "Business Studies",
       "Agriculture",
       "Literature",
+      "General Science",
     ];
 
     return (
