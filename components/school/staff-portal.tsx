@@ -666,7 +666,7 @@ const handleDeleteOccurrence = async (id: string) => {
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 3</div>
                       <div className="font-serif text-3xl font-bold text-[#006B3C] flex items-baseline">
                         {calculateLiveClassCount("Form 3")}
-                        <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ 23</span>
+                        <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ {classStudents["Form 3"].length}</span>
                       </div>
                       <div className="text-[11px] text-slate-400 mt-1 font-mono">8-4-4 · {calculateLiveClassPct("Form 3")}% today</div>
                     </div>
@@ -675,7 +675,7 @@ const handleDeleteOccurrence = async (id: string) => {
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 4</div>
                       <div className="font-serif text-3xl font-bold text-[#006B3C] flex items-baseline">
                         {calculateLiveClassCount("Form 4")}
-                        <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ 17</span>
+                        <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ {classStudents["Form 4"].length}</span>
                       </div>
                       <div className="text-[11px] text-slate-400 mt-1 font-mono">8-4-4 · {calculateLiveClassPct("Form 4")}% today</div>
                     </div>
@@ -684,7 +684,7 @@ const handleDeleteOccurrence = async (id: string) => {
                       <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Grade 10</div>
                       <div className="font-serif text-3xl font-bold text-[#006B3C] flex items-baseline">
                         {calculateLiveClassCount("Grade 10")}
-                        <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ 29</span>
+                        <span className="text-xs text-slate-400 font-sans font-normal ml-1">/ {classStudents["Grade 10"].length}</span>
                       </div>
                       <div className="text-[11px] text-slate-400 mt-1 font-mono">CBC · {calculateLiveClassPct("Grade 10")}% today</div>
                     </div>
@@ -693,7 +693,7 @@ const handleDeleteOccurrence = async (id: string) => {
                       <div className="text-[10px] font-mono tracking-wider text-[#A0751A] uppercase font-bold mb-2">School-Wide Rate</div>
                       <div className="font-serif text-3xl font-bold text-[#C8992A]">{calculateSchoolWidePct()}%</div>
                       <div className="text-[10px] text-[#A0751A] mt-1 font-mono uppercase font-bold">
-                        TUE, 2 JUN · {calculateSchoolWidePresent()} of 69 present
+                        TUE, 2 JUN · {calculateSchoolWidePresent()} of {Object.values(classStudents).flat().length} present
                       </div>
                     </div>
                   </div>
