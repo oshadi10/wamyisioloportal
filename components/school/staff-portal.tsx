@@ -89,7 +89,7 @@ export function StaffPortal({
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
   // DYNAMIC TRACKING STATE PARAMETERS
-  const SYSTEM_TODAY = "2026-06-02";
+  const SYSTEM_TODAY = new Date().toISOString().split("T")[0];
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
   const [isClassSubmitted, setIsClassSubmitted] = useState(false);
