@@ -8,7 +8,7 @@ export const studentAccounts: Record<string, string> = {
   'Wako Roba': '363', 'Jatani Jarso': '351', 'Dida Galma': '385', 'Somo Galgalo': '359',
   'Ramadham Ekwom': '333', 'Hassan Achuka': '369', 'Yahya Hassan': '357', 'Ramadhan Lepir': '347',
   'Talha Hussein': '390', 'Mohamed Said': '355', 'Tadiku Kampu': '345', 'Alnoor Hussein': '361',
-  'Dulqifli Mohamed': '365', 'Galgesa Arigele': '319', 'Mansur Mohamed': '373', 'Wilson Jamal': '335',
+  'Dulqifli Mohamed': '365', 'Galgesa Arigele': '319', 'Mansur Mohamed': '373', 'Wilson Jamal': '335', 'Musa Mohamed': '379',
   'Abdirahman Ekusekope': '432', 'Abdinassir Ibrahim': '400', 'Abubakar Halkano': '402',
   'Mohamed Galo': '403', 'Abdulkarim Ramadhan': '404', 'Guyo Tadicha': '405', 'Muhidin Mohamed': '407',
   'Abdirizack Abubakar': '408', 'Badrudin Mohamed': '409', 'Idi Mohamed': '410', 'Ali Kini': '412',
@@ -21,7 +21,7 @@ export const studentAccounts: Record<string, string> = {
 
 export const classStudents: Record<string, string[]> = {
   'Form 4': ['Bagayo Khalil', 'Casim Lope', 'Shahid Ali', 'Rama Said', 'Abdalla Jamal', 'Ismail Abdullahi', 'Adan Isack', 'Abdikadir Kimgol', 'Alex Ogendi', 'Abdi Ture', 'Yunis Halake', 'Ian Hamatun', 'John Diyo', 'Ibrahim Mohamed', 'Bilal Ilchagi', 'Farhan Ngurusi', 'Hassanoor Jalafow'],
-  'Form 3': ['Mamo Godana', 'Roba Kampu', 'Ismail Laranyu', 'Rob Wario', 'Kadir Adan', 'Muqsin Maqbul', 'Saidnur Rogicha', 'Wako Roba', 'Jatani Jarso', 'Dida Galma', 'Somo Galgalo', 'Ramadham Ekwom', 'Hassan Achuka', 'Yahya Hassan', 'Ramadhan Lepir', 'Talha Hussein', 'Mohamed Said', 'Tadiku Kampu', 'Alnoor Hussein', 'Dulqifli Mohamed', 'Galgesa Arigele', 'Mansur Mohamed', 'Wilson Jamal'],
+  'Form 3': ['Mamo Godana', 'Roba Kampu', 'Ismail Laranyu', 'Rob Wario', 'Kadir Adan', 'Muqsin Maqbul', 'Saidnur Rogicha', 'Wako Roba', 'Jatani Jarso', 'Dida Galma', 'Somo Galgalo', 'Ramadham Ekwom', 'Hassan Achuka', 'Yahya Hassan', 'Ramadhan Lepir', 'Talha Hussein', 'Mohamed Said', 'Tadiku Kampu', 'Alnoor Hussein', 'Dulqifli Mohamed', 'Galgesa Arigele', 'Mansur Mohamed', 'Wilson Jamal','Musa Mohamed'],
   'Grade 10': ['Abdirahman Ekusekope', 'Abdinassir Ibrahim', 'Abubakar Halkano', 'Mohamed Galo', 'Abdulkarim Ramadhan', 'Guyo Tadicha', 'Muhidin Mohamed', 'Abdirizack Abubakar', 'Badrudin Mohamed', 'Idi Mohamed', 'Ali Kini', 'Abubakarsidiq Hassan', 'Abdikadir Ismail', 'Zakaria Jillo', 'Frankline Ewoi', 'Mohamed Amin', 'Abdishkur Mohamed', 'Ibrahim Hussein', 'Ramadhan Sabls', 'Abdirizack Yussuf', 'Abdirahman Ahmed', 'Hamza Halkano', 'Abdi Osman', 'Daniel Lemoris', 'Ledula Kimlahau', 'Kampicha Golicha', 'Isack Munene', 'Suleiman Mutethia', 'Ahmed Noor']
 };
 
