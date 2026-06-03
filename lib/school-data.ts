@@ -1,7 +1,7 @@
 export const studentAccounts: Record<string, string> = {
   'Bagayo Khalil': '277', 'Casim Lope': '294', 'Shahid Ali': '296', 'Rama Said': '282',
-  'Abdalla Jamal': '269', 'Ismail Abdullahi': '289', 'Adan Isack': '271', 'Abdikadir Kimgol': '275',
-  'Alex Ogendi': '375', 'Abdi Ture': '372', 'Yunis Halake': '306', 'Ian Hamatun': '291',
+  'Abdalla Jamal': '269', 'Ismail Abdullahi': '289', 'Adan Isack': '271', 'Abdikadir Kimgol': '271',
+  'Alex Ogendi': '275', 'Abdi Ture': '372', 'Yunis Halake': '306', 'Ian Hamatun': '291',
   'John Diyo': '283', 'Ibrahim Mohamed': '299', 'Bilal Ilchagi': '278', 'Farhan Ngurusi': '276',
   'Hassanoor Jalafow': '279', 'Mamo Godana': '352', 'Roba Kampu': '344', 'Ismail Laranyu': '348',
   'Rob Wario': '315', 'Kadir Adan': '342', 'Muqsin Maqbul': '356', 'Saidnur Rogicha': '325',
