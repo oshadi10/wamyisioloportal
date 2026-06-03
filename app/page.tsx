@@ -16,6 +16,8 @@ import {
   initializeFees,
   studentAccounts,
   getStudentClass,
+  classStudents,
+  lecturers,
 } from "@/lib/school-data";
 
 type ViewType = "home" | "student-login" | "staff-login" | "student-portal" | "staff-portal";
@@ -522,9 +524,9 @@ useEffect(() => {
 
                 {/* STATS */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-blue-700 mb-1">69+</h3><p className="text-gray-600 font-semibold text-sm">Students</p></div>
-                  <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-green-700 mb-1">8</h3><p className="text-gray-600 font-semibold text-sm">Staff Members</p></div>
-                  <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-yellow-600 mb-1">3</h3><p className="text-gray-600 font-semibold text-sm">Classes</p></div>
+                  <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-blue-700 mb-1">{Object.values(classStudents).flat().length}+</h3><p className="text-gray-600 font-semibold text-sm">Students</p></div>
+                  <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-green-700 mb-1">{lecturers.length}</h3><p className="text-gray-600 font-semibold text-sm">Staff Members</p></div>
+                  <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-yellow-600 mb-1">{Object.keys(classStudents).length}</h3><p className="text-gray-600 font-semibold text-sm">Classes</p></div>
                   <div className="bg-white rounded-2xl shadow-lg p-6 text-center"><h3 className="text-4xl font-bold text-red-600 mb-1">100%</h3><p className="text-gray-600 font-semibold text-sm">Discipline</p></div>
                 </div>
 
