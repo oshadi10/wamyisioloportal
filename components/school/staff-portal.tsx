@@ -334,16 +334,20 @@ const handleDeleteOccurrence = async (id: string) => {
   };
 
   const getClassBreakdownStr = () => {
-    const currentStudents = classStudents[selectedClass] || [];
-    let p = 0, a = 0, u = 0;
-    currentStudents.forEach(student => {
-      const record = attRecords[student] || { am: 'unmarked', pm: 'unmarked' };
-      if (record.am === 'present') p++; else if (record.am === 'absent') a++; else u++;
-      if (record.pm === 'present') p++; else if (record.pm === 'absent') a++; else u++;
-    });
-    return `${p} present, ${a} absent, ${u} not marked`;
-  };
-
+  const currentStudents = classStudents[selectedClass] || [];
+  let p = 0, a = 0, u = 0;
+  currentStudents.forEach(student => {
+    const record = attRecords[student];
+    const r = record && record.class_name === selectedClass
+      ? record
+      : { am: 'unmarked', pm: 'unmarked' };
+    // Count by student, not by session
+    if (r.am === 'present' || r.pm === 'present') p++;
+    else if (r.am === 'absent' || r.pm === 'absent') a++;
+    else u++;
+  });
+  return `${p} present, ${a} absent, ${u} not marked`;
+};
  const fetchAttendance = async () => {
   setAttRecords({});
   setIsClassSubmitted(false);
