@@ -344,34 +344,37 @@ const handleDeleteOccurrence = async (id: string) => {
     return `${p} present, ${a} absent, ${u} not marked`;
   };
 
-  const fetchAttendance = async () => {
-     setAttRecords({});        
-     setIsClassSubmitted(false);
-    const { data, error } = await supabase
-      .from("student_attendance")
-      .select("*")
-      .eq("log_date", attDate)
-      .eq("class_name", selectedClass);
+ const fetchAttendance = async () => {
+  setAttRecords({});
+  setIsClassSubmitted(false);
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+  // Fetch ALL classes at once so summary cards are accurate
+  const { data, error } = await supabase
+    .from("student_attendance")
+    .select("*")
+    .eq("log_date", attDate);
 
-    const mapped: Record<string, { am: string; pm: string }> = {};
-    let submittedMarker = false;
-    
-    data?.forEach((row: any) => {
-      mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const mapped: Record<string, { am: string; pm: string }> = {};
+  let submittedMarker = false;
+
+  data?.forEach((row: any) => {
+    mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
+    // Only check submission status for the currently selected class
+    if (row.class_name === selectedClass) {
       if (row.am_status !== 'unmarked' || row.pm_status !== 'unmarked') {
         submittedMarker = true;
       }
-    });
-    
-    setAttRecords(mapped);
-    setIsClassSubmitted(submittedMarker);
-  };
+    }
+  });
 
+  setAttRecords(mapped);
+  setIsClassSubmitted(submittedMarker);
+};
   const handleToggleAttendance = (studentName: string, session: "am" | "pm") => {
     if (!canMarkAttendance) return;
 
