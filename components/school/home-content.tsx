@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, Award, GraduationCap } from "lucide-react";
+import { classStudents, lecturers } from "@/lib/school-data";
 
 interface HomeContentProps {
   currentPage: string;
@@ -26,14 +27,14 @@ export function HomeContent({ currentPage }: HomeContentProps) {
               <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
                 <Users className="h-8 w-8 text-[#1a56a0]" />
                 <div>
-                  <p className="text-2xl font-semibold">70+</p>
+                  <p className="text-2xl font-semibold">{Object.values(classStudents).flat().length}+</p>
                   <p className="text-xs text-muted-foreground">Students</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
                 <BookOpen className="h-8 w-8 text-[#146f3a]" />
                 <div>
-                  <p className="text-2xl font-semibold">8</p>
+                  <p className="text-2xl font-semibold">{lecturers.length}</p>
                   <p className="text-xs text-muted-foreground">Staff Members</p>
                 </div>
               </div>
