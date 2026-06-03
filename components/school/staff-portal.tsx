@@ -345,6 +345,8 @@ const handleDeleteOccurrence = async (id: string) => {
   };
 
   const fetchAttendance = async () => {
+     setAttRecords({});        
+     setIsClassSubmitted(false);
     const { data, error } = await supabase
       .from("student_attendance")
       .select("*")
