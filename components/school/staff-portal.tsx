@@ -711,9 +711,7 @@ const handleDeleteOccurrence = async (id: string) => {
                   <div className="space-y-2 pt-2">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <h2 className="font-serif text-2xl font-bold text-[#006B3C]">{selectedClass}</h2>
-                      <span className="text-xs text-slate-400 font-mono font-medium">
-                        {selectedClass === 'Grade 10' ? 'CBC' : '8-4-4'} · {classStudents[selectedClass]?.length || 0} students · {new Date(attDate).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()}: {getClassBreakdownStr()}
-                      </span>
+                      
                     </div>
 
                     {!canMarkAttendance && (
