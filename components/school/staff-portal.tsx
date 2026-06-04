@@ -52,30 +52,34 @@ export function StaffPortal({
   const [newTerm, setNewTerm] = useState("Term 1, 2026");
   const [meritClass, setMeritClass] = useState(classNames[0]);
   const [meritTerm, setMeritTerm] = useState("Term 1, 2026");
+  
+  // Isolated Content state configurations
   const [matTitle, setMatTitle] = useState("");
   const [matDesc, setMatDesc] = useState("");
   const [matClass, setMatClass] = useState(classNames[0]);
   const [matSubject, setMatSubject] = useState(lecturerSubjects[0] || "");
   const [matContent, setMatContent] = useState("");
-  const [matFile, setMatFile] = useState<File | null>(null);
-  const [matUploading, setMatUploading] = useState(false);
-  const [ttType, setTtType] = useState("teaching");
+  
   const [ttTitle, setTtTitle] = useState("");
   const [ttTerm, setTtTerm] = useState("Term 1, 2026");
-  const [ttFile, setTtFile] = useState<File | null>(null);
-  const [ttUploading, setTtUploading] = useState(false);
+  const [ttContent, setTtContent] = useState("");
+  const [ttType, setTtType] = useState("teaching");
+
   const [evtType, setEvtType] = useState("announcement");
   const [evtTitle, setEvtTitle] = useState("");
   const [evtDesc, setEvtDesc] = useState("");
   const [evtDate, setEvtDate] = useState("");
+
   const [newOpeningDate, setNewOpeningDate] = useState("");
   const [newIddBreak, setNewIddBreak] = useState("");
   const [newMidExam, setNewMidExam] = useState("");
   const [newMidBreak, setNewMidBreak] = useState("");
   const [newEndExam, setNewEndExam] = useState("");
   const [newClosingDate, setNewClosingDate] = useState("");
-  const [feeTotal, setFeeTotal] = useState((fees[selectedStudent]?.total || 45000).toString());
-  const [feePaid, setFeePaid] = useState((fees[selectedStudent]?.paid || 30000).toString());
+
+  const [feeTotal, setFeeTotal] = useState("45000");
+  const [feePaid, setFeePaid] = useState("30000");
+
   const [students, setStudents] = useState<any[]>([]);
   const [stdName, setStdName] = useState("");
   const [stdClass, setStdClass] = useState(classNames[0]);
@@ -96,6 +100,7 @@ export function StaffPortal({
   const [logTopic, setLogTopic] = useState("");
   const [logNotes, setLogNotes] = useState("");
   const [logSaving, setLogSaving] = useState(false);
+  
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [occDate, setOccDate] = useState(SYSTEM_TODAY);
   const [occTime, setOccTime] = useState("");
@@ -107,24 +112,7 @@ export function StaffPortal({
   const [occSeverity, setOccSeverity] = useState("normal");
   const [occSaving, setOccSaving] = useState(false);
 
-  const [prefects, setPrefects] = useState([
-    { id: "1", name: "Alex Ogendi", role: "School Captain" },
-    { id: "2", name: "Yahya Hassan", role: "Ass. Captain" },
-    { id: "3", name: "Ramadhan Ekwom", role: "D.H Captain" },
-    { id: "4", name: "Shahid Ali", role: "Entertainment Captain" },
-    { id: "5", name: "Galgesa Arigele", role: "Dormitory Captain" },
-    { id: "6", name: "Casim Lope", role: "Muslim League Chairman" },
-    { id: "7", name: "Abdi Ture", role: "Imam" },
-    { id: "8", name: "Dida Galma", role: "Environment Captain" },
-    { id: "9", name: "Mamo Godana", role: "Bell Ringer" },
-    { id: "10", name: "Abubakar Halkano", role: "Lab Captain" },
-    { id: "11", name: "Ramadhan Lepir", role: "Games Captain" },
-    { id: "12", name: "Bagayo Khalil", role: "Commander" },
-    { id: "13", name: "Ramadhan Sabls", role: "Patrol Leader" },
-    { id: "14", name: "Musa Mohammed", role: "Form 3 Prefect" },
-    { id: "15", name: "John Diyo", role: "Form 4 Prefect" },
-    { id: "16", name: "Abdinassir Ibrahim", role: "Grade 10 Prefect" },
-  ]);
+  const [prefects, setPrefects] = useState<any[]>([]);
   const [newPrefectName, setNewPrefectName] = useState("");
   const [newPrefectRole, setNewPrefectRole] = useState("");
   const [editingPrefectId, setEditingPrefectId] = useState<string | null>(null);
@@ -136,6 +124,14 @@ export function StaffPortal({
   const isClassTeacher = isAdmin || (lecturer?.id && CLASS_TEACHERS[selectedClass] === lecturer.id);
   const isSameDay = attDate === SYSTEM_TODAY;
   const canMarkAttendance = isAdmin ? isSameDay : (isClassTeacher && isSameDay && !isClassSubmitted);
+
+  // Sync fee inputs whenever student updates
+  useEffect(() => {
+    if (selectedStudent && fees) {
+      setFeeTotal((fees[selectedStudent]?.total || 45000).toString());
+      setFeePaid((fees[selectedStudent]?.paid || 30000).toString());
+    }
+  }, [selectedStudent, fees]);
 
   useEffect(() => {
     if (activeTab === "students") fetchStudents();
@@ -150,7 +146,7 @@ export function StaffPortal({
 
   const fetchPrefects = async () => {
     const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
-    if (!error && data && data.length > 0) setPrefects(data);
+    if (!error && data) setPrefects(data);
   };
 
   const handleAddPrefect = async () => {
@@ -282,14 +278,10 @@ export function StaffPortal({
     setSelectedClass(className);
     const firstStudent = classStudents[className][0];
     setSelectedStudent(firstStudent);
-    setFeeTotal((fees[firstStudent]?.total || 45000).toString());
-    setFeePaid((fees[firstStudent]?.paid || 30000).toString());
   };
 
   const handleStudentSelect = (student: string) => {
     setSelectedStudent(student);
-    setFeeTotal((fees[student]?.total || 45000).toString());
-    setFeePaid((fees[student]?.paid || 30000).toString());
   };
 
   const handleUploadResult = () => {
@@ -302,7 +294,36 @@ export function StaffPortal({
 
   const handleUpdateFees = () => {
     onUpdateFees(selectedStudent, Number(feeTotal), Number(feePaid));
-    alert("Fees updated.");
+    alert("Fees updated configuration saved successfully.");
+  };
+
+  const handlePostMaterial = () => {
+    if (!matTitle.trim()) return alert("Provide resource topic title.");
+    onPostMaterial({
+      title: matTitle, description: matDesc, subject: matSubject, class_name: matClass,
+      teacher_name: lecturer?.name || "Teacher", type: "text", content: matContent, file_url: "", file_name: ""
+    });
+    setMatTitle(""); setMatDesc(""); setMatContent("");
+  };
+
+  const handleUploadTimetable = () => {
+    if (!ttTitle.trim()) return alert("Provide configuration title.");
+    onUploadTimetable({ type: ttType, title: ttTitle, term: ttTerm, file_url: ttContent, file_name: "Document Link URL" });
+    setTtTitle(""); setTtContent("");
+  };
+
+  const handlePostEvent = async () => {
+    if (!evtTitle.trim()) return alert("Enter title.");
+    const { error } = await supabase.from("events").insert({ type: evtType, title: evtTitle, description: evtDesc, date: evtDate || null });
+    if (!error) { setEvtTitle(""); setEvtDesc(""); setEvtDate(""); alert("Notice published."); }
+  };
+
+  const handleAddTermRow = async () => {
+    if (!newOpeningDate || !newClosingDate) return alert("Fill term boundaries.");
+    const row = { term: "Term 2, 2026", opening_date: newOpeningDate, idd_date: newIddBreak || "—", midterm_exam: newMidExam || "—", mid_term: newMidBreak || "—", end_term_exam: newEndExam || "—", closing_date: newClosingDate, status: "Current Term" };
+    await supabase.from("term_dates").delete().neq("term", "safety_wildcard");
+    const { error } = await supabase.from("term_dates").insert(row);
+    if (!error) { onUploadTermDate(row); alert("Home dashboard timeline calendar updated."); }
   };
 
   const getMeritList = () => {
@@ -329,7 +350,7 @@ export function StaffPortal({
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
 
-        {/* SIDEBAR NAVIGATION PANEL */}
+        {/* SIDEBAR NAVIGATION ROSTER PANEL */}
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -349,7 +370,7 @@ export function StaffPortal({
           </CardContent>
         </Card>
 
-        {/* MAIN PANEL CONTENT WRAPPERS */}
+        {/* MAIN MULTI-TAB WORKSPACE HUB */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -369,7 +390,7 @@ export function StaffPortal({
                   <TabsTrigger value="occurrence" className="text-xs px-2.5 py-1.5">📖 Occurrence</TabsTrigger>
                 </TabsList>
 
-                {/* 1. RESULTS TAB CONTENT */}
+                {/* 1. EXAM TRACKING SHEET HUB */}
                 <TabsContent value="results" className="space-y-4">
                   <Card>
                     <CardHeader><CardTitle className="text-lg">Upload Result for {selectedStudent}</CardTitle></CardHeader>
@@ -397,7 +418,7 @@ export function StaffPortal({
                   </Card>
 
                   {Object.keys(resultsByTerm).length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">No examination sheets configured.</div>
+                    <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">No examination records set up for this student.</div>
                   ) : (
                     Object.entries(resultsByTerm).map(([term, list]) => (
                       <Card key={term}>
@@ -426,7 +447,7 @@ export function StaffPortal({
                   )}
                 </TabsContent>
 
-                {/* 2. ATTENDANCE TAB CONTENT */}
+                {/* 2. ATTENDANCE MANAGEMENT CONTROLS */}
                 <TabsContent value="attendance" className="space-y-4">
                   <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border shadow-sm">
                     <div className="flex items-center gap-2">
@@ -479,15 +500,15 @@ export function StaffPortal({
                   </Card>
                 </TabsContent>
 
-                {/* 3. SECURE COVERS PRIVATE DOCUMENTS */}
+                {/* 3. CONFIDENTIAL STORAGE VAULT FOLDERS */}
                 <TabsContent value="documents" className="space-y-4">
                   <ProtectedDocumentManager studentId={selectedStudent} studentName={selectedStudent} currentUserRole={isAdmin ? "principal" : "teacher"} currentUserId={lecturer?.id || "staff_user"} />
                 </TabsContent>
 
-                {/* 4. MERIT LIST TAB CONTENT */}
+                {/* 4. PERFORMANCE RANK MATRIX */}
                 <TabsContent value="merit" className="space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Classroom Leaderboard Matrix</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">Classroom Leaderboard Dashboard</CardTitle></CardHeader>
                     <CardContent className="flex flex-wrap gap-3 items-end">
                       <div>
                         <Label>Class</Label>
@@ -509,7 +530,7 @@ export function StaffPortal({
                   <Card>
                     <CardContent className="pt-6">
                       {meritList.length === 0 ? (
-                        <div className="text-center p-6 text-muted-foreground">No matching data profiles matched for this tracking period.</div>
+                        <div className="text-center p-6 text-muted-foreground">No tracking entries match this active timeline setup.</div>
                       ) : (
                         <Table>
                           <TableHeader><TableRow><TableHead className="w-[60px]">Rank</TableHead><TableHead>Student Name</TableHead><TableHead>Aggregated Score</TableHead><TableHead>Average</TableHead><TableHead>Grade</TableHead></TableRow></TableHeader>
@@ -530,17 +551,29 @@ export function StaffPortal({
                   </Card>
                 </TabsContent>
 
-                {/* 5. MATERIALS TAB CONTENT */}
+                {/* 5. COURSE MATERIALS UPLOADER */}
                 <TabsContent value="materials" className="space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Publish Revision Materials & Syllabus Files</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">Publish Syllabus Handouts & Resource Notes</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div><Label>Title</Label><Input value={matTitle} onChange={(e) => setMatTitle(e.target.value)} placeholder="e.g. Assignment 3" /></div>
                         <div><Label>Subject Scope</Label><Input value={matSubject} onChange={(e) => setMatSubject(e.target.value)} /></div>
                       </div>
-                      <div><Label>Description</Label><Textarea value={matDesc} onChange={(e) => setMatDesc(e.target.value)} placeholder="Summary brief details..." rows={2} /></div>
-                      <div><Label>Resource Download Link (Optional)</Label><Input value={matContent} onChange={(e) => setMatContent(e.target.value)} placeholder="https://drive.google.com/..." /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Class Target</Label>
+                          <Select value={matClass} onValueChange={setMatClass}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Web Resource URL Link</Label>
+                          <Input value={matContent} onChange={(e) => setMatContent(e.target.value)} placeholder="https://drive.google.com/..." />
+                        </div>
+                      </div>
+                      <div><Label>Description Brief</Label><Textarea value={matDesc} onChange={(e) => setMatDesc(e.target.value)} placeholder="Summary overview notes..." rows={2} /></div>
                       <Button onClick={handlePostMaterial} className="bg-[#378add] text-white">Post Resource Material</Button>
                     </CardContent>
                   </Card>
@@ -563,20 +596,29 @@ export function StaffPortal({
                   </div>
                 </TabsContent>
 
-                {/* 6. TIMETABLES TAB CONTENT */}
+                {/* 6. TIMETABLE SCHEDULE SYNC */}
                 <TabsContent value="timetables" className="space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Publish Academic Calendars / Timetables</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">Publish Academic Calendars / Blocks</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div><Label>Title</Label><Input value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} placeholder="e.g. Form 4 Master Block" /></div>
                         <div><Label>Term Context</Label><Input value={ttTerm} onChange={(e) => setTtTerm(e.target.value)} /></div>
                       </div>
-                      <div>
-                        <Label>Document Web URL Link</Label>
-                        <Input value={matContent} onChange={(e) => setMatContent(e.target.value)} placeholder="https://..." />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Schedule Classification Type</Label>
+                          <Select value={ttType} onValueChange={setTtType}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="teaching">Routine Class Schedule</SelectItem><SelectItem value="exam">Examination Matrix</SelectItem></SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Document Web URL Link</Label>
+                          <Input value={ttContent} onChange={(e) => setTtContent(e.target.value)} placeholder="https://..." />
+                        </div>
                       </div>
-                      <Button onClick={handleUploadTimetable} disabled={ttUploading} className="bg-[#378add] text-white">Save Entry</Button>
+                      <Button onClick={handleUploadTimetable} className="bg-[#378add] text-white">Save Entry</Button>
                     </CardContent>
                   </Card>
 
@@ -585,7 +627,9 @@ export function StaffPortal({
                     <TableBody>
                       {timetables.map((t) => (
                         <TableRow key={t.id}>
-                          <TableCell className="font-medium">{t.title}</TableCell>
+                          <TableCell className="font-medium">
+                            {t.file_url ? <a href={t.file_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{t.title}</a> : t.title}
+                          </TableCell>
                           <TableCell>{t.term}</TableCell>
                           <TableCell className="capitalize">{t.type}</TableCell>
                           <TableCell><Button size="icon" variant="ghost" onClick={() => onDeleteTimetable(t.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
@@ -595,43 +639,43 @@ export function StaffPortal({
                   </Table>
                 </TabsContent>
 
-                {/* 7. FEES TAB CONTENT */}
+                {/* 7. BILLING ACCOUNTS FINANCIALS */}
                 {isAdmin && (
                   <TabsContent value="fees" className="space-y-4">
                     <Card>
-                      <CardHeader><CardTitle className="text-base">Financial Account Ledger Statement: {selectedStudent}</CardTitle></CardHeader>
+                      <CardHeader><CardTitle className="text-base">Financial Account Ledger Balance for: {selectedStudent}</CardTitle></CardHeader>
                       <CardContent className="grid sm:grid-cols-3 gap-4 items-end">
                         <div><Label>Required Base Term Fees</Label><Input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} /></div>
                         <div><Label>Paid Receipts Aggregate</Label><Input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} /></div>
-                        <Button onClick={handleUpdateFees} className="bg-emerald-600 hover:bg-emerald-700 text-white">Save Changes</Button>
+                        <Button onClick={handleUpdateFees} className="bg-emerald-600 hover:bg-emerald-700 text-white">Save Ledger Status</Button>
                       </CardContent>
                     </Card>
                   </TabsContent>
                 )}
 
-                {/* 8. EVENTS TAB CONTENT */}
+                {/* 8. MASTER SCHEDULER BOARD EVENTS */}
                 {isAdmin && (
                   <TabsContent value="events" className="space-y-4">
                     <Card>
-                      <CardHeader><CardTitle className="text-base">System Calendar Notifications Hub</CardTitle></CardHeader>
+                      <CardHeader><CardTitle className="text-base">System Calendar Notice Boards</CardTitle></CardHeader>
                       <CardContent className="space-y-3">
-                        <div><Label>Headline Title</Label><Input value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} /></div>
-                        <div><Label>Body Notice Details</Label><Textarea value={evtDesc} onChange={(e) => setEvtDesc(e.target.value)} /></div>
+                        <div><Label>Headline Notice Title</Label><Input value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} /></div>
+                        <div><Label>Notice Context Body Brief</Label><Textarea value={evtDesc} onChange={(e) => setEvtDesc(e.target.value)} /></div>
                         <div className="grid grid-cols-2 gap-3">
                           <div><Label>Category</Label>
                             <Select value={evtType} onValueChange={setEvtType}>
                               <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent><SelectItem value="announcement">Public Board Notice</SelectItem><SelectItem value="event">Calendar Event</SelectItem></SelectContent>
+                              <SelectContent><SelectItem value="announcement">Public Board Notice</SelectItem><SelectItem value="event">Calendar Activity Event</SelectItem></SelectContent>
                             </Select>
                           </div>
                           <div><Label>Target Date Marker</Label><Input type="date" value={evtDate} onChange={(e) => setEvtDate(e.target.value)} /></div>
                         </div>
-                        <Button onClick={handlePostEvent} className="bg-[#378add] text-white">Publish to Boards</Button>
+                        <Button onClick={handlePostEvent} className="bg-[#378add] text-white">Publish Notice</Button>
                       </CardContent>
                     </Card>
 
                     <Card>
-                      <CardHeader><CardTitle className="text-base">Batch Update Home Dashboard Master Term Schedule</CardTitle></CardHeader>
+                      <CardHeader><CardTitle className="text-base">Batch Setup Home Dashboard Term Timeline</CardTitle></CardHeader>
                       <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div><Label>Opening Date</Label><Input type="date" value={newOpeningDate} onChange={(e) => setNewOpeningDate(e.target.value)} /></div>
                         <div><Label>Idd Break</Label><Input type="date" value={newIddBreak} onChange={(e) => setNewIddBreak(e.target.value)} /></div>
@@ -639,13 +683,13 @@ export function StaffPortal({
                         <div><Label>Mid-Term Break</Label><Input type="date" value={newMidBreak} onChange={(e) => setNewMidBreak(e.target.value)} /></div>
                         <div><Label>End-Term Exams</Label><Input type="date" value={newEndExam} onChange={(e) => setNewEndExam(e.target.value)} /></div>
                         <div><Label>Closing Date</Label><Input type="date" value={newClosingDate} onChange={(e) => setNewClosingDate(e.target.value)} /></div>
-                        <div className="col-span-full pt-2"><Button onClick={handleAddTermRow} className="w-full bg-[#006B3C] text-white hover:bg-[#00542e]">Overwrite Calendar Dates</Button></div>
+                        <div className="col-span-full pt-2"><Button onClick={handleAddTermRow} className="w-full bg-[#006B3C] text-white hover:bg-[#00542e]">Overwrite Dashboard Calendar</Button></div>
                       </CardContent>
                     </Card>
                   </TabsContent>
                 )}
 
-                {/* 9. STUDENTS REGISTER HUB */}
+                {/* 9. ADMISSIONS PROFILES HUB */}
                 {isAdmin && (
                   <TabsContent value="students" className="space-y-4">
                     <Card>
@@ -653,22 +697,22 @@ export function StaffPortal({
                       <CardContent className="grid sm:grid-cols-2 gap-3 items-end">
                         <div><Label>Full Student Name</Label><Input value={stdName} onChange={(e) => setStdName(e.target.value)} placeholder="John Doe" /></div>
                         <div><Label>Admission Number</Label><Input value={stdAdmissionNo} onChange={(e) => setStdAdmissionNo(e.target.value)} placeholder="ADM/000/2026" /></div>
-                        <div><Label>Assigned Class</Label>
+                        <div><Label>Assigned Class Stream</Label>
                           <Select value={stdClass} onValueChange={setStdClass}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
-                        <div><Label>Emergency Contact</Label><Input value={stdParent} onChange={(e) => setStdParent(e.target.value)} placeholder="+254..." /></div>
+                        <div><Label>Emergency Contact Number</Label><Input value={stdParent} onChange={(e) => setStdParent(e.target.value)} placeholder="+254..." /></div>
                         <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="col-span-full bg-emerald-600 text-white">Commit Profile Registration</Button>
                       </CardContent>
                     </Card>
 
                     <Card>
-                      <CardHeader><CardTitle className="text-base">System Active Rosters</CardTitle></CardHeader>
+                      <CardHeader><CardTitle className="text-base">Active Enrolled Registry Logs</CardTitle></CardHeader>
                       <CardContent>
                         <Table>
-                          <TableHeader><TableRow><TableHead>Admission No</TableHead><TableHead>Student Name</TableHead><TableHead>Class</TableHead><TableHead className="w-[80px]"></TableHead></TableRow></TableHeader>
+                          <TableHeader><TableRow><TableHead>Admission No</TableHead><TableHead>Student Name</TableHead><TableHead>Class Stream</TableHead><TableHead className="w-[80px]"></TableHead></TableRow></TableHeader>
                           <TableBody>
                             {students.map((s) => (
                               <TableRow key={s.id}>
@@ -685,14 +729,14 @@ export function StaffPortal({
                   </TabsContent>
                 )}
 
-                {/* 10. PREFECTS TAB CONTENT */}
+                {/* 10. STUDENT COUNCIL PREFECT LEADERSHIP CABINET */}
                 <TabsContent value="prefects" className="space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Student Council Leadership Registry</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">Council Appointment Ledger</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                        <div><Label>Prefect Name</Label><Input value={newPrefectName} onChange={(e) => setNewPrefectName(e.target.value)} placeholder="e.g. Alex Ogendi" /></div>
-                        <div><Label>Dignitary Title Role</Label><Input value={newPrefectRole} onChange={(e) => setNewPrefectRole(e.target.value)} placeholder="e.g. School Captain" /></div>
+                        <div><Label>Prefect Student Name</Label><Input value={newPrefectName} onChange={(e) => setNewPrefectName(e.target.value)} placeholder="e.g. Alex Ogendi" /></div>
+                        <div><Label>Council Portfolio Duty Role</Label><Input value={newPrefectRole} onChange={(e) => setNewPrefectRole(e.target.value)} placeholder="e.g. School Captain" /></div>
                         <Button onClick={handleAddPrefect} disabled={prefectsSaving} className="bg-[#378add] text-white">Add Appointee</Button>
                       </div>
 
@@ -723,16 +767,16 @@ export function StaffPortal({
                   </Card>
                 </TabsContent>
 
-                {/* 11. LESSON LOGGING SCHEME */}
+                {/* 11. INSTRUCTOR CLASSROOM WORK LOG SHEET */}
                 <TabsContent value="mylog" className="space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Submit Daily Teacher Work Log Sheet</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">File Instructor Daily Lesson Log Sheet</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div><Label>Log Work Date</Label><Input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} /></div>
-                        <div><Label>Time In</Label><Input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)} /></div>
-                        <div><Label>Time Out</Label><Input type="time" value={timeOut} onChange={(e) => setTimeOut(e.target.value)} /></div>
-                        <div><Label>Class</Label>
+                        <div><Label>Log Activity Date</Label><Input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} /></div>
+                        <div><Label>Time Stamp In</Label><Input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)} /></div>
+                        <div><Label>Time Stamp Out</Label><Input type="time" value={timeOut} onChange={(e) => setTimeOut(e.target.value)} /></div>
+                        <div><Label>Class Target</Label>
                           <Select value={logClass} onValueChange={setLogClass}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
@@ -740,15 +784,15 @@ export function StaffPortal({
                         </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div><Label>Subject Covered</Label>
+                        <div><Label>Subject Scope</Label>
                           <Select value={logSubject} onValueChange={setLogSubject}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>{lecturerSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
-                        <div><Label>Syllabus Subtopic / Lesson Objective</Label><Input value={logTopic} onChange={(e) => setLogTopic(e.target.value)} placeholder="e.g. Quadratic Equations Intro" /></div>
+                        <div><Label>Syllabus Subtopic Objective Taught</Label><Input value={logTopic} onChange={(e) => setLogTopic(e.target.value)} placeholder="e.g. Quadratic Formula Matrix" /></div>
                       </div>
-                      <div><Label>Instructor Comments / Remarks</Label><Textarea value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} /></div>
+                      <div><Label>Instructor Comments / Evaluation Remarks</Label><Textarea value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} /></div>
                       <Button onClick={handleSubmitLog} disabled={logSaving} className="bg-emerald-600 text-white">Save Work Log Entry</Button>
                     </CardContent>
                   </Card>
@@ -769,10 +813,10 @@ export function StaffPortal({
                   </Table>
                 </TabsContent>
 
-                {/* 12. OCCURRENCE RECORD SHEET */}
+                {/* 12. INCIDENT & CAMPUS OCCURRENCE RECORD SHEET */}
                 <TabsContent value="occurrence" className="space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Record Discipline / Daily Incident Log</CardTitle></CardHeader>
+                    <CardHeader><CardTitle className="text-base">Record Discipline Incident / Campus Occurrence Log</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div><Label>Incident Date</Label><Input type="date" value={occDate} onChange={(e) => setOccDate(e.target.value)} /></div>
@@ -780,22 +824,22 @@ export function StaffPortal({
                         <div><Label>Classification</Label>
                           <Select value={occCategory} onValueChange={setOccCategory}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="discipline">Discipline Breach</SelectItem><SelectItem value="health">Medical / Clinic Emergency</SelectItem><SelectItem value="general">General Campus Incident</SelectItem></SelectContent>
+                            <SelectContent><SelectItem value="discipline">Discipline Breach Case</SelectItem><SelectItem value="health">Medical Clinic Incident</SelectItem><SelectItem value="general">General Campus Notice</SelectItem></SelectContent>
                           </Select>
                         </div>
-                        <div><Label>Risk Severity Level</Label>
+                        <div><Label>Risk Severity Escalation</Label>
                           <Select value={occSeverity} onValueChange={setOccSeverity}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="normal">Normal / Mild</SelectItem><SelectItem value="medium">Medium Action required</SelectItem><SelectItem value="critical">Critical Escalation Required</SelectItem></SelectContent>
+                            <SelectContent><SelectItem value="normal">Normal Routine</SelectItem><SelectItem value="medium">Medium Warning Action</SelectItem><SelectItem value="critical">Critical Principal Escalation</SelectItem></SelectContent>
                           </Select>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div><Label>Students / Stakeholders Involved</Label><Input value={occStudents} onChange={(e) => setOccStudents(e.target.value)} placeholder="Comma-separated student names..." /></div>
-                        <div><Label>Incident Case Subject</Label><Input value={occTitle} onChange={(e) => setOccTitle(e.target.value)} placeholder="e.g. Noise making during prep" /></div>
+                        <div><Label>Students Involved Profile List</Label><Input value={occStudents} onChange={(e) => setOccStudents(e.target.value)} placeholder="Comma-separated student names..." /></div>
+                        <div><Label>Incident Case Headline Subject</Label><Input value={occTitle} onChange={(e) => setOccTitle(e.target.value)} placeholder="e.g. Noise during night session prep" /></div>
                       </div>
-                      <div><Label>Detailed Account Narrative</Label><Textarea value={occDesc} onChange={(e) => setOccDesc(e.target.value)} rows={2} /></div>
-                      <div><Label>Immediate Redress Action Taken</Label><Input value={occAction} onChange={(e) => setOccAction(e.target.value)} placeholder="e.g. Suspended from dinner session" /></div>
+                      <div><Label>Detailed Account Narrative Case Brief</Label><Textarea value={occDesc} onChange={(e) => setOccDesc(e.target.value)} rows={2} /></div>
+                      <div><Label>Immediate Redress Action / Penalty Taken</Label><Input value={occAction} onChange={(e) => setOccAction(e.target.value)} placeholder="e.g. Cleaned laboratory hallway floors" /></div>
                       <Button onClick={handleSubmitOccurrence} disabled={occSaving} className="bg-rose-600 hover:bg-rose-700 text-white">File Incident Report</Button>
                     </CardContent>
                   </Card>
@@ -886,6 +930,7 @@ export function ProtectedDocumentManager({
       fetchStudentFiles(); 
     } catch (error: any) {
       alert(`Upload failed: ${error.message}`);
+    } platform: {
     } finally {
       setUploading(false);
     }
