@@ -6,7 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle, Lock, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCircle, Lock, Loader2, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
@@ -77,14 +79,9 @@ export function StaffPortal({
   const [students, setStudents] = useState<any[]>([]);
   const [stdName, setStdName] = useState("");
   const [stdClass, setStdClass] = useState(classNames[0]);
-  const [stdAdmNo, setStdAdmNo] = useState("");
+  const [stdAdmissionNo, setStdAdmissionNo] = useState("");
   const [stdParent, setStdParent] = useState("");
   const [stdRegistering, setStdRegistering] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [docType, setDocType] = useState("Birth Certificate");
-  const [docFile, setDocFile] = useState<File | null>(null);
-  const [docUploading, setDocUploading] = useState(false);
-  const [studentDocs, setStudentDocs] = useState<any[]>([]);
 
   const SYSTEM_TODAY = new Date().toISOString().split("T")[0];
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
@@ -109,37 +106,6 @@ export function StaffPortal({
   const [occStudents, setOccStudents] = useState("");
   const [occSeverity, setOccSeverity] = useState("normal");
   const [occSaving, setOccSaving] = useState(false);
-  const [occFilter, setOccFilter] = useState("all");
-
-  useEffect(() => {
-    if (activeTab === "students") fetchStudents();
-    if (activeTab === "attendance") fetchAttendance();
-    if (activeTab === "prefects") fetchPrefects();
-    if (activeTab === "occurrence") fetchOccurrences();
-  }, [activeTab, selectedClass, attDate]);
-
-  useEffect(() => {
-    if (activeTab === "mylog") fetchTeacherLogs();
-  }, [activeTab, logDate]);
-
-  const isAdmin = lecturer?.name === "Mr. Osman Halake";
-
-  const isClassTeacher = 
-    isAdmin ||
-    (lecturer?.id && CLASS_TEACHERS[selectedClass] === lecturer.id) || 
-    (lecturer?.name && lecturer.name.toLowerCase().includes(CLASS_TEACHERS[selectedClass] || ""));
-    
-  const isSameDay = attDate === SYSTEM_TODAY;
-  const canMarkAttendance = isAdmin ? (isClassTeacher && isSameDay) : (isClassTeacher && isSameDay && !isClassSubmitted);
-  
-  let lockBannerMessage = "";
-  if (!isClassTeacher) {
-    lockBannerMessage = `🔒 VIEW ONLY MODE: You are authenticated as ${lecturer?.name || "Guest"}. Only the assigned Class Teacher can modify this register.`;
-  } else if (!isSameDay) {
-    lockBannerMessage = `🔒 LOCKED: Attendance tracking is configured for strict Same-Day logging. Modifying row frames for ${attDate} is restricted.`;
-  } else if (isClassSubmitted) {
-    lockBannerMessage = `🔒 LOGGED & LOCKED: Today's class registry is securely committed to cloud systems. Corrections or back-edits are prohibited.`;
-  }
 
   const [prefects, setPrefects] = useState([
     { id: "1", name: "Alex Ogendi", role: "School Captain" },
@@ -166,20 +132,32 @@ export function StaffPortal({
   const [editingRole, setEditingRole] = useState("");
   const [prefectsSaving, setPrefectsSaving] = useState(false);
 
+  const isAdmin = lecturer?.name === "Mr. Osman Halake";
+  const isClassTeacher = isAdmin || (lecturer?.id && CLASS_TEACHERS[selectedClass] === lecturer.id);
+  const isSameDay = attDate === SYSTEM_TODAY;
+  const canMarkAttendance = isAdmin ? isSameDay : (isClassTeacher && isSameDay && !isClassSubmitted);
+
+  useEffect(() => {
+    if (activeTab === "students") fetchStudents();
+    if (activeTab === "attendance") fetchAttendance();
+    if (activeTab === "prefects") fetchPrefects();
+    if (activeTab === "occurrence") fetchOccurrences();
+  }, [activeTab, selectedClass, attDate]);
+
+  useEffect(() => {
+    if (activeTab === "mylog") fetchTeacherLogs();
+  }, [activeTab, logDate]);
+
   const fetchPrefects = async () => {
     const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
     if (!error && data && data.length > 0) setPrefects(data);
   };
 
   const handleAddPrefect = async () => {
-    if (!newPrefectName.trim() || !newPrefectRole.trim()) { alert("Enter name and role."); return; }
+    if (!newPrefectName.trim() || !newPrefectRole.trim()) return;
     setPrefectsSaving(true);
     const { error } = await supabase.from("prefects").insert({ name: newPrefectName.trim(), role: newPrefectRole.trim() });
-    if (error) {
-      setPrefects(prev => [...prev, { id: Date.now().toString(), name: newPrefectName.trim(), role: newPrefectRole.trim() }]);
-    } else {
-      await fetchPrefects();
-    }
+    if (!error) await fetchPrefects();
     setNewPrefectName(""); setNewPrefectRole("");
     setPrefectsSaving(false);
   };
@@ -187,235 +165,118 @@ export function StaffPortal({
   const handleDeletePrefect = async (id: string) => {
     if (!confirm("Remove this prefect?")) return;
     const { error } = await supabase.from("prefects").delete().eq("id", id);
-    if (error) {
-      setPrefects(prev => prev.filter(p => p.id !== id));
-    } else {
-      await fetchPrefects();
-    }
+    if (!error) await fetchPrefects();
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingName.trim() || !editingRole.trim()) { alert("Enter name and role."); return; }
+  const handleSavePrefectEdit = async () => {
+    if (!editingName.trim() || !editingRole.trim()) return;
     const { error } = await supabase.from("prefects").update({ name: editingName.trim(), role: editingRole.trim() }).eq("id", editingPrefectId);
-    if (error) {
-      setPrefects(prev => prev.map(p => p.id === editingPrefectId ? { ...p, name: editingName.trim(), role: editingRole.trim() } : p));
-    } else {
-      await fetchPrefects();
-    }
+    if (!error) await fetchPrefects();
     setEditingPrefectId(null);
   };
 
   const fetchTeacherLogs = async () => {
-    const { data, error } = await supabase
-      .from("teacher_logs")
-      .select("*")
-      .eq("log_date", logDate)
-      .order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("teacher_logs").select("*").eq("log_date", logDate).order("created_at", { ascending: false });
     if (!error && data) setTeacherLogs(data);
   };
 
   const handleSubmitLog = async () => {
-    if (!timeIn.trim() || !logTopic.trim()) { alert("Enter time in and topic taught."); return; }
+    if (!timeIn.trim() || !logTopic.trim()) return alert("Fill required log fields.");
     setLogSaving(true);
-    const { error } = await supabase.from("teacher_logs").insert({
-      teacher_name: lecturer?.name || "Unknown Teacher",
-      log_date: logDate,
-      time_in: timeIn,
-      time_out: timeOut || null,
-      class_name: logClass,
-      subject: logSubject,
-      topic_taught: logTopic,
-      notes: logNotes || null,
+    await supabase.from("teacher_logs").insert({
+      teacher_name: lecturer?.name || "Unknown Teacher", log_date: logDate, time_in: timeIn, time_out: timeOut || null,
+      class_name: logClass, subject: logSubject, topic_taught: logTopic, notes: logNotes || null,
     });
-    if (error) { alert("Failed to save log."); setLogSaving(false); return; }
     setTimeIn(""); setTimeOut(""); setLogTopic(""); setLogNotes("");
     setLogSaving(false);
     fetchTeacherLogs();
-    alert("✓ Lesson log saved.");
   };
 
   const handleDeleteLog = async (id: string) => {
-    if (!confirm("Delete this log entry?")) return;
-    await supabase.from("teacher_logs").delete().eq("id", id);
-    fetchTeacherLogs();
+    if (confirm("Delete entry?")) { await supabase.from("teacher_logs").delete().eq("id", id); fetchTeacherLogs(); }
   };
 
   const fetchOccurrences = async () => {
-    const { data, error } = await supabase
-      .from("daily_occurrence")
-      .select("*")
-      .order("log_date", { ascending: false })
-      .order("time_of_incident", { ascending: false });
+    const { data, error } = await supabase.from("daily_occurrence").select("*").order("log_date", { ascending: false });
     if (!error && data) setOccurrences(data);
   };
 
   const handleSubmitOccurrence = async () => {
-    if (!occTitle.trim() || !occDesc.trim()) { alert("Enter title and description."); return; }
+    if (!occTitle.trim() || !occDesc.trim()) return;
     setOccSaving(true);
-    const { error } = await supabase.from("daily_occurrence").insert({
-      log_date: occDate,
-      tod_name: lecturer.name,
-      time_of_incident: occTime || null,
-      category: occCategory,
-      title: occTitle,
-      description: occDesc,
-      action_taken: occAction || null,
-      students_involved: occStudents || null,
-      severity: occSeverity,
+    await supabase.from("daily_occurrence").insert({
+      log_date: occDate, tod_name: lecturer.name, time_of_incident: occTime || null, category: occCategory,
+      title: occTitle, description: occDesc, action_taken: occAction || null, students_involved: occStudents || null, severity: occSeverity,
     });
-    if (error) { alert("Failed to save."); setOccSaving(false); return; }
-    setOccTitle(""); setOccDesc(""); setOccAction(""); setOccStudents(""); setOccTime("");
+    setOccTitle(""); setOccDesc(""); setOccAction(""); setOccStudents("");
     setOccSaving(false);
     fetchOccurrences();
-    alert("✓ Occurrence recorded.");
   };
 
   const handleDeleteOccurrence = async (id: string) => {
-    if (!confirm("Delete this occurrence record?")) return;
-    await supabase.from("daily_occurrence").delete().eq("id", id);
-    fetchOccurrences();
-  };
-
-  const calculateLiveClassCount = (className: string) => {
-    let presentCount = 0;
-    classStudents[className]?.forEach(student => {
-      const record = attRecords[student];
-      if (record) {
-        if (record.am === 'present') presentCount++;
-        if (record.pm === 'present') presentCount++;
-      }
-    });
-    return Math.round(presentCount / 2);
-  };
-
-  const calculateLiveClassPct = (className: string) => {
-    const totalSlots = (classStudents[className]?.length || 0) * 2;
-    if (totalSlots === 0) return 0;
-    let presentSlots = 0;
-    classStudents[className].forEach(student => {
-      const record = attRecords[student];
-      if (record) {
-        if (record.am === 'present') presentSlots++;
-        if (record.pm === 'present') presentSlots++;
-      }
-    });
-    return Math.round((presentSlots / totalSlots) * 100);
-  };
-
-  const calculateSchoolWidePresent = () => {
-    let grandTotal = 0;
-    Object.keys(classStudents).forEach(className => {
-      grandTotal += calculateLiveClassCount(className);
-    });
-    return grandTotal;
-  };
-
-  const calculateSchoolWidePct = () => {
-    let totalSlots = 0;
-    let presentSlots = 0;
-    Object.keys(classStudents).forEach(className => {
-      totalSlots += classStudents[className].length * 2;
-      classStudents[className].forEach(student => {
-        const record = attRecords[student];
-        if (record) {
-          if (record.am === 'present') presentSlots++;
-          if (record.pm === 'present') presentSlots++;
-        }
-      });
-    });
-    return totalSlots > 0 ? Math.round((presentSlots / totalSlots) * 100) : 0;
-  };
-
-  const getClassBreakdownStr = () => {
-    const currentStudents = classStudents[selectedClass] || [];
-    let p = 0, a = 0, u = 0;
-    currentStudents.forEach(student => {
-      const record = attRecords[student];
-      const r = record && record.class_name === selectedClass
-        ? record
-        : { am: 'unmarked', pm: 'unmarked' };
-      if (r.am === 'present' || r.pm === 'present') p++;
-      else if (r.am === 'absent' || r.pm === 'absent') a++;
-      else u++;
-    });
-    return `${p} present, ${a} absent, ${u} not marked`;
+    if (confirm("Delete record?")) { await supabase.from("daily_occurrence").delete().eq("id", id); fetchOccurrences(); }
   };
 
   const fetchAttendance = async () => {
     setAttRecords({});
     setIsClassSubmitted(false);
-    const { data, error } = await supabase
-      .from("student_attendance")
-      .select("*")
-      .eq("log_date", attDate);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
+    const { data, error } = await supabase.from("student_attendance").select("*").eq("log_date", attDate);
+    if (error) return;
     const mapped: Record<string, { am: string; pm: string }> = {};
     let submittedMarker = false;
-
     data?.forEach((row: any) => {
       mapped[row.student_name] = { am: row.am_status, pm: row.pm_status };
-      if (row.class_name === selectedClass) {
-        if (row.am_status !== 'unmarked' || row.pm_status !== 'unmarked') {
-          submittedMarker = true;
-        }
+      if (row.class_name === selectedClass && (row.am_status !== "unmarked" || row.pm_status !== "unmarked")) {
+        submittedMarker = true;
       }
     });
-
     setAttRecords(mapped);
     setIsClassSubmitted(submittedMarker);
   };
 
   const handleToggleAttendance = (studentName: string, session: "am" | "pm") => {
     if (!canMarkAttendance) return;
-    const currentPair = attRecords[studentName] || { am: "unmarked", pm: "unmarked" };
-    const currentStatus = currentPair[session];
-    
-    let nextStatus = "unmarked";
-    if (currentStatus === "unmarked") nextStatus = "present";
-    else if (currentStatus === "present") nextStatus = "absent";
-
-    setAttRecords(prev => ({
-      ...prev,
-      [studentName]: { ...currentPair, [session]: nextStatus }
-    }));
+    const current = attRecords[studentName] || { am: "unmarked", pm: "unmarked" };
+    const nextStatus = current[session] === "unmarked" ? "present" : current[session] === "present" ? "absent" : "unmarked";
+    setAttRecords(prev => ({ ...prev, [studentName]: { ...current, [session]: nextStatus } }));
   };
 
-  const handleMarkAllGroup = (status: 'present' | 'absent') => {
+  const handleMarkAllGroup = (status: "present" | "absent") => {
     if (!canMarkAttendance) return;
     const updated = { ...attRecords };
-    classStudents[selectedClass].forEach(student => {
-      updated[student] = { am: status, pm: status };
-    });
+    classStudents[selectedClass].forEach(student => { updated[student] = { am: status, pm: status }; });
     setAttRecords(updated);
   };
 
   const handleFinalSubmissionLock = async () => {
     if (!canMarkAttendance) return;
-    if (!confirm("⚠️ WARNING: Submitting this form secures the roll framework. Changes or corrections are final and cannot be altered. Propose update?")) return;
-
-    const currentStudents = classStudents[selectedClass] || [];
-    for (const student of currentStudents) {
+    if (!confirm("Submit layout registry? Data locks upon commit.")) return;
+    for (const student of classStudents[selectedClass] || []) {
       const pair = attRecords[student] || { am: "unmarked", pm: "unmarked" };
       await supabase.from("student_attendance").upsert({
-        log_date: attDate,
-        class_name: selectedClass,
-        student_name: student,
-        am_status: pair.am,
-        pm_status: pair.pm,
+        log_date: attDate, class_name: selectedClass, student_name: student, am_status: pair.am, pm_status: pair.pm,
       }, { onConflict: "log_date,student_name" });
     }
-
     setIsClassSubmitted(true);
-    alert("✓ Register securely committed. Corrections lockout algorithm is now active.");
     fetchAttendance();
   };
 
-  const studentResults = results.filter((r) => r.student === selectedStudent);
+  const fetchStudents = async () => {
+    const { data } = await supabase.from("students").select("*").order("created_at", { ascending: false });
+    if (data) setStudents(data);
+  };
+
+  const handleRegisterStudent = async () => {
+    if (!stdName.trim() || !stdAdmissionNo.trim()) return;
+    setStdRegistering(true);
+    await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmissionNo, parent_contact: stdParent });
+    setStdName(""); setStdAdmissionNo(""); setStdParent(""); setStdRegistering(false);
+    fetchStudents();
+  };
+
+  const handleDeleteStudent = async (id: string) => {
+    if (confirm("Delete student?")) { await supabase.from("students").delete().eq("id", id); fetchStudents(); }
+  };
 
   const handleClassChange = (className: string) => {
     setSelectedClass(className);
@@ -432,125 +293,16 @@ export function StaffPortal({
   };
 
   const handleUploadResult = () => {
-    if (!newSubject.trim() || !newMarks.trim()) { alert("Enter subject and marks."); return; }
+    if (!newSubject.trim() || !newMarks.trim()) return alert("Enter fields.");
     const marks = Number(newMarks);
-    const grade = newGrade.trim() || (selectedClass === 'Grade 10' ? getGrade10Grade(marks) : getGrade(marks));
+    const grade = newGrade.trim() || (selectedClass === "Grade 10" ? getGrade10Grade(marks) : getGrade(marks));
     onUploadResult({ student: selectedStudent, className: selectedClass, subject: newSubject.trim(), marks, grade, term: newTerm });
     setNewMarks(""); setNewGrade("");
   };
 
   const handleUpdateFees = () => {
-    const total = Number(feeTotal);
-    const paid = Number(feePaid);
-    if (isNaN(total) || isNaN(paid) || total < 0 || paid < 0) { alert("Enter valid fee amounts."); return; }
-    if (paid > total) { alert("Amount paid cannot exceed total fees."); return; }
-    onUpdateFees(selectedStudent, total, paid);
-    alert(`Fees updated for ${selectedStudent}.`);
-  };
-
-  const handlePostEvent = async () => {
-    if (!evtTitle.trim()) { alert("Enter a title."); return; }
-    const { error } = await supabase.from("events").insert({ type: evtType, title: evtTitle, description: evtDesc, date: evtDate });
-    if (error) { alert("Failed to post."); return; }
-    setEvtTitle(""); setEvtDesc(""); setEvtDate("");
-    alert("Posted successfully!");
-  };
-
-  const handleDeleteEvent = async (id: string) => {
-    await supabase.from("events").delete().eq("id", id);
-  };
-
-  const fetchStudents = async () => {
-    const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
-    if (error) { console.error(error); return; }
-    setStudents(data || []);
-  };
-
-  const fetchStudentDocs = async (studentId: string) => {
-    const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", studentId).order("created_at", { ascending: false });
-    if (error) { console.error(error); return; }
-    setStudentDocs(data || []);
-  };
-
-  const handleRegisterStudent = async () => {
-    if (!stdName.trim() || !stdAdmNo.trim()) { alert("Enter student name and admission number."); return; }
-    setStdRegistering(true);
-    const { error } = await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmNo, parent_contact: stdParent });
-    if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
-    alert(`${stdName} registered successfully!`);
-    setStdName(""); setStdAdmNo(""); setStdParent("");
-    setStdRegistering(false);
-    fetchStudents();
-  };
-
-  const handleDeleteStudent = async (id: string) => {
-    if (!confirm("Delete this student and all their documents?")) return;
-    await supabase.from("students").delete().eq("id", id);
-    fetchStudents();
-    setSelectedStudentId(null);
-    setStudentDocs([]);
-  };
-
-  const handleUploadDoc = async () => {
-    if (!selectedStudentId) { alert("Select a student first."); return; }
-    if (!docFile) { alert("Select a file to upload."); return; }
-    setDocUploading(true);
-    const filePath = `${selectedStudentId}/${Date.now()}_${docFile.name}`;
-    const { error: uploadError } = await supabase.storage.from("student-documents").upload(filePath, docFile);
-    if (uploadError) { alert("Upload failed."); setDocUploading(false); return; }
-    const { data } = supabase.storage.from("student-documents").getPublicUrl(filePath);
-    const { error: insertError } = await supabase.from("student_documents").insert({
-      student_id: selectedStudentId, document_name: docType, document_type: docType, file_url: data.publicUrl, file_name: docFile.name,
-    });
-    if (insertError) { alert("Failed to save document."); setDocUploading(false); return; }
-    alert("Document uploaded!");
-    setDocFile(null); setDocUploading(false);
-    fetchStudentDocs(selectedStudentId);
-  };
-
-  const handleDeleteDoc = async (id: string) => {
-    await supabase.from("student_documents").delete().eq("id", id);
-    if (selectedStudentId) fetchStudentDocs(selectedStudentId);
-  };
-
-  const handlePostMaterial = async () => {
-    if (!matTitle.trim()) { alert("Enter a title."); return; }
-    setMatUploading(true);
-    let file_url = ""; let file_name = "";
-    if (matFile) {
-      const filePath = `${Date.now()}_${matFile.name}`;
-      const { error: uploadError } = await supabase.storage.from("materials").upload(filePath, matFile);
-      if (uploadError) { alert("File upload failed."); setMatUploading(false); return; }
-      const { data } = supabase.storage.from("materials").getPublicUrl(filePath);
-      file_url = data.publicUrl; file_name = matFile.name;
-    }
-    onPostMaterial({ title: matTitle, description: matDesc, subject: matSubject, class_name: matClass, teacher_name: lecturer?.name || "Teacher", type: matFile ? "file" : "text", content: matContent, file_url, file_name });
-    setMatTitle(""); setMatDesc(""); setMatContent(""); setMatFile(null); setMatUploading(false);
-  };
-
-  const handleUploadTimetable = async () => {
-    if (!ttFile || !ttTitle.trim()) { alert("Enter title and select a file."); return; }
-    setTtUploading(true);
-    const filePath = `${Date.now()}_${ttFile.name}`;
-    const { error: uploadError } = await supabase.storage.from("timetables").upload(filePath, ttFile);
-    if (uploadError) { alert("Upload failed."); setTtUploading(false); return; }
-    const { data } = supabase.storage.from("timetables").getPublicUrl(filePath);
-    onUploadTimetable({ type: ttType, title: ttTitle, term: ttTerm, file_url: data.publicUrl, file_name: ttFile.name });
-    setTtTitle(""); setTtFile(null); setTtUploading(false);
-  };
-
-  const handleAddTermRow = async () => {
-    if (!newOpeningDate.trim() || !newClosingDate.trim()) { alert("Please fill out at least Opening and Closing dates."); return; }
-    const termData: any = { term: "Term 2, 2026", opening_date: newOpeningDate, idd_date: newIddBreak || "—", midterm_exam: newMidExam || "—", mid_term: newMidBreak || "—", end_term_exam: newEndExam || "—", closing_date: newClosingDate, status: "Current Term" };
-    try {
-      const { error: deleteError } = await supabase.from("term_dates").delete().neq("term", "xyz_placeholder_safety");
-      if (deleteError) { console.error(deleteError); alert("Failed to clear old dates."); return; }
-      const { error: insertError } = await supabase.from("term_dates").insert(termData);
-      if (insertError) { console.error(insertError); alert("Failed to save term dates."); return; }
-      alert("Homepage calendar successfully updated!");
-      setNewOpeningDate(""); setNewIddBreak(""); setNewMidExam(""); setNewMidBreak(""); setNewEndExam(""); setNewClosingDate("");
-      onUploadTermDate(termData);
-    } catch (e) { console.error(e); alert("Something went wrong."); }
+    onUpdateFees(selectedStudent, Number(feeTotal), Number(feePaid));
+    alert("Fees updated.");
   };
 
   const getMeritList = () => {
@@ -559,11 +311,12 @@ export function StaffPortal({
       const totalMarks = r.reduce((sum, r) => sum + r.marks, 0);
       const subjects = r.length;
       const average = subjects > 0 ? Math.round((totalMarks / subjects) * 10) / 10 : 0;
-      const overallGrade = subjects > 0 ? (meritClass === 'Grade 10' ? getGrade10Grade(average) : getGrade(average)) : "-";
+      const overallGrade = subjects > 0 ? (meritClass === "Grade 10" ? getGrade10Grade(average) : getGrade(average)) : "-";
       return { student, totalMarks, subjects, average, overallGrade };
     }).filter((s) => s.subjects > 0).sort((a, b) => b.totalMarks - a.totalMarks);
   };
 
+  const studentResults = results.filter((r) => r.student === selectedStudent);
   const meritList = getMeritList();
   const resultsByTerm = studentResults.reduce((acc, r) => {
     const t = r.term || "Unknown Term";
@@ -572,17 +325,11 @@ export function StaffPortal({
     return acc;
   }, {} as Record<string, Result[]>);
 
-  const isImageFile = (fileName: string) => {
-    if (!fileName) return false;
-    const n = fileName.toLowerCase();
-    return n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".webp");
-  };
-
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="grid md:grid-cols-[320px_1fr] gap-4">
 
-        {/* SIDEBAR NAVIGATION SHEET LIST */}
+        {/* SIDEBAR NAVIGATION PANEL */}
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Class Lists</CardTitle></CardHeader>
           <CardContent className="space-y-3">
@@ -590,7 +337,7 @@ export function StaffPortal({
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
-            <div className="max-h-[400px] overflow-y-auto space-y-1">
+            <div className="max-h-[550px] overflow-y-auto space-y-1">
               {classStudents[selectedClass].map((student) => (
                 <button key={student} onClick={() => handleStudentSelect(student)}
                   className={cn("w-full text-left px-3 py-2 text-sm rounded-md border transition-colors",
@@ -602,80 +349,479 @@ export function StaffPortal({
           </CardContent>
         </Card>
 
-        {/* MAIN PANEL VIEW SECTIONS */}
+        {/* MAIN PANEL CONTENT WRAPPERS */}
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="mb-4 flex flex-wrap gap-1 h-auto">
-                  <TabsTrigger value="results" className="flex-shrink-0 text-xs px-2 py-1.5">Results</TabsTrigger>
-                  <TabsTrigger value="attendance" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Attendance</TabsTrigger>
-                  <TabsTrigger value="documents" className="flex-shrink-0 text-xs px-2 py-1.5">🔒 Secure Folders</TabsTrigger>
-                  <TabsTrigger value="merit" className="flex-shrink-0 text-xs px-2 py-1.5">
-                    <Trophy className="h-3 w-3 mr-1" />Merit List
-                  </TabsTrigger>
-                  <TabsTrigger value="materials" className="flex-shrink-0 text-xs px-2 py-1.5">📚 Materials</TabsTrigger>
-                  <TabsTrigger value="timetables" className="flex-shrink-0 text-xs px-2 py-1.5">📅 Timetables</TabsTrigger>
-                  {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
-                  {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
-                  {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
-                  <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
-                  <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
-                  <TabsTrigger value="occurrence" className="flex-shrink-0 text-xs px-2 py-1.5">📖 Occurrence</TabsTrigger>
+                <TabsList className="mb-4 flex flex-wrap gap-1 h-auto bg-muted p-1 rounded-lg">
+                  <TabsTrigger value="results" className="text-xs px-2.5 py-1.5">Results</TabsTrigger>
+                  <TabsTrigger value="attendance" className="text-xs px-2.5 py-1.5">📅 Attendance</TabsTrigger>
+                  <TabsTrigger value="documents" className="text-xs px-2.5 py-1.5">🔒 Secure Folders</TabsTrigger>
+                  <TabsTrigger value="merit" className="text-xs px-2.5 py-1.5"><Trophy className="h-3 w-3 mr-1" />Merit List</TabsTrigger>
+                  <TabsTrigger value="materials" className="text-xs px-2.5 py-1.5">📚 Materials</TabsTrigger>
+                  <TabsTrigger value="timetables" className="text-xs px-2.5 py-1.5">📅 Timetables</TabsTrigger>
+                  {isAdmin && <TabsTrigger value="fees" className="text-xs px-2.5 py-1.5">Fees</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="events" className="text-xs px-2.5 py-1.5">📣 Events</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="students" className="text-xs px-2.5 py-1.5">🎓 Students</TabsTrigger>}
+                  <TabsTrigger value="prefects" className="text-xs px-2.5 py-1.5">🏅 Prefects</TabsTrigger>
+                  <TabsTrigger value="mylog" className="text-xs px-2.5 py-1.5">📋 My Log</TabsTrigger>
+                  <TabsTrigger value="occurrence" className="text-xs px-2.5 py-1.5">📖 Occurrence</TabsTrigger>
                 </TabsList>
 
-                {/* SECURE SYSTEM DOCUMENT FOLDER WRAPPER */}
-                <TabsContent value="documents" className="space-y-6">
-                  <ProtectedDocumentManager
-                    studentId={selectedStudent} 
-                    studentName={selectedStudent} 
-                    currentUserRole={isAdmin ? "principal" : "teacher"} 
-                    currentUserId={lecturer?.id || "staff_user"} 
-                  />
+                {/* 1. RESULTS TAB CONTENT */}
+                <TabsContent value="results" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-lg">Upload Result for {selectedStudent}</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
+                      <div>
+                        <Label>Subject</Label>
+                        <Select value={newSubject} onValueChange={setNewSubject}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{lecturerSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Marks</Label>
+                        <Input type="number" value={newMarks} onChange={(e) => setNewMarks(e.target.value)} placeholder="e.g. 78" />
+                      </div>
+                      <div>
+                        <Label>Term Context</Label>
+                        <Select value={newTerm} onValueChange={setNewTerm}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{termOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleUploadResult} className="bg-[#378add] hover:bg-[#2c72b8] text-white">Upload</Button>
+                    </CardContent>
+                  </Card>
+
+                  {Object.keys(resultsByTerm).length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">No examination sheets configured.</div>
+                  ) : (
+                    Object.entries(resultsByTerm).map(([term, list]) => (
+                      <Card key={term}>
+                        <CardHeader><CardTitle className="text-base text-primary font-bold">{term}</CardTitle></CardHeader>
+                        <CardContent>
+                          <Table>
+                            <TableHeader><TableRow><TableHead>Subject</TableHead><TableHead>Marks</TableHead><TableHead>Grade</TableHead><TableHead className="w-[80px]"></TableHead></TableRow></TableHeader>
+                            <TableBody>
+                              {list.map((r, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="font-medium">{r.subject}</TableCell>
+                                  <TableCell>{r.marks}%</TableCell>
+                                  <TableCell><span className="px-2 py-0.5 rounded text-xs font-bold bg-muted">{r.grade}</span></TableCell>
+                                  <TableCell>
+                                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => onDeleteResult(r.student, r.subject, r.term)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </TabsContent>
 
-                {/* ATTENDANCE TAB PANEL */}
-                <TabsContent value="attendance" className="space-y-6">
-                  <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                {/* 2. ATTENDANCE TAB CONTENT */}
+                <TabsContent value="attendance" className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border shadow-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-emerald-800">Target Date:</span>
-                      <input 
-                        type="date" 
-                        value={attDate} 
-                        onChange={(e) => setAttDate(e.target.value)} 
-                        className="border border-emerald-200 rounded-md px-3 py-1.5 text-sm bg-slate-50 font-mono text-[#1A2E1E] focus:outline-none focus:border-[#006B3C]" 
-                      />
+                      <span className="text-sm font-medium">Target Date:</span>
+                      <Input type="date" value={attDate} onChange={(e) => setAttDate(e.target.value)} className="w-auto font-mono" />
                     </div>
-
-                    <div className={cn(
-                      "inline-flex items-center gap-1.5 text-xs font-mono tracking-wide px-3 py-1.5 rounded-full border font-semibold",
-                      canMarkAttendance 
-                        ? "bg-[#E8F5EE] border-emerald-300 text-[#006B3C]" 
-                        : "bg-[#FDF6E3] border-amber-300 text-[#C8992A]"
-                    )}>
-                      {canMarkAttendance ? "✏️ Editing Enabled" : "🔒 View Only"}
+                    <div className={cn("text-xs font-mono px-3 py-1.5 rounded-full border font-bold", canMarkAttendance ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "bg-amber-50 border-amber-300 text-amber-700")}>
+                      {canMarkAttendance ? "✏️ Editing Enabled" : "🔒 View Only Mode"}
                     </div>
-
-                    <div className="sm:ml-auto flex flex-wrap gap-2">
+                    <div className="sm:ml-auto flex gap-2">
                       {canMarkAttendance && (
                         <>
-                          <Button variant="outline" size="sm" onClick={() => handleMarkAllGroup('present')} className="border-emerald-200 hover:bg-emerald-50 text-emerald-800 font-medium">✓ All Present</Button>
-                          <Button variant="outline" size="sm" onClick={() => handleMarkAllGroup('absent')} className="border-rose-200 hover:bg-rose-50 text-rose-800 font-medium">✗ All Absent</Button>
-                          <Button size="sm" onClick={handleFinalSubmissionLock} className="bg-[#C8992A] hover:bg-[#b8891f] text-white font-medium flex items-center gap-1">💾 Save</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleMarkAllGroup("present")} className="text-emerald-700 border-emerald-200">✓ All Present</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleMarkAllGroup("absent")} className="text-rose-700 border-rose-200">✗ All Absent</Button>
+                          <Button size="sm" onClick={handleFinalSubmissionLock} className="bg-emerald-600 hover:bg-emerald-700 text-white">Commit Registry</Button>
                         </>
                       )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
-                      <div className="text-[10px] font-mono tracking-wider text-emerald-600 uppercase font-bold mb-2">Form 3</div>
-                      <div className="font-serif text-3xl font-bold text-[#006B3C] flex items-baseline">
-                        {calculateLiveClassCount("Form 3")}
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Roll Call Register — {selectedClass}</CardTitle></CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader><TableRow><TableHead>Student Name</TableHead><TableHead className="text-center">Morning (AM)</TableHead><TableHead className="text-center">Afternoon (PM)</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {classStudents[selectedClass].map((student) => {
+                            const record = attRecords[student] || { am: "unmarked", pm: "unmarked" };
+                            return (
+                              <TableRow key={student}>
+                                <TableCell className="font-medium">{student}</TableCell>
+                                <TableCell className="text-center">
+                                  <Button size="sm" variant="outline" onClick={() => handleToggleAttendance(student, "am")} disabled={!canMarkAttendance}
+                                    className={cn("w-28 text-xs font-semibold", record.am === "present" ? "bg-emerald-500 text-white border-transparent" : record.am === "absent" ? "bg-rose-500 text-white border-transparent" : "bg-secondary text-secondary-foreground")}>
+                                    {record.am.toUpperCase()}
+                                  </Button>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Button size="sm" variant="outline" onClick={() => handleToggleAttendance(student, "pm")} disabled={!canMarkAttendance}
+                                    className={cn("w-28 text-xs font-semibold", record.pm === "present" ? "bg-emerald-500 text-white border-transparent" : record.pm === "absent" ? "bg-rose-500 text-white border-transparent" : "bg-secondary text-secondary-foreground")}>
+                                    {record.pm.toUpperCase()}
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* 3. SECURE COVERS PRIVATE DOCUMENTS */}
+                <TabsContent value="documents" className="space-y-4">
+                  <ProtectedDocumentManager studentId={selectedStudent} studentName={selectedStudent} currentUserRole={isAdmin ? "principal" : "teacher"} currentUserId={lecturer?.id || "staff_user"} />
+                </TabsContent>
+
+                {/* 4. MERIT LIST TAB CONTENT */}
+                <TabsContent value="merit" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Classroom Leaderboard Matrix</CardTitle></CardHeader>
+                    <CardContent className="flex flex-wrap gap-3 items-end">
+                      <div>
+                        <Label>Class</Label>
+                        <Select value={meritClass} onValueChange={setMeritClass}>
+                          <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                        </Select>
                       </div>
-                    </div>
+                      <div>
+                        <Label>Term Context</Label>
+                        <Select value={meritTerm} onValueChange={setMeritTerm}>
+                          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>{termOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-6">
+                      {meritList.length === 0 ? (
+                        <div className="text-center p-6 text-muted-foreground">No matching data profiles matched for this tracking period.</div>
+                      ) : (
+                        <Table>
+                          <TableHeader><TableRow><TableHead className="w-[60px]">Rank</TableHead><TableHead>Student Name</TableHead><TableHead>Aggregated Score</TableHead><TableHead>Average</TableHead><TableHead>Grade</TableHead></TableRow></TableHeader>
+                          <TableBody>
+                            {meritList.map((row, index) => (
+                              <TableRow key={index} className={cn(index === 0 && "bg-amber-50/70 font-semibold")}>
+                                <TableCell className="font-bold text-center">{index + 1}</TableCell>
+                                <TableCell>{row.student}</TableCell>
+                                <TableCell>{row.totalMarks}</TableCell>
+                                <TableCell>{row.average}%</TableCell>
+                                <TableCell><span className="px-2 py-0.5 rounded text-xs font-bold bg-muted">{row.overallGrade}</span></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* 5. MATERIALS TAB CONTENT */}
+                <TabsContent value="materials" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Publish Revision Materials & Syllabus Files</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><Label>Title</Label><Input value={matTitle} onChange={(e) => setMatTitle(e.target.value)} placeholder="e.g. Assignment 3" /></div>
+                        <div><Label>Subject Scope</Label><Input value={matSubject} onChange={(e) => setMatSubject(e.target.value)} /></div>
+                      </div>
+                      <div><Label>Description</Label><Textarea value={matDesc} onChange={(e) => setMatDesc(e.target.value)} placeholder="Summary brief details..." rows={2} /></div>
+                      <div><Label>Resource Download Link (Optional)</Label><Input value={matContent} onChange={(e) => setMatContent(e.target.value)} placeholder="https://drive.google.com/..." /></div>
+                      <Button onClick={handlePostMaterial} className="bg-[#378add] text-white">Post Resource Material</Button>
+                    </CardContent>
+                  </Card>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {materials.map((m) => (
+                      <Card key={m.id}>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <div><CardTitle className="text-sm font-bold">{m.title}</CardTitle><p className="text-xs text-muted-foreground">{m.subject} — {m.class_name}</p></div>
+                            <Button size="icon" variant="ghost" onClick={() => onDeleteMaterial(m.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-xs mb-2 text-muted-foreground">{m.description}</p>
+                          {m.content && <a href={m.content} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline break-all block font-mono">{m.content}</a>}
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 </TabsContent>
+
+                {/* 6. TIMETABLES TAB CONTENT */}
+                <TabsContent value="timetables" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Publish Academic Calendars / Timetables</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><Label>Title</Label><Input value={ttTitle} onChange={(e) => setTtTitle(e.target.value)} placeholder="e.g. Form 4 Master Block" /></div>
+                        <div><Label>Term Context</Label><Input value={ttTerm} onChange={(e) => setTtTerm(e.target.value)} /></div>
+                      </div>
+                      <div>
+                        <Label>Document Web URL Link</Label>
+                        <Input value={matContent} onChange={(e) => setMatContent(e.target.value)} placeholder="https://..." />
+                      </div>
+                      <Button onClick={handleUploadTimetable} disabled={ttUploading} className="bg-[#378add] text-white">Save Entry</Button>
+                    </CardContent>
+                  </Card>
+
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Scope Schedule Name</TableHead><TableHead>Term</TableHead><TableHead>Type</TableHead><TableHead className="w-[80px]"></TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {timetables.map((t) => (
+                        <TableRow key={t.id}>
+                          <TableCell className="font-medium">{t.title}</TableCell>
+                          <TableCell>{t.term}</TableCell>
+                          <TableCell className="capitalize">{t.type}</TableCell>
+                          <TableCell><Button size="icon" variant="ghost" onClick={() => onDeleteTimetable(t.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                {/* 7. FEES TAB CONTENT */}
+                {isAdmin && (
+                  <TabsContent value="fees" className="space-y-4">
+                    <Card>
+                      <CardHeader><CardTitle className="text-base">Financial Account Ledger Statement: {selectedStudent}</CardTitle></CardHeader>
+                      <CardContent className="grid sm:grid-cols-3 gap-4 items-end">
+                        <div><Label>Required Base Term Fees</Label><Input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} /></div>
+                        <div><Label>Paid Receipts Aggregate</Label><Input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} /></div>
+                        <Button onClick={handleUpdateFees} className="bg-emerald-600 hover:bg-emerald-700 text-white">Save Changes</Button>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
+
+                {/* 8. EVENTS TAB CONTENT */}
+                {isAdmin && (
+                  <TabsContent value="events" className="space-y-4">
+                    <Card>
+                      <CardHeader><CardTitle className="text-base">System Calendar Notifications Hub</CardTitle></CardHeader>
+                      <CardContent className="space-y-3">
+                        <div><Label>Headline Title</Label><Input value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} /></div>
+                        <div><Label>Body Notice Details</Label><Textarea value={evtDesc} onChange={(e) => setEvtDesc(e.target.value)} /></div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div><Label>Category</Label>
+                            <Select value={evtType} onValueChange={setEvtType}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent><SelectItem value="announcement">Public Board Notice</SelectItem><SelectItem value="event">Calendar Event</SelectItem></SelectContent>
+                            </Select>
+                          </div>
+                          <div><Label>Target Date Marker</Label><Input type="date" value={evtDate} onChange={(e) => setEvtDate(e.target.value)} /></div>
+                        </div>
+                        <Button onClick={handlePostEvent} className="bg-[#378add] text-white">Publish to Boards</Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader><CardTitle className="text-base">Batch Update Home Dashboard Master Term Schedule</CardTitle></CardHeader>
+                      <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div><Label>Opening Date</Label><Input type="date" value={newOpeningDate} onChange={(e) => setNewOpeningDate(e.target.value)} /></div>
+                        <div><Label>Idd Break</Label><Input type="date" value={newIddBreak} onChange={(e) => setNewIddBreak(e.target.value)} /></div>
+                        <div><Label>Mid-Term Exams</Label><Input type="date" value={newMidExam} onChange={(e) => setNewMidExam(e.target.value)} /></div>
+                        <div><Label>Mid-Term Break</Label><Input type="date" value={newMidBreak} onChange={(e) => setNewMidBreak(e.target.value)} /></div>
+                        <div><Label>End-Term Exams</Label><Input type="date" value={newEndExam} onChange={(e) => setNewEndExam(e.target.value)} /></div>
+                        <div><Label>Closing Date</Label><Input type="date" value={newClosingDate} onChange={(e) => setNewClosingDate(e.target.value)} /></div>
+                        <div className="col-span-full pt-2"><Button onClick={handleAddTermRow} className="w-full bg-[#006B3C] text-white hover:bg-[#00542e]">Overwrite Calendar Dates</Button></div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
+
+                {/* 9. STUDENTS REGISTER HUB */}
+                {isAdmin && (
+                  <TabsContent value="students" className="space-y-4">
+                    <Card>
+                      <CardHeader><CardTitle className="text-base">Enroll New Admission Profile</CardTitle></CardHeader>
+                      <CardContent className="grid sm:grid-cols-2 gap-3 items-end">
+                        <div><Label>Full Student Name</Label><Input value={stdName} onChange={(e) => setStdName(e.target.value)} placeholder="John Doe" /></div>
+                        <div><Label>Admission Number</Label><Input value={stdAdmissionNo} onChange={(e) => setStdAdmissionNo(e.target.value)} placeholder="ADM/000/2026" /></div>
+                        <div><Label>Assigned Class</Label>
+                          <Select value={stdClass} onValueChange={setStdClass}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div><Label>Emergency Contact</Label><Input value={stdParent} onChange={(e) => setStdParent(e.target.value)} placeholder="+254..." /></div>
+                        <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="col-span-full bg-emerald-600 text-white">Commit Profile Registration</Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader><CardTitle className="text-base">System Active Rosters</CardTitle></CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader><TableRow><TableHead>Admission No</TableHead><TableHead>Student Name</TableHead><TableHead>Class</TableHead><TableHead className="w-[80px]"></TableHead></TableRow></TableHeader>
+                          <TableBody>
+                            {students.map((s) => (
+                              <TableRow key={s.id}>
+                                <TableCell className="font-mono font-semibold">{s.admission_no}</TableCell>
+                                <TableCell>{s.name}</TableCell>
+                                <TableCell>{s.class_name}</TableCell>
+                                <TableCell><Button size="icon" variant="ghost" onClick={() => handleDeleteStudent(s.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
+
+                {/* 10. PREFECTS TAB CONTENT */}
+                <TabsContent value="prefects" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Student Council Leadership Registry</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                        <div><Label>Prefect Name</Label><Input value={newPrefectName} onChange={(e) => setNewPrefectName(e.target.value)} placeholder="e.g. Alex Ogendi" /></div>
+                        <div><Label>Dignitary Title Role</Label><Input value={newPrefectRole} onChange={(e) => setNewPrefectRole(e.target.value)} placeholder="e.g. School Captain" /></div>
+                        <Button onClick={handleAddPrefect} disabled={prefectsSaving} className="bg-[#378add] text-white">Add Appointee</Button>
+                      </div>
+
+                      <Table>
+                        <TableHeader><TableRow><TableHead>Council Appointee Officer</TableHead><TableHead>Assigned Council Portfolio</TableHead><TableHead className="w-[100px] text-right">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {prefects.map((p) => (
+                            <TableRow key={p.id}>
+                              <TableCell className="font-medium">
+                                {editingPrefectId === p.id ? <Input value={editingName} onChange={(e) => setEditingName(e.target.value)} /> : p.name}
+                              </TableCell>
+                              <TableCell>
+                                {editingPrefectId === p.id ? <Input value={editingRole} onChange={(e) => setEditingRole(e.target.value)} /> : <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold">{p.role}</span>}
+                              </TableCell>
+                              <TableCell className="text-right space-x-1">
+                                {editingPrefectId === p.id ? (
+                                  <Button size="sm" onClick={handleSavePrefectEdit} className="bg-emerald-600 text-white">Save</Button>
+                                ) : (
+                                  <Button size="icon" variant="ghost" onClick={() => { setEditingPrefectId(p.id); setEditingName(p.name); setEditingRole(p.role); }}><Edit className="h-4 w-4" /></Button>
+                                )}
+                                <Button size="icon" variant="ghost" onClick={() => handleDeletePrefect(p.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* 11. LESSON LOGGING SCHEME */}
+                <TabsContent value="mylog" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Submit Daily Teacher Work Log Sheet</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div><Label>Log Work Date</Label><Input type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} /></div>
+                        <div><Label>Time In</Label><Input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)} /></div>
+                        <div><Label>Time Out</Label><Input type="time" value={timeOut} onChange={(e) => setTimeOut(e.target.value)} /></div>
+                        <div><Label>Class</Label>
+                          <Select value={logClass} onValueChange={setLogClass}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{classNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div><Label>Subject Covered</Label>
+                          <Select value={logSubject} onValueChange={setLogSubject}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{lecturerSubjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div><Label>Syllabus Subtopic / Lesson Objective</Label><Input value={logTopic} onChange={(e) => setLogTopic(e.target.value)} placeholder="e.g. Quadratic Equations Intro" /></div>
+                      </div>
+                      <div><Label>Instructor Comments / Remarks</Label><Textarea value={logNotes} onChange={(e) => setLogNotes(e.target.value)} rows={2} /></div>
+                      <Button onClick={handleSubmitLog} disabled={logSaving} className="bg-emerald-600 text-white">Save Work Log Entry</Button>
+                    </CardContent>
+                  </Card>
+
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Instructor</TableHead><TableHead>Subject</TableHead><TableHead>Topic Objective Covered</TableHead><TableHead className="w-[80px]"></TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {teacherLogs.map((l) => (
+                        <TableRow key={l.id}>
+                          <TableCell className="font-mono text-xs">{l.log_date}</TableCell>
+                          <TableCell className="font-medium text-xs">{l.teacher_name}</TableCell>
+                          <TableCell className="text-xs">{l.subject} ({l.class_name})</TableCell>
+                          <TableCell className="text-xs font-mono">{l.topic_taught}</TableCell>
+                          <TableCell><Button size="icon" variant="ghost" onClick={() => handleDeleteLog(l.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                {/* 12. OCCURRENCE RECORD SHEET */}
+                <TabsContent value="occurrence" className="space-y-4">
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Record Discipline / Daily Incident Log</CardTitle></CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div><Label>Incident Date</Label><Input type="date" value={occDate} onChange={(e) => setOccDate(e.target.value)} /></div>
+                        <div><Label>Time Tracker</Label><Input type="time" value={occTime} onChange={(e) => setOccTime(e.target.value)} /></div>
+                        <div><Label>Classification</Label>
+                          <Select value={occCategory} onValueChange={setOccCategory}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="discipline">Discipline Breach</SelectItem><SelectItem value="health">Medical / Clinic Emergency</SelectItem><SelectItem value="general">General Campus Incident</SelectItem></SelectContent>
+                          </Select>
+                        </div>
+                        <div><Label>Risk Severity Level</Label>
+                          <Select value={occSeverity} onValueChange={setOccSeverity}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="normal">Normal / Mild</SelectItem><SelectItem value="medium">Medium Action required</SelectItem><SelectItem value="critical">Critical Escalation Required</SelectItem></SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div><Label>Students / Stakeholders Involved</Label><Input value={occStudents} onChange={(e) => setOccStudents(e.target.value)} placeholder="Comma-separated student names..." /></div>
+                        <div><Label>Incident Case Subject</Label><Input value={occTitle} onChange={(e) => setOccTitle(e.target.value)} placeholder="e.g. Noise making during prep" /></div>
+                      </div>
+                      <div><Label>Detailed Account Narrative</Label><Textarea value={occDesc} onChange={(e) => setOccDesc(e.target.value)} rows={2} /></div>
+                      <div><Label>Immediate Redress Action Taken</Label><Input value={occAction} onChange={(e) => setOccAction(e.target.value)} placeholder="e.g. Suspended from dinner session" /></div>
+                      <Button onClick={handleSubmitOccurrence} disabled={occSaving} className="bg-rose-600 hover:bg-rose-700 text-white">File Incident Report</Button>
+                    </CardContent>
+                  </Card>
+
+                  <div className="space-y-3">
+                    {occurrences.map((o) => (
+                      <Card key={o.id} className={cn("border-l-4", o.severity === "critical" ? "border-l-red-500" : o.severity === "medium" ? "border-l-amber-500" : "border-l-slate-400")}>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-sm font-bold">{o.title}</CardTitle>
+                              <p className="text-xs text-muted-foreground">{o.log_date} at {o.time_of_incident || "—"} | Filed By: {o.tod_name}</p>
+                            </div>
+                            <Button size="icon" variant="ghost" onClick={() => handleDeleteOccurrence(o.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="text-xs space-y-1 text-slate-700">
+                          <p><strong>Involved Profile:</strong> {o.students_involved || "—"}</p>
+                          <p><strong>Description Details:</strong> {o.description}</p>
+                          <p><strong>Resolution:</strong> {o.action_taken || "—"}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+
               </Tabs>
             </CardContent>
           </Card>
@@ -754,7 +900,7 @@ export function ProtectedDocumentManager({
 
   if (!hasAccess) {
     return (
-      <Card className="w-full mt-2 border-destructive/50 bg-destructive/5">
+      <Card className="w-full border-destructive/50 bg-destructive/5">
         <CardContent className="flex items-center p-6 text-destructive font-medium">
           <Lock className="w-5 h-5 mr-2" />
           You do not have permission to view or manage documents for this student. Only the Principal has access.
@@ -764,7 +910,7 @@ export function ProtectedDocumentManager({
   }
 
   return (
-    <Card className="w-full mt-2">
+    <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-xl">Confidential Student Folder</CardTitle>
