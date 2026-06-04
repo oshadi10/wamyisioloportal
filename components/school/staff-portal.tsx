@@ -930,7 +930,6 @@ export function ProtectedDocumentManager({
       fetchStudentFiles(); 
     } catch (error: any) {
       alert(`Upload failed: ${error.message}`);
-    } platform: {
     } finally {
       setUploading(false);
     }
