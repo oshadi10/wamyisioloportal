@@ -1351,7 +1351,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                           rel="noopener noreferrer"
                           className="text-xs text-blue-600 underline"
                         >
-                          📄 {doc.file_name}
+                          <span>📄 {doc.file_name}</span>
                         </a>
                       </div>
                       <Button
