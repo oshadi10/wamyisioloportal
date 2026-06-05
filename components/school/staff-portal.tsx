@@ -113,6 +113,12 @@ export function StaffPortal({
   const [occSeverity, setOccSeverity] = useState("normal");
   const [occSaving, setOccSaving] = useState(false);
   const [occFilter, setOccFilter] = useState("all");
+  const [studentFolders, setStudentFolders] = useState<Record<string, any[]>>({});
+  const [openFolderStudent, setOpenFolderStudent] = useState<string | null>(null);
+  const [folderDocType, setFolderDocType] = useState("Birth Certificate");
+  const [folderDocFile, setFolderDocFile] = useState<File | null>(null);
+  const [folderUploading, setFolderUploading] = useState(false);
+  const [folderDocs, setFolderDocs] = useState<any[]>([]);
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
@@ -523,7 +529,44 @@ const handleDeleteOccurrence = async (id: string) => {
     await supabase.from("student_documents").delete().eq("id", id);
     if (selectedStudentId) fetchStudentDocs(selectedStudentId);
   };
+  const fetchStudentFolderDocs = async (studentName: string) => {
+  const { data, error } = await supabase
+    .from("student_documents")
+    .select("*")
+    .eq("student_name", studentName)
+    .order("created_at", { ascending: false });
+  if (!error && data) setFolderDocs(data);
+};
 
+const handleFolderUpload = async (studentName: string) => {
+  if (!folderDocFile) { alert("Select a file."); return; }
+  setFolderUploading(true);
+  const filePath = `folders/${studentName.replace(/ /g, "_")}/${Date.now()}_${folderDocFile.name}`;
+  const { error: uploadError } = await supabase.storage
+    .from("student-documents")
+    .upload(filePath, folderDocFile);
+  if (uploadError) { alert("Upload failed."); setFolderUploading(false); return; }
+  const { data } = supabase.storage.from("student-documents").getPublicUrl(filePath);
+  const { error: insertError } = await supabase.from("student_documents").insert({
+    student_name: studentName,
+    document_name: folderDocType,
+    document_type: folderDocType,
+    file_url: data.publicUrl,
+    file_name: folderDocFile.name,
+  });
+  if (insertError) { alert("Failed to save."); setFolderUploading(false); return; }
+  alert("✓ Document uploaded!");
+  setFolderDocFile(null);
+  setFolderUploading(false);
+  fetchStudentFolderDocs(studentName);
+};
+
+const handleDeleteFolderDoc = async (id: string, studentName: string) => {
+  if (!confirm("Delete this document?")) return;
+  await supabase.from("student_documents").delete().eq("id", id);
+  fetchStudentFolderDocs(studentName);
+};
+ 
   const handlePostMaterial = async () => {
     if (!matTitle.trim()) { alert("Enter a title."); return; }
     setMatUploading(true);
@@ -629,6 +672,7 @@ const handleDeleteOccurrence = async (id: string) => {
                   {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="folders" className="flex-shrink-0 text-xs px-2 py-1.5">📁 Folders</TabsTrigger>}
                   <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
                   <TabsTrigger value="occurrence" className="flex-shrink-0 text-xs px-2 py-1.5">📖 Occurrence</TabsTrigger>
@@ -1204,6 +1248,131 @@ const handleDeleteOccurrence = async (id: string) => {
                     </div>
                   </TabsContent>
                 )}
+                {isAdmin && (
+  <TabsContent value="folders" className="space-y-4">
+    <div className="flex items-center justify-between">
+      <h4 className="font-semibold text-sm text-slate-800">📁 Student Document Folders</h4>
+      <span className="text-xs text-muted-foreground">{Object.values(classStudents).flat().length} students</span>
+    </div>
+
+    {/* Class Filter */}
+    <select
+      value={selectedClass}
+      onChange={(e) => setSelectedClass(e.target.value)}
+      className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+    >
+      {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+    </select>
+
+    {/* Student Folder List */}
+    <div className="space-y-2">
+      {classStudents[selectedClass].map((studentName) => (
+        <div key={studentName} className="border rounded-lg bg-white shadow-sm overflow-hidden">
+          {/* Folder Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50"
+            onClick={() => {
+              if (openFolderStudent === studentName) {
+                setOpenFolderStudent(null);
+                setFolderDocs([]);
+              } else {
+                setOpenFolderStudent(studentName);
+                setFolderDocFile(null);
+                fetchStudentFolderDocs(studentName);
+              }
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">📁</span>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">{studentName}</p>
+                <p className="text-xs text-muted-foreground">{selectedClass}</p>
+              </div>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {openFolderStudent === studentName ? "▲ Close" : "▼ Open"}
+            </span>
+          </div>
+
+          {/* Folder Content */}
+          {openFolderStudent === studentName && (
+            <div className="border-t p-4 space-y-3 bg-slate-50">
+              {/* Upload Form */}
+              <div className="space-y-2 bg-white border rounded-md p-3">
+                <p className="text-xs font-semibold text-blue-900">📎 Upload Document</p>
+                <select
+                  value={folderDocType}
+                  onChange={(e) => setFolderDocType(e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                >
+                  <option>Birth Certificate</option>
+                  <option>JSS Result Slip</option>
+                  <option>Transfer Letter</option>
+                  <option>Medical Certificate</option>
+                  <option>Parent ID Copy</option>
+                  <option>Fee Receipt</option>
+                  <option>Report Form</option>
+                  <option>Other</option>
+                </select>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={(e) => setFolderDocFile(e.target.files?.[0] || null)}
+                  className="text-sm w-full"
+                />
+                {folderDocFile && (
+                  <p className="text-xs text-green-600">Selected: {folderDocFile.name}</p>
+                )}
+                <Button
+                  onClick={() => handleFolderUpload(studentName)}
+                  disabled={folderUploading}
+                  className="bg-[#1a56a0] hover:bg-[#154a8a] w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {folderUploading ? "Uploading..." : "Upload Document"}
+                </Button>
+              </div>
+
+              {/* Documents List */}
+              {folderDocs.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic text-center py-2">
+                  No documents uploaded yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-600">{folderDocs.length} document{folderDocs.length !== 1 ? "s" : ""}</p>
+                  {folderDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
+                        
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 underline"
+                        >
+                          📄 {doc.file_name}
+                        </a>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteFolderDoc(doc.id, studentName)}
+                        className="text-destructive border-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </TabsContent>
+)}
                 
                 {/* PREFECTS COUNCIL MODULE */}
                 <TabsContent value="prefects" className="space-y-4">
