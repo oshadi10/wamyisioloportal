@@ -136,8 +136,8 @@ export function StaffPortal({
     if (activeTab === "mylog") fetchTeacherLogs();
   }, [activeTab, logDate]);
   useEffect(() => {
-  if (activeTab === "occurrence") fetchOccurrences();
-}, [occViewDate, occTeacherFilter]);
+  if (activeTab === "occurrence") fetchOccurrences(occTeacherFilter, occViewDate);
+}, [occViewDate, occTeacherFilter, activeTab]);
 
   const isAdmin = lecturer?.name === "Mr. Osman Halake";
 
@@ -258,12 +258,22 @@ export function StaffPortal({
     await supabase.from("teacher_logs").delete().eq("id", id);
     fetchTeacherLogs();
   };
-  const fetchOccurrences = async () => {
+  const fetchOccurrences = async (teacherFilter = occTeacherFilter, viewDate = occViewDate) => {
   let query = supabase
     .from("daily_occurrence")
     .select("*")
     .order("log_date", { ascending: false })
     .order("time_of_incident", { ascending: false });
+
+  if (!teacherFilter) {
+    query = query.eq("log_date", viewDate);
+  } else if (viewDate !== SYSTEM_TODAY) {
+    query = query.eq("log_date", viewDate);
+  }
+
+  const { data, error } = await query;
+  if (!error && data) setOccurrences(data);
+};
 
   // Apply date filter only when no teacher is selected,
   // OR when both teacher and a non-today date are selected
