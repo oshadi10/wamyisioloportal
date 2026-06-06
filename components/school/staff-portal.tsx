@@ -1780,14 +1780,11 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
     </div>
 
     {(() => {
-      const filtered = occurrences
-  .filter(o => isAdmin ? (occTeacherFilter ? o.tod_name === occTeacherFilter : false) : o.tod_name === lecturer.name)
+     const filtered = occurrences
+  .filter(o => isAdmin ? (occTeacherFilter ? o.tod_name === occTeacherFilter : true) : o.tod_name === lecturer.name)
   .filter(o => occFilter === "all" ? true : o.category === occFilter);
-
       if (filtered.length === 0) return (
-        <p className="text-xs text-muted-foreground italic">
-  {isAdmin && !occTeacherFilter ? "Select a teacher to view occurrences." : "No occurrences recorded yet."}
-</p>
+        <p className="text-xs text-muted-foreground italic">No occurrences recorded yet.</p>
       );
 
       // group by date
