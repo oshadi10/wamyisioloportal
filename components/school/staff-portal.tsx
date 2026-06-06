@@ -1919,3 +1919,11 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
     })()}
   </div>
 </TabsContent>
+</Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
