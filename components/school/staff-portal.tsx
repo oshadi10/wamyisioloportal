@@ -136,8 +136,8 @@ export function StaffPortal({
     if (activeTab === "mylog") fetchTeacherLogs();
   }, [activeTab, logDate]);
   useEffect(() => {
-  if (activeTab === "occurrence") fetchOccurrences(occTeacherFilter, occViewDate);
-}, [occViewDate, occTeacherFilter, activeTab]);
+  if (activeTab === "occurrence") fetchOccurrences();
+}, [occViewDate, occTeacherFilter]);
 
   const isAdmin = lecturer?.name === "Mr. Osman Halake";
 
@@ -258,24 +258,21 @@ export function StaffPortal({
     await supabase.from("teacher_logs").delete().eq("id", id);
     fetchTeacherLogs();
   };
-  const fetchOccurrences = async (teacherFilter = occTeacherFilter, viewDate = occViewDate) => {
+  const fetchOccurrences = async () => {
   let query = supabase
     .from("daily_occurrence")
     .select("*")
     .order("log_date", { ascending: false })
     .order("time_of_incident", { ascending: false });
 
-  if (!teacherFilter) {
-    query = query.eq("log_date", viewDate);
-  } else if (viewDate !== SYSTEM_TODAY) {
-    query = query.eq("log_date", viewDate);
+  if (!occTeacherFilter) {
+    query = query.eq("log_date", occViewDate);
   }
 
   const { data, error } = await query;
   if (!error && data) setOccurrences(data);
 };
 
- 
 const handleSubmitOccurrence = async () => {
   if (!occTitle.trim() || !occDesc.trim()) { alert("Enter title and description."); return; }
   setOccSaving(true);
@@ -1648,7 +1645,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                     </div>
                   )}
                 </TabsContent>
-               <TabsContent value="occurrence" className="space-y-4">
+                <TabsContent value="occurrence" className="space-y-4">
 
   {/* HEADER */}
   <div className="flex items-center justify-between">
@@ -1665,6 +1662,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
   {/* ENTRY FORM */}
   <div className="border rounded-md p-4 bg-muted/30 space-y-3">
     <h5 className="text-xs font-semibold text-blue-900">➕ Record New Occurrence</h5>
+
     <div className="grid grid-cols-2 gap-2">
       <div>
         <Label className="text-xs font-semibold">Date</Label>
@@ -1677,6 +1675,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
       </div>
     </div>
+
     <div className="grid grid-cols-2 gap-2">
       <div>
         <Label className="text-xs font-semibold">Category</Label>
@@ -1701,30 +1700,35 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
         </select>
       </div>
     </div>
+
     <div>
       <Label className="text-xs font-semibold">Title / Heading</Label>
       <input placeholder="e.g. Student found outside class during lesson"
         value={occTitle} onChange={(e) => setOccTitle(e.target.value)}
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
     </div>
+
     <div>
       <Label className="text-xs font-semibold">Description</Label>
       <textarea placeholder="Describe what happened in detail..."
         value={occDesc} onChange={(e) => setOccDesc(e.target.value)}
         className="w-full border rounded-md px-3 py-2 text-sm min-h-[80px] bg-white" />
     </div>
+
     <div>
       <Label className="text-xs font-semibold">Students Involved (optional)</Label>
       <input placeholder="e.g. Bagayo Khalil, Casim Lope"
         value={occStudents} onChange={(e) => setOccStudents(e.target.value)}
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
     </div>
+
     <div>
       <Label className="text-xs font-semibold">Action Taken (optional)</Label>
       <textarea placeholder="e.g. Reported to class teacher, sent to principal..."
         value={occAction} onChange={(e) => setOccAction(e.target.value)}
         className="w-full border rounded-md px-3 py-2 text-sm min-h-[60px] bg-white" />
     </div>
+
     <Button onClick={handleSubmitOccurrence} disabled={occSaving}
       className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
       <Plus className="h-4 w-4 mr-2" />{occSaving ? "Saving..." : "Record Occurrence"}
@@ -1734,36 +1738,36 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
   {/* FILTER & LIST */}
   <div className="space-y-3">
     <div className="flex items-center gap-2 flex-wrap">
-      <h5 className="text-xs font-semibold text-slate-700">
-        {isAdmin ? "All Occurrences" : "My Recorded Occurrences"}
-      </h5>
-      <div className="flex items-center gap-2 ml-auto flex-wrap">
-        <input
-          type="date"
-          value={occViewDate}
-          max={SYSTEM_TODAY}
-          onChange={(e) => { setOccViewDate(e.target.value); setOccTeacherFilter(""); }}
-          className="border border-slate-200 rounded-md px-2 py-1 text-xs bg-white font-mono text-slate-700 focus:outline-none focus:border-blue-400"
-        />
-        {isAdmin && (
-          <select
-            value={occTeacherFilter}
-            onChange={(e) => setOccTeacherFilter(e.target.value)}
-            className="border rounded-md px-2 py-1 text-xs bg-white"
-          >
-            <option value="" disabled>-- Select Teacher --</option>
-            <option value="Mr. Guyo Halake">Mr. Guyo Halake</option>
-            <option value="Mr. Dennis Kipkoech">Mr. Dennis Kipkoech</option>
-            <option value="Mr. John Simiyu">Mr. John Simiyu</option>
-            <option value="Mrs. Selina Ewoi">Mrs. Selina Ewoi</option>
-            <option value="Mr. Leonard Kiprotich">Mr. Leonard Kiprotich</option>
-            <option value="Mr. Rotich Mark">Mr. Rotich Mark</option>
-            <option value="Mr. Kibet Shadrack">Mr. Kibet Shadrack</option>
-          </select>
-        )}
-      </div>
-      <select value={occFilter} onChange={(e) => setOccFilter(e.target.value)}
-        className="border rounded-md px-2 py-1 text-xs bg-white">
+  <h5 className="text-xs font-semibold text-slate-700">
+    {isAdmin ? "All Occurrences" : "My Recorded Occurrences"}
+  </h5>
+  <div className="flex items-center gap-2 ml-auto flex-wrap">
+  <input
+    type="date"
+    value={occViewDate}
+    max={SYSTEM_TODAY}
+    onChange={(e) => { setOccViewDate(e.target.value); setOccTeacherFilter(""); }}
+    className="border border-slate-200 rounded-md px-2 py-1 text-xs bg-white font-mono text-slate-700 focus:outline-none focus:border-blue-400"
+  />
+  {isAdmin && (
+    <select
+      value={occTeacherFilter}
+      onChange={(e) => setOccTeacherFilter(e.target.value)}
+      className="border rounded-md px-2 py-1 text-xs bg-white"
+    >
+      <option value="" disabled>-- Select Teacher --</option>
+      <option value="Mr. Guyo Halake">Mr. Guyo Halake</option>
+      <option value="Mr. Dennis Kipkoech">Mr. Dennis Kipkoech</option>
+      <option value="Mr. John Simiyu">Mr. John Simiyu</option>
+      <option value="Mrs. Selina Ewoi">Mrs. Selina Ewoi</option>
+      <option value="Mr. Leonard Kiprotich">Mr. Leonard Kiprotich</option>
+      <option value="Mr. Rotich Mark">Mr. Rotich Mark</option>
+      <option value="Mr. Kibet Shadrack">Mr. Kibet Shadrack</option>
+    </select>
+  )}
+</div>
+  <select value={occFilter} onChange={(e) => setOccFilter(e.target.value)}
+    className="border rounded-md px-2 py-1 text-xs bg-white">
         <option value="all">All Categories</option>
         <option value="discipline">Discipline</option>
         <option value="academic">Academic</option>
@@ -1776,14 +1780,14 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
     </div>
 
     {(() => {
-      const filtered = occurrences
-        .filter(o => isAdmin ? (occTeacherFilter ? o.tod_name === occTeacherFilter : true) : o.tod_name === lecturer.name)
-        .filter(o => occFilter === "all" ? true : o.category === occFilter);
-
+     const filtered = occurrences
+  .filter(o => isAdmin ? (occTeacherFilter ? o.tod_name === occTeacherFilter : true) : o.tod_name === lecturer.name)
+  .filter(o => occFilter === "all" ? true : o.category === occFilter);
       if (filtered.length === 0) return (
         <p className="text-xs text-muted-foreground italic">No occurrences recorded yet.</p>
       );
 
+      // group by date
       const grouped = filtered.reduce((acc, o) => {
         if (!acc[o.log_date]) acc[o.log_date] = [];
         acc[o.log_date].push(o);
@@ -1919,7 +1923,8 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
     })()}
   </div>
 </TabsContent>
-</Tabs>
+
+              </Tabs>
             </CardContent>
           </Card>
         </div>
