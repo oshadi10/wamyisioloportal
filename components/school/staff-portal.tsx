@@ -265,7 +265,11 @@ export function StaffPortal({
     .order("log_date", { ascending: false })
     .order("time_of_incident", { ascending: false });
 
+  // Apply date filter only when no teacher is selected,
+  // OR when both teacher and a non-today date are selected
   if (!occTeacherFilter) {
+    query = query.eq("log_date", occViewDate);
+  } else if (occViewDate !== SYSTEM_TODAY) {
     query = query.eq("log_date", occViewDate);
   }
 
