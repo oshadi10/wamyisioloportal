@@ -1827,7 +1827,7 @@ return (
             </div>
           ))}
         </div>
-      ));
+      );
     })()}
   </div>
 </TabsContent>
