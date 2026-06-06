@@ -275,18 +275,7 @@ export function StaffPortal({
   if (!error && data) setOccurrences(data);
 };
 
-  // Apply date filter only when no teacher is selected,
-  // OR when both teacher and a non-today date are selected
-  if (!occTeacherFilter) {
-    query = query.eq("log_date", occViewDate);
-  } else if (occViewDate !== SYSTEM_TODAY) {
-    query = query.eq("log_date", occViewDate);
-  };
-
-  const { data, error } = await query;
-  if (!error && data) setOccurrences(data);
-};
-
+ 
 const handleSubmitOccurrence = async () => {
   if (!occTitle.trim() || !occDesc.trim()) { alert("Enter title and description."); return; }
   setOccSaving(true);
