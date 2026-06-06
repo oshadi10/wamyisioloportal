@@ -1750,9 +1750,13 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
       className="border rounded-md px-2 py-1 text-xs bg-white"
     >
       <option value="" disabled>-- Select Teacher --</option>
-      {[...new Set(occurrences.map(o => o.tod_name))].sort().map(name => (
-        <option key={name} value={name}>{name}</option>
-      ))}
+      <option value="Mr. Guyo Halake">Mr. Guyo Halake</option>
+      <option value="Mr. Dennis Kipkoech">Mr. Dennis Kipkoech</option>
+      <option value="Mr. John Simiyu">Mr. John Simiyu</option>
+      <option value="Mrs. Selina Ewoi">Mrs. Selina Ewoi</option>
+      <option value="Mr. Leonard Kiprotich">Mr. Leonard Kiprotich</option>
+      <option value="Mr. Rotich Mark">Mr. Rotich Mark</option>
+      <option value="Mr. Kibet Shadrack">Mr. Kibet Shadrack</option>
     </select>
   )}
 </div>
