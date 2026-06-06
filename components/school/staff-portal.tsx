@@ -1810,57 +1810,114 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
       };
 
       const allEntries = Object.values(grouped).flat();
-return (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-        {occViewDate === SYSTEM_TODAY ? "Today" : occViewDate}
-      </div>
-      <div className="flex-1 h-px bg-slate-200" />
-      <span className="text-xs text-slate-400">{allEntries.length} entr{allEntries.length === 1 ? "y" : "ies"}</span>
-    </div>
-    {allEntries.map((o) => (
-            <div key={o.id} className={`border rounded-lg p-4 shadow-sm space-y-2 ${severityColor(o.severity)}`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-base">{categoryIcon[o.category] || "📝"}</span>
-                  <span className="text-sm font-semibold text-slate-800">{o.title}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${severityBadge(o.severity)}`}>
-                    {o.severity}
-                  </span>
+
+      return (
+        <div className="space-y-4">
+          {occTeacherFilter ? (
+            Object.entries(grouped).map(([date, entries]) => (
+              <div key={date} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{date}</div>
+                  <div className="flex-1 h-px bg-slate-200" />
+                  <span className="text-xs text-slate-400">{entries.length} entr{entries.length === 1 ? "y" : "ies"}</span>
                 </div>
-                {(isAdmin || o.tod_name === lecturer.name) && (
-                  <Button size="sm" variant="outline" onClick={() => handleDeleteOccurrence(o.id)}
-                    className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0">
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                )}
+                {entries.map((o) => (
+                  <div key={o.id} className={`border rounded-lg p-4 shadow-sm space-y-2 ${severityColor(o.severity)}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-base">{categoryIcon[o.category] || "📝"}</span>
+                        <span className="text-sm font-semibold text-slate-800">{o.title}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${severityBadge(o.severity)}`}>
+                          {o.severity}
+                        </span>
+                      </div>
+                      {(isAdmin || o.tod_name === lecturer.name) && (
+                        <Button size="sm" variant="outline" onClick={() => handleDeleteOccurrence(o.id)}
+                          className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
+                        👤 {o.tod_name}
+                      </span>
+                      {o.time_of_incident && (
+                        <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
+                          ⏰ {o.time_of_incident}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-700">{o.description}</p>
+                    {o.students_involved && (
+                      <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
+                        <span className="font-semibold text-slate-600">Students involved: </span>
+                        <span className="text-slate-700">{o.students_involved}</span>
+                      </div>
+                    )}
+                    {o.action_taken && (
+                      <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
+                        <span className="font-semibold text-slate-600">Action taken: </span>
+                        <span className="text-slate-700">{o.action_taken}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
-                  👤 {o.tod_name}
-                </span>
-                {o.time_of_incident && (
-                  <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
-                    ⏰ {o.time_of_incident}
-                  </span>
-                )}
+            ))
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {occViewDate === SYSTEM_TODAY ? "Today" : occViewDate}
+                </div>
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-xs text-slate-400">{allEntries.length} entr{allEntries.length === 1 ? "y" : "ies"}</span>
               </div>
-              <p className="text-sm text-slate-700">{o.description}</p>
-              {o.students_involved && (
-                <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
-                  <span className="font-semibold text-slate-600">Students involved: </span>
-                  <span className="text-slate-700">{o.students_involved}</span>
+              {allEntries.map((o) => (
+                <div key={o.id} className={`border rounded-lg p-4 shadow-sm space-y-2 ${severityColor(o.severity)}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-base">{categoryIcon[o.category] || "📝"}</span>
+                      <span className="text-sm font-semibold text-slate-800">{o.title}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${severityBadge(o.severity)}`}>
+                        {o.severity}
+                      </span>
+                    </div>
+                    {(isAdmin || o.tod_name === lecturer.name) && (
+                      <Button size="sm" variant="outline" onClick={() => handleDeleteOccurrence(o.id)}
+                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
+                      👤 {o.tod_name}
+                    </span>
+                    {o.time_of_incident && (
+                      <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
+                        ⏰ {o.time_of_incident}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-700">{o.description}</p>
+                  {o.students_involved && (
+                    <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
+                      <span className="font-semibold text-slate-600">Students involved: </span>
+                      <span className="text-slate-700">{o.students_involved}</span>
+                    </div>
+                  )}
+                  {o.action_taken && (
+                    <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
+                      <span className="font-semibold text-slate-600">Action taken: </span>
+                      <span className="text-slate-700">{o.action_taken}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {o.action_taken && (
-                <div className="text-xs bg-white border border-slate-200 rounded-md px-3 py-2">
-                  <span className="font-semibold text-slate-600">Action taken: </span>
-                  <span className="text-slate-700">{o.action_taken}</span>
-                </div>
-              )}
-            </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
       );
     })()}
