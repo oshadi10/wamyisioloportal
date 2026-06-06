@@ -115,6 +115,7 @@ export function StaffPortal({
   const [occSaving, setOccSaving] = useState(false);
   const [occFilter, setOccFilter] = useState("all");
   const [occViewDate, setOccViewDate] = useState(SYSTEM_TODAY);
+  const [occTeacherFilter, setOccTeacherFilter] = useState("");
   const [studentFolders, setStudentFolders] = useState<Record<string, any[]>>({});
   const [openFolderStudent, setOpenFolderStudent] = useState<string | null>(null);
   const [folderDocType, setFolderDocType] = useState("Birth Certificate");
@@ -1734,15 +1735,27 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
   <h5 className="text-xs font-semibold text-slate-700">
     {isAdmin ? "All Occurrences" : "My Recorded Occurrences"}
   </h5>
-  <div className="flex items-center gap-2 ml-auto">
-    <input
-      type="date"
-      value={occViewDate}
-      max={SYSTEM_TODAY}
-      onChange={(e) => setOccViewDate(e.target.value)}
-      className="border border-slate-200 rounded-md px-2 py-1 text-xs bg-white font-mono text-slate-700 focus:outline-none focus:border-blue-400"
-    />
-  </div>
+  <div className="flex items-center gap-2 ml-auto flex-wrap">
+  <input
+    type="date"
+    value={occViewDate}
+    max={SYSTEM_TODAY}
+    onChange={(e) => { setOccViewDate(e.target.value); setOccTeacherFilter(""); }}
+    className="border border-slate-200 rounded-md px-2 py-1 text-xs bg-white font-mono text-slate-700 focus:outline-none focus:border-blue-400"
+  />
+  {isAdmin && (
+    <select
+      value={occTeacherFilter}
+      onChange={(e) => setOccTeacherFilter(e.target.value)}
+      className="border rounded-md px-2 py-1 text-xs bg-white"
+    >
+      <option value="" disabled>-- Select Teacher --</option>
+      {[...new Set(occurrences.map(o => o.tod_name))].sort().map(name => (
+        <option key={name} value={name}>{name}</option>
+      ))}
+    </select>
+  )}
+</div>
   <select value={occFilter} onChange={(e) => setOccFilter(e.target.value)}
     className="border rounded-md px-2 py-1 text-xs bg-white">
         <option value="all">All Categories</option>
@@ -1758,11 +1771,13 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
 
     {(() => {
       const filtered = occurrences
-        .filter(o => isAdmin ? true : o.tod_name === lecturer.name)
-        .filter(o => occFilter === "all" ? true : o.category === occFilter);
+  .filter(o => isAdmin ? (occTeacherFilter ? o.tod_name === occTeacherFilter : false) : o.tod_name === lecturer.name)
+  .filter(o => occFilter === "all" ? true : o.category === occFilter);
 
       if (filtered.length === 0) return (
-        <p className="text-xs text-muted-foreground italic">No occurrences recorded yet.</p>
+        <p className="text-xs text-muted-foreground italic">
+  {isAdmin && !occTeacherFilter ? "Select a teacher to view occurrences." : "No occurrences recorded yet."}
+</p>
       );
 
       // group by date
