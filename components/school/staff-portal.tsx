@@ -113,6 +113,7 @@ export function StaffPortal({
   const [occSeverity, setOccSeverity] = useState("normal");
   const [occSaving, setOccSaving] = useState(false);
   const [occFilter, setOccFilter] = useState("all");
+  const [occViewDate, setOccViewDate] = useState(SYSTEM_TODAY);
   const [studentFolders, setStudentFolders] = useState<Record<string, any[]>>({});
   const [openFolderStudent, setOpenFolderStudent] = useState<string | null>(null);
   const [folderDocType, setFolderDocType] = useState("Birth Certificate");
@@ -132,6 +133,9 @@ export function StaffPortal({
   useEffect(() => {
     if (activeTab === "mylog") fetchTeacherLogs();
   }, [activeTab, logDate]);
+  useEffect(() => {
+  if (activeTab === "occurrence") fetchOccurrences();
+}, [occViewDate]);
 
   const isAdmin = lecturer?.name === "Mr. Osman Halake";
 
@@ -256,7 +260,7 @@ export function StaffPortal({
   const { data, error } = await supabase
     .from("daily_occurrence")
     .select("*")
-    .order("log_date", { ascending: false })
+    .eq("log_date", occViewDate)
     .order("time_of_incident", { ascending: false });
   if (!error && data) setOccurrences(data);
 };
@@ -1714,11 +1718,20 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
   {/* FILTER & LIST */}
   <div className="space-y-3">
     <div className="flex items-center gap-2 flex-wrap">
-      <h5 className="text-xs font-semibold text-slate-700">
-        {isAdmin ? "All Occurrences" : "My Recorded Occurrences"}
-      </h5>
-      <select value={occFilter} onChange={(e) => setOccFilter(e.target.value)}
-        className="border rounded-md px-2 py-1 text-xs bg-white ml-auto">
+  <h5 className="text-xs font-semibold text-slate-700">
+    {isAdmin ? "All Occurrences" : "My Recorded Occurrences"}
+  </h5>
+  <div className="flex items-center gap-2 ml-auto">
+    <input
+      type="date"
+      value={occViewDate}
+      max={SYSTEM_TODAY}
+      onChange={(e) => setOccViewDate(e.target.value)}
+      className="border border-slate-200 rounded-md px-2 py-1 text-xs bg-white font-mono text-slate-700 focus:outline-none focus:border-blue-400"
+    />
+  </div>
+  <select value={occFilter} onChange={(e) => setOccFilter(e.target.value)}
+    className="border rounded-md px-2 py-1 text-xs bg-white">
         <option value="all">All Categories</option>
         <option value="discipline">Discipline</option>
         <option value="academic">Academic</option>
@@ -1761,14 +1774,17 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
         security: "🔒", property: "🏫", visitor: "👤", general: "📝"
       };
 
-      return Object.entries(grouped).map(([date, entries]) => (
-        <div key={date} className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{date}</div>
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-xs text-slate-400">{entries.length} entr{entries.length === 1 ? "y" : "ies"}</span>
-          </div>
-          {entries.map((o) => (
+      const allEntries = Object.values(grouped).flat();
+return (
+  <div className="space-y-2">
+    <div className="flex items-center gap-2">
+      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+        {occViewDate === SYSTEM_TODAY ? "Today" : occViewDate}
+      </div>
+      <div className="flex-1 h-px bg-slate-200" />
+      <span className="text-xs text-slate-400">{allEntries.length} entr{allEntries.length === 1 ? "y" : "ies"}</span>
+    </div>
+    {allEntries.map((o) => (
             <div key={o.id} className={`border rounded-lg p-4 shadow-sm space-y-2 ${severityColor(o.severity)}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
