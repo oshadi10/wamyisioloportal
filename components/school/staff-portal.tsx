@@ -137,7 +137,7 @@ export function StaffPortal({
   }, [activeTab, logDate]);
   useEffect(() => {
   if (activeTab === "occurrence") fetchOccurrences();
-}, [occViewDate]);
+}, [occViewDate, occTeacherFilter]);
 
   const isAdmin = lecturer?.name === "Mr. Osman Halake";
 
@@ -259,11 +259,17 @@ export function StaffPortal({
     fetchTeacherLogs();
   };
   const fetchOccurrences = async () => {
-  const { data, error } = await supabase
+  let query = supabase
     .from("daily_occurrence")
     .select("*")
-    .eq("log_date", occViewDate)
+    .order("log_date", { ascending: false })
     .order("time_of_incident", { ascending: false });
+
+  if (!occTeacherFilter) {
+    query = query.eq("log_date", occViewDate);
+  }
+
+  const { data, error } = await query;
   if (!error && data) setOccurrences(data);
 };
 
