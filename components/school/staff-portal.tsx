@@ -102,6 +102,7 @@ export function StaffPortal({
   const [logTopic, setLogTopic] = useState("");
   const [logNotes, setLogNotes] = useState("");
   const [logSaving, setLogSaving] = useState(false);
+  const [logTeacherFilter, setLogTeacherFilter] = useState("all");
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [occDate, setOccDate] = useState(SYSTEM_TODAY);
   const [occTime, setOccTime] = useState("");
@@ -1546,14 +1547,26 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                   {/* ADMIN VIEW — See all teachers matching selected logDate */}
                   {isAdmin && (
                     <div className="space-y-2">
-                      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">All Teacher Logs ({logDate})</h5>
-                      {teacherLogs.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic p-3 text-center border border-dashed rounded-md bg-white">
-                          No logs recorded on this date.
-                        </p>
+                      <div className="flex items-center gap-2 flex-wrap border-b pb-2">
+  <h5 className="text-xs font-semibold text-slate-700">All Teacher Logs ({logDate})</h5>
+  <select
+    value={logTeacherFilter}
+    onChange={(e) => setLogTeacherFilter(e.target.value)}
+    className="border rounded-md px-2 py-1 text-xs bg-white ml-auto"
+  >
+    <option value="all">All Teachers</option>
+    {[...new Set(teacherLogs.map(l => l.teacher_name))].sort().map(name => (
+      <option key={name} value={name}>{name}</option>
+    ))}
+  </select>
+</div>
+                      {teacherLogs.filter(l => logTeacherFilter === "all" ? true : l.teacher_name === logTeacherFilter).length === 0 ? (
+  <p className="text-xs text-muted-foreground italic p-3 text-center border border-dashed rounded-md bg-white">
+    No logs recorded on this date.
+  </p>
                       ) : (
                         <div className="space-y-2">
-                          {teacherLogs.map((log) => (
+                          {teacherLogs.filter(l => logTeacherFilter === "all" ? true : l.teacher_name === logTeacherFilter).map((log) => (
                             <div key={log.id} className="border rounded-md bg-white p-3 shadow-sm space-y-1">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
