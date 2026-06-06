@@ -281,7 +281,7 @@ export function StaffPortal({
     query = query.eq("log_date", occViewDate);
   } else if (occViewDate !== SYSTEM_TODAY) {
     query = query.eq("log_date", occViewDate);
-  }
+  };
 
   const { data, error } = await query;
   if (!error && data) setOccurrences(data);
