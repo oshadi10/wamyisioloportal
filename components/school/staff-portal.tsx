@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
 import { Printer, TrendingUp, AlertTriangle } from "lucide-react";
+import { getSchoolExpectedPerTerm } from "@/lib/school-data";
 
 interface StaffPortalProps {
   lecturer: Lecturer;
@@ -135,6 +136,7 @@ export function StaffPortal({
   const [folderDocFile, setFolderDocFile] = useState<File | null>(null);
   const [folderUploading, setFolderUploading] = useState(false);
   const [folderDocs, setFolderDocs] = useState<any[]>([]);
+  const [stdCategory, setStdCategory] = useState("sponsored");
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
@@ -604,26 +606,28 @@ const handleDeleteOccurrence = async (id: string) => {
   };
 
   const getSummaryStats = () => {
-    const feePayingRecords = summaryData.filter(r => r.category !== "sponsored");
-    const sponsoredRecords = summaryData.filter(r => r.category === "sponsored");
-    const totalExpected = feePayingRecords.reduce((s, r) => s + (r.expected_fee || 0), 0);
-    const feePayingCollected = feePayingRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
-    const sponsoredSurplus = sponsoredRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
-    const totalCollected = feePayingCollected + sponsoredSurplus;
-    const totalArrears = Math.max(0, totalExpected - feePayingCollected);
-    return { totalExpected, feePayingCollected, sponsoredSurplus, totalCollected, totalArrears };
-  };
+  const feePayingRecords = summaryData.filter(r => r.category !== "sponsored");
+  const sponsoredRecords = summaryData.filter(r => r.category === "sponsored");
+  const totalExpected = [1, 2, 3].reduce((s, t) => s + getSchoolExpectedPerTerm(t), 0);
+  const feePayingCollected = feePayingRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
+  const sponsoredSurplus = sponsoredRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
+  const totalCollected = feePayingCollected + sponsoredSurplus;
+  const totalArrears = Math.max(0, totalExpected - feePayingCollected);
+  return { totalExpected, feePayingCollected, sponsoredSurplus, totalCollected, totalArrears };
+};
 
   const getTermStats = (term: number) => {
-    const fp = summaryData.filter(r => r.term === term && r.category !== "sponsored");
-    const sp = summaryData.filter(r => r.term === term && r.category === "sponsored");
-    const expected = fp.reduce((s, r) => s + (r.expected_fee || 0), 0);
-    const fpCollected = fp.reduce((s, r) => s + (r.amount_paid || 0), 0);
-    const spSurplus = sp.reduce((s, r) => s + (r.amount_paid || 0), 0);
-    const arrears = Math.max(0, expected - fpCollected);
-    const pct = expected > 0 ? Math.round((fpCollected / expected) * 100) : 100;
-    return { expected, fpCollected, spSurplus, arrears, pct };
-  };
+  const fp = summaryData.filter(r => r.term === term && r.category !== "sponsored");
+  const sp = summaryData.filter(r => r.term === term && r.category === "sponsored");
+  const fpCollected = fp.reduce((s, r) => s + (r.amount_paid || 0), 0);
+  const spSurplus = sp.reduce((s, r) => s + (r.amount_paid || 0), 0);
+
+  // Use the hardcoded school-wide expected total, not just recorded students
+  const expected = getSchoolExpectedPerTerm(term);
+  const arrears = Math.max(0, expected - fpCollected);
+  const pct = expected > 0 ? Math.round((fpCollected / expected) * 100) : 0;
+  return { expected, fpCollected, spSurplus, arrears, pct };
+};
 
   const handlePrintReceipt = () => {
     const printWindow = window.open("", "_blank");
@@ -736,7 +740,7 @@ const handleDeleteOccurrence = async (id: string) => {
   const handleRegisterStudent = async () => {
     if (!stdName.trim() || !stdAdmNo.trim()) { alert("Enter student name and admission number."); return; }
     setStdRegistering(true);
-    const { error } = await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmNo, parent_contact: stdParent });
+    const { error } = await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmNo, parent_contact: stdParent, category: stdCategory });
     if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
     alert(`${stdName} registered successfully!`);
     setStdName(""); setStdAdmNo(""); setStdParent("");
@@ -1735,6 +1739,16 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </div>
+                        <div>
+  
+  <Label className="text-xs font-semibold">Category</Label>
+  <select value={stdCategory} onChange={(e) => setStdCategory(e.target.value)}
+    className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+    <option value="sponsored">Sponsored</option>
+    <option value="day">Day scholar</option>
+    <option value="boarding">Boarding</option>
+  </select>
+</div>
                         <div>
                           <Label className="text-xs font-semibold">Parent Contact</Label>
                           <input placeholder="e.g. 0712345678" value={stdParent} onChange={(e) => setStdParent(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
