@@ -1,4 +1,6 @@
 "use client";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
 
 const getKiswahiliComment = (marks: number): string => {
   if (marks >= 75) return "Mwanafunzi amefanya vizuri sana. Endelea hivyo.";
@@ -51,6 +53,38 @@ interface StudentPortalProps {
 export function StudentPortal({ studentName, results, fees, materials, timetables }: StudentPortalProps) {
   const [selectedTerm, setSelectedTerm] = useState("Term 1, 2026");
   const [activeTab, setActiveTab] = useState("results");
+  const [studentFeeRecords, setStudentFeeRecords] = useState<any[]>([]);
+  const [feeLoading, setFeeLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("results");
+
+// NEW — add these two state lines
+const [studentFeeRecords, setStudentFeeRecords] = useState<any[]>([]);
+const [feeLoading, setFeeLoading] = useState(false);
+
+// NEW — Step 3: fetch function, effect, and totals
+const fetchStudentFees = async () => {
+  setFeeLoading(true);
+  const { data, error } = await supabase
+    .from("student_fees")
+    .select("*")
+    .eq("student_name", studentName)
+    .order("year", { ascending: true })
+    .order("term", { ascending: true });
+  if (!error && data) setStudentFeeRecords(data);
+  setFeeLoading(false);
+};
+
+useEffect(() => {
+  if (activeTab === "fees") fetchStudentFees();
+}, [activeTab, studentName]);
+
+const totalExpected = studentFeeRecords.reduce((s, r) => s + (r.expected_fee || 0), 0);
+const totalPaid = studentFeeRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
+const totalBalance = Math.max(0, totalExpected - totalPaid);
+const totalSurplus = Math.max(0, totalPaid - totalExpected);
+
+// existing code continues below...
+const studentClass = getStudentClass(studentName);
 
   const studentClass = getStudentClass(studentName);
   const admNo = studentAccounts[studentName] || "N/A";
@@ -113,7 +147,7 @@ const positionSuffix = classPosition === 1 ? "st" : classPosition === 2 ? "nd" :
       )
       .join("");
 
-    const feeBalance = myFees.total - myFees.paid;
+    const feeBalance = totalBalance;
 
     let logoSrc = "";
     try {
@@ -247,34 +281,121 @@ ${studentClass !== 'Grade 10' && classPosition ? `<div><strong>CLASS POSITION:</
         </TabsContent>
 
         {/* Fees Tab */}
+        {/* Fees Tab */}
         <TabsContent value="fees">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Fee Statement</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Total Fees</TableHead>
-                    <TableHead>Paid</TableHead>
-                    <TableHead>Balance</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>KSh {myFees.total.toLocaleString()}</TableCell>
-                    <TableCell>KSh {myFees.paid.toLocaleString()}</TableCell>
-                    <TableCell className="text-destructive font-medium">
-                      KSh {balance.toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-              {balance > 0 ? (
-                <p className="text-xs text-muted-foreground mt-3">Please clear your fee balance.</p>
+            <CardContent className="space-y-4">
+              {feeLoading ? (
+                <p className="text-sm text-muted-foreground animate-pulse">Loading fee records...</p>
+              ) : studentFeeRecords.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground">No fee records found.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Contact the school office for your fee statement.</p>
+                </div>
               ) : (
-                <p className="text-xs text-[#27500a] mt-3">Fees fully paid.</p>
+                <>
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-slate-50 border rounded-md p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Total expected</p>
+                      <p className="font-semibold text-sm text-slate-800">KSh {totalExpected.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-md p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Total paid</p>
+                      <p className="font-semibold text-sm text-emerald-700">KSh {totalPaid.toLocaleString()}</p>
+                    </div>
+                    <div className={`border rounded-md p-3 text-center ${totalBalance === 0 ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100"}`}>
+                      <p className="text-xs text-muted-foreground mb-1">{totalBalance === 0 ? "Status" : "Balance"}</p>
+                      <p className={`font-semibold text-sm ${totalBalance === 0 ? "text-emerald-700" : "text-red-600"}`}>
+                        {totalBalance === 0 ? "✓ Cleared" : `KSh ${totalBalance.toLocaleString()}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Per-term breakdown */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Per-term breakdown</p>
+                    <div className="border rounded-md overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Term</th>
+                            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Expected</th>
+                            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Paid</th>
+                            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-600">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {studentFeeRecords.map((r, i) => {
+                            const bal = Math.max(0, (r.expected_fee || 0) - (r.amount_paid || 0));
+                            const surplus = Math.max(0, (r.amount_paid || 0) - (r.expected_fee || 0));
+                            const isSponsored = r.category === "sponsored";
+                            return (
+                              <tr key={i} className="border-t">
+                                <td className="px-3 py-2">
+                                  <span className="font-medium">Term {r.term}, {r.year}</span>
+                                  {isSponsored && (
+                                    <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Sponsored</span>
+                                  )}
+                                  {r.advance_next > 0 && (
+                                    <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Advance given</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right text-slate-600">
+                                  {isSponsored ? <span className="text-amber-700">Sponsored</span> : `KSh ${(r.expected_fee || 0).toLocaleString()}`}
+                                </td>
+                                <td className="px-3 py-2 text-right text-emerald-700 font-semibold">
+                                  KSh {(r.amount_paid || 0).toLocaleString()}
+                                  {r.payment_source && r.payment_source !== "fee-paying" && (
+                                    <span className="block text-xs text-blue-600 font-normal">{r.payment_source}</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  {isSponsored ? (
+                                    <span className="text-blue-600 font-semibold text-xs">+KSh {(r.amount_paid || 0).toLocaleString()} surplus</span>
+                                  ) : surplus > 0 ? (
+                                    <span className="text-blue-600 font-semibold text-xs">+KSh {surplus.toLocaleString()} adv.</span>
+                                  ) : bal === 0 ? (
+                                    <span className="text-emerald-600 font-semibold text-xs">✓ Cleared</span>
+                                  ) : (
+                                    <span className="text-red-600 font-semibold text-xs">KSh {bal.toLocaleString()}</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Carry forward warning */}
+                  {totalBalance > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-md px-4 py-3">
+                      <p className="text-sm font-semibold text-red-700">Outstanding balance: KSh {totalBalance.toLocaleString()}</p>
+                      <p className="text-xs text-red-500 mt-0.5">Please clear your fee balance. Contact the school office.</p>
+                    </div>
+                  )}
+                  {totalBalance === 0 && totalSurplus > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-3">
+                      <p className="text-sm font-semibold text-blue-700">Advance credit: KSh {totalSurplus.toLocaleString()}</p>
+                      <p className="text-xs text-blue-500 mt-0.5">You have an advance payment that will be applied to your next term.</p>
+                    </div>
+                  )}
+                  {totalBalance === 0 && totalSurplus === 0 && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-md px-4 py-3">
+                      <p className="text-sm font-semibold text-emerald-700">✓ All fees cleared</p>
+                      <p className="text-xs text-emerald-600 mt-0.5">Your fee account is up to date.</p>
+                    </div>
+                  )}
+
+                  <button onClick={fetchStudentFees} className="text-xs text-muted-foreground underline w-full text-center">
+                    🔄 Refresh
+                  </button>
+                </>
               )}
             </CardContent>
           </Card>
