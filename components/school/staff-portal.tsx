@@ -137,6 +137,7 @@ export function StaffPortal({
   const [folderUploading, setFolderUploading] = useState(false);
   const [folderDocs, setFolderDocs] = useState<any[]>([]);
   const [stdCategory, setStdCategory] = useState("sponsored");
+  const [allStudents, setAllStudents] = useState<any[]>([]);
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
@@ -144,6 +145,7 @@ export function StaffPortal({
     if (activeTab === "attendance") fetchAttendance();
     if (activeTab === "prefects") fetchPrefects();
     if (activeTab === "occurrence") fetchOccurrences();
+    if (activeTab === "fees") fetchAllStudentsForFees();
   }, [activeTab, selectedClass, attDate]);
 
   // Dedicated effect listener monitoring date changes for teacher logs
@@ -608,10 +610,18 @@ const handleDeleteOccurrence = async (id: string) => {
   const getSummaryStats = () => {
   const feePayingRecords = summaryData.filter(r => r.category !== "sponsored");
   const sponsoredRecords = summaryData.filter(r => r.category === "sponsored");
-  const totalExpected = [1, 2, 3].reduce((s, t) => s + getSchoolExpectedPerTerm(t), 0);
   const feePayingCollected = feePayingRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
   const sponsoredSurplus = sponsoredRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
   const totalCollected = feePayingCollected + sponsoredSurplus;
+
+  // Calculate expected from ALL students in Supabase
+  const totalExpected = [1, 2, 3].reduce((sum, term) => {
+    return sum + allStudents.reduce((s, student) => {
+      const fee = FEE_STRUCTURE[student.category]?.[term - 1] ?? 0;
+      return s + fee;
+    }, 0);
+  }, 0);
+
   const totalArrears = Math.max(0, totalExpected - feePayingCollected);
   return { totalExpected, feePayingCollected, sponsoredSurplus, totalCollected, totalArrears };
 };
@@ -622,8 +632,12 @@ const handleDeleteOccurrence = async (id: string) => {
   const fpCollected = fp.reduce((s, r) => s + (r.amount_paid || 0), 0);
   const spSurplus = sp.reduce((s, r) => s + (r.amount_paid || 0), 0);
 
-  // Use the hardcoded school-wide expected total, not just recorded students
-  const expected = getSchoolExpectedPerTerm(term);
+  // Expected based on ALL students from Supabase
+  const expected = allStudents.reduce((s, student) => {
+    const fee = FEE_STRUCTURE[student.category]?.[term - 1] ?? 0;
+    return s + fee;
+  }, 0);
+
   const arrears = Math.max(0, expected - fpCollected);
   const pct = expected > 0 ? Math.round((fpCollected / expected) * 100) : 0;
   return { expected, fpCollected, spSurplus, arrears, pct };
@@ -730,6 +744,12 @@ const handleDeleteOccurrence = async (id: string) => {
     if (error) { console.error(error); return; }
     setStudents(data || []);
   };
+  const fetchAllStudentsForFees = async () => {
+  const { data, error } = await supabase
+    .from("students")
+    .select("name, class_name, category");
+  if (!error && data) setAllStudents(data);
+};
 
   const fetchStudentDocs = async (studentId: string) => {
     const { data, error } = await supabase.from("student_documents").select("*").eq("student_id", studentId).order("created_at", { ascending: false });
