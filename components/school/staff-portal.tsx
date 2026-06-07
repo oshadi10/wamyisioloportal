@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
 import { Printer, TrendingUp, AlertTriangle } from "lucide-react";
-import { getSchoolExpectedPerTerm } from "@/lib/school-data";
+
 
 interface StaffPortalProps {
   lecturer: Lecturer;
@@ -1750,63 +1750,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                 )}
 
                 {/* STUDENTS TAB */}
-                {isAdmin && (
-                  <TabsContent value="students" className="space-y-6">
-                    <div className="border rounded-md p-4 bg-muted/30 space-y-3">
-                      <h4 className="font-semibold text-sm text-blue-900">🎓 Register New Student</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs font-semibold">Full Name</Label>
-                          <input placeholder="e.g. Amina Hassan" value={stdName} onChange={(e) => setStdName(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                        </div>
-                        <div>
-                          <Label className="text-xs font-semibold">Admission No</Label>
-                          <input placeholder="e.g. 433" value={stdAdmNo} onChange={(e) => setStdAdmNo(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs font-semibold">Class</Label>
-                          <select value={stdClass} onChange={(e) => setStdClass(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
-                            {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-  
-  <Label className="text-xs font-semibold">Category</Label>
-  <select value={stdCategory} onChange={(e) => setStdCategory(e.target.value)}
-    className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
-    <option value="sponsored">Sponsored</option>
-    <option value="day">Day scholar</option>
-    <option value="boarding">Boarding</option>
-  </select>
-</div>
-                        <div>
-                          <Label className="text-xs font-semibold">Parent Contact</Label>
-                          <input placeholder="e.g. 0712345678" value={stdParent} onChange={(e) => setStdParent(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                        </div>
-                      </div>
-                      <Button onClick={handleRegisterStudent} disabled={stdRegistering} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
-                        <Plus className="h-4 w-4 mr-2" /> Register Student
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-slate-800 border-b pb-1">Registered Students</h4>
-                      <Button onClick={fetchStudents} variant="outline" className="text-xs">🔄 Refresh List</Button>
-                      {students.length === 0 ? (
-                        <p className="text-sm text-muted-foreground italic">No students registered yet. Click Refresh.</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {students.map((s) => (
-                            <div key={s.id}
-                              className={`border rounded-lg p-4 bg-white shadow-sm space-y-3 cursor-pointer transition-colors ${selectedStudentId === s.id ? "border-blue-500 bg-blue-50" : "hover:bg-slate-50"}`}
-                              onClick={() => { setSelectedStudentId(s.id); fetchStudentDocs(s.id); }}>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="font-semibold text-slate-900">{s.name}</p>
-                                  <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name} · 📞 {s.parent_contact || "N/A"}</p>
-{isAdmin && (
+               {isAdmin && (
   <TabsContent value="students" className="space-y-4">
     {/* REGISTER FORM */}
     <div className="border rounded-md p-4 bg-muted/30 space-y-3">
@@ -1990,98 +1934,8 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
     </div>
   </TabsContent>
 )}
-                )}
-                {isAdmin && (
-  <TabsContent value="folders" className="space-y-4">
-    <div className="flex items-center justify-between">
-      <h4 className="font-semibold text-sm text-slate-800">📁 Student Document Folders</h4>
-      <span className="text-xs text-muted-foreground">{Object.values(classStudents).flat().length} students</span>
-    </div>
-
-    {/* Class Filter */}
-    <select
-      value={selectedClass}
-      onChange={(e) => setSelectedClass(e.target.value)}
-      className="w-full border rounded-md px-3 py-2 text-sm bg-white"
-    >
-      {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
-    </select>
-
-    {/* Student Folder List */}
-    <div className="space-y-2">
-      {classStudents[selectedClass].map((studentName) => (
-        <div key={studentName} className="border rounded-lg bg-white shadow-sm overflow-hidden">
-          {/* Folder Header */}
-          <div
-            className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50"
-            onClick={() => {
-              if (openFolderStudent === studentName) {
-                setOpenFolderStudent(null);
-                setFolderDocs([]);
-              } else {
-                setOpenFolderStudent(studentName);
-                setFolderDocFile(null);
-                fetchStudentFolderDocs(studentName);
-              }
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-lg">📁</span>
-              <div>
-                <p className="text-sm font-semibold text-slate-800">{studentName}</p>
-                <p className="text-xs text-muted-foreground">{selectedClass}</p>
-              </div>
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {openFolderStudent === studentName ? "▲ Close" : "▼ Open"}
-            </span>
-          </div>
-
-          {/* Folder Content */}
-          {openFolderStudent === studentName && (
-            <div className="border-t p-4 space-y-3 bg-slate-50">
-              {/* Upload Form */}
-              <div className="space-y-2 bg-white border rounded-md p-3">
-                <p className="text-xs font-semibold text-blue-900">📎 Upload Document</p>
-                <select
-                  value={folderDocType}
-                  onChange={(e) => setFolderDocType(e.target.value)}
-                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
-                >
-                  <option>Birth Certificate</option>
-                  <option>JSS Result Slip</option>
-                  <option>Transfer Letter</option>
-                  <option>Medical Certificate</option>
-                  <option>Parent ID Copy</option>
-                  <option>Fee Receipt</option>
-                  <option>Report Form</option>
-                  <option>Other</option>
-                </select>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={(e) => setFolderDocFile(e.target.files?.[0] || null)}
-                  className="text-sm w-full"
-                />
-                {folderDocFile && (
-                  <p className="text-xs text-green-600">Selected: {folderDocFile.name}</p>
-                )}
-                <Button
-                  onClick={() => handleFolderUpload(studentName)}
-                  disabled={folderUploading}
-                  className="bg-[#1a56a0] hover:bg-[#154a8a] w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {folderUploading ? "Uploading..." : "Upload Document"}
-                </Button>
-              </div>
-
-              {/* Documents List */}
-              {folderDocs.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic text-center py-2">
-                  No documents uploaded yet.
-
-                
+               
+    
                 {/* PREFECTS COUNCIL MODULE */}
                 <TabsContent value="prefects" className="space-y-4">
                   <div className="flex items-center justify-between">
