@@ -76,8 +76,8 @@ export function StaffPortal({
   const [newMidBreak, setNewMidBreak] = useState("");
   const [newEndExam, setNewEndExam] = useState("");
   const [newClosingDate, setNewClosingDate] = useState("");
-  const [feeTotal, setFeeTotal] = useState((fees[selectedStudent]?.total || 45000).toString());
-  const [feePaid, setFeePaid] = useState((fees[selectedStudent]?.paid || 30000).toString());
+  const [feeTotal, setFeeTotal] = useState("");
+  const [feePaid, setFeePaid] = useState("");
   // FEES ENHANCED STATE
   const [feeCategory, setFeeCategory] = useState<"boarding"|"day"|"sponsored">("day");
   const [feeSource, setFeeSource] = useState<"bursary"|"personal">("bursary");
