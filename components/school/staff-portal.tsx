@@ -146,6 +146,7 @@ export function StaffPortal({
     if (activeTab === "prefects") fetchPrefects();
     if (activeTab === "occurrence") fetchOccurrences();
     if (activeTab === "fees") fetchAllStudentsForFees();
+    
   }, [activeTab, selectedClass, attDate]);
 
   // Dedicated effect listener monitoring date changes for teacher logs
@@ -740,10 +741,14 @@ const handleDeleteOccurrence = async (id: string) => {
   };
 
   const fetchStudents = async () => {
-    const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
-    if (error) { console.error(error); return; }
-    setStudents(data || []);
-  };
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .order("class_name", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) { console.error(error); return; }
+  setStudents(data || []);
+};
   const fetchAllStudentsForFees = async () => {
   const { data, error } = await supabase
     .from("students")
@@ -948,7 +953,6 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                   {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
-                  {isAdmin && <TabsTrigger value="folders" className="flex-shrink-0 text-xs px-2 py-1.5">📁 Folders</TabsTrigger>}
                   <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
                   <TabsTrigger value="occurrence" className="flex-shrink-0 text-xs px-2 py-1.5">📖 Occurrence</TabsTrigger>
@@ -1802,56 +1806,190 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                                 <div>
                                   <p className="font-semibold text-slate-900">{s.name}</p>
                                   <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name} · 📞 {s.parent_contact || "N/A"}</p>
-                                </div>
-                                <Button variant="outline" size="sm"
-                                  onClick={(e) => { e.stopPropagation(); handleDeleteStudent(s.id); }}
-                                  className="text-destructive border-destructive hover:bg-destructive/10">
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
+{isAdmin && (
+  <TabsContent value="students" className="space-y-4">
+    {/* REGISTER FORM */}
+    <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+      <h4 className="font-semibold text-sm text-blue-900">🎓 Register New Student</h4>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs font-semibold">Full Name</Label>
+          <input placeholder="e.g. Amina Hassan" value={stdName} onChange={(e) => setStdName(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <Label className="text-xs font-semibold">Admission No</Label>
+          <input placeholder="e.g. 433" value={stdAdmNo} onChange={(e) => setStdAdmNo(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs font-semibold">Class</Label>
+          <select value={stdClass} onChange={(e) => setStdClass(e.target.value)}
+            className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+            {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <Label className="text-xs font-semibold">Category</Label>
+          <select value={stdCategory} onChange={(e) => setStdCategory(e.target.value)}
+            className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+            <option value="sponsored">Sponsored</option>
+            <option value="day">Day scholar</option>
+            <option value="boarding">Boarding</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs font-semibold">Parent Contact</Label>
+          <input placeholder="e.g. 0712345678" value={stdParent} onChange={(e) => setStdParent(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <Button onClick={handleRegisterStudent} disabled={stdRegistering}
+        className="bg-blue-700 hover:bg-blue-800 text-white w-full">
+        <Plus className="h-4 w-4 mr-2" />{stdRegistering ? "Registering..." : "Register Student"}
+      </Button>
+    </div>
+
+    {/* CLASS FILTER + STUDENT LIST */}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h4 className="font-semibold text-sm text-slate-800">📁 Student Folders</h4>
+        <div className="flex items-center gap-2">
+          <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}
+            className="border rounded-md px-3 py-2 text-sm bg-white">
+            {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <Button onClick={fetchStudents} variant="outline" size="sm" className="text-xs">🔄 Refresh</Button>
+        </div>
+      </div>
+
+      {students.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic text-center py-4">No students found. Click Refresh.</p>
+      ) : (
+        <div className="space-y-2">
+          {students
+            .filter((s) => s.class_name === selectedClass)
+            .map((s) => {
+              const catColors: Record<string, string> = {
+                boarding: "bg-emerald-100 text-emerald-700",
+                day: "bg-blue-100 text-blue-700",
+                sponsored: "bg-amber-100 text-amber-700",
+              };
+              const catLabel: Record<string, string> = {
+                boarding: "Boarding",
+                day: "Day",
+                sponsored: "Sponsored",
+              };
+              return (
+                <div key={s.id} className="border rounded-lg bg-white shadow-sm overflow-hidden">
+                  {/* Folder header */}
+                  <div
+                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50"
+                    onClick={() => {
+                      if (openFolderStudent === s.name) {
+                        setOpenFolderStudent(null);
+                        setFolderDocs([]);
+                      } else {
+                        setOpenFolderStudent(s.name);
+                        setFolderDocFile(null);
+                        fetchStudentFolderDocs(s.name);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">📁</span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{s.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-muted-foreground">Adm: {s.admission_no}</p>
+                          {s.category && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${catColors[s.category] || "bg-slate-100 text-slate-600"}`}>
+                              {catLabel[s.category] || s.category}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {openFolderStudent === s.name ? "▲ Close" : "▼ Open"}
+                      </span>
+                      <Button variant="outline" size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteStudent(s.id); }}
+                        className="text-destructive border-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Folder content */}
+                  {openFolderStudent === s.name && (
+                    <div className="border-t p-4 space-y-3 bg-slate-50">
+                      {/* Upload form */}
+                      <div className="space-y-2 bg-white border rounded-md p-3">
+                        <p className="text-xs font-semibold text-blue-900">📎 Upload Document</p>
+                        <select value={folderDocType} onChange={(e) => setFolderDocType(e.target.value)}
+                          className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                          <option>Birth Certificate</option>
+                          <option>JSS Result Slip</option>
+                          <option>Transfer Letter</option>
+                          <option>Medical Certificate</option>
+                          <option>Parent ID Copy</option>
+                          <option>Fee Receipt</option>
+                          <option>Report Form</option>
+                          <option>Other</option>
+                        </select>
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={(e) => setFolderDocFile(e.target.files?.[0] || null)}
+                          className="text-sm w-full" />
+                        {folderDocFile && (
+                          <p className="text-xs text-green-600">Selected: {folderDocFile.name}</p>
+                        )}
+                        <Button onClick={() => handleFolderUpload(s.name)} disabled={folderUploading}
+                          className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+                          <Plus className="h-4 w-4 mr-2" />
+                          {folderUploading ? "Uploading..." : "Upload Document"}
+                        </Button>
+                      </div>
+
+                      {/* Documents list */}
+                      {folderDocs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic text-center py-2">No documents uploaded yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-slate-600">{folderDocs.length} document{folderDocs.length !== 1 ? "s" : ""}</p>
+                          {folderDocs.map((doc) => (
+                            <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
+                              <div>
+                                <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
+                                <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 underline">
+                                  📄 {doc.file_name}
+                                </a>
                               </div>
-                              {selectedStudentId === s.id && (
-                                <div className="space-y-3 border-t pt-3">
-                                  <h5 className="text-xs font-semibold text-slate-700">📎 Documents</h5>
-                                  <div className="space-y-2 bg-slate-50 rounded-md p-3">
-                                    <select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                                      <option>Birth Certificate</option>
-                                      <option>JSS Result Slip</option>
-                                      <option>Transfer Letter</option>
-                                      <option>Medical Certificate</option>
-                                      <option>Parent ID Copy</option>
-                                      <option>Other</option>
-                                    </select>
-                                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setDocFile(e.target.files?.[0] || null)} className="text-sm" />
-                                    {docFile && <p className="text-xs text-green-600">Selected: {docFile.name}</p>}
-                                    <Button onClick={handleUploadDoc} disabled={docUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full text-sm">
-                                      {docUploading ? "Uploading..." : "Upload Document"}
-                                    </Button>
-                                  </div>
-                                  {studentDocs.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground italic">No documents uploaded yet.</p>
-                                  ) : (
-                                    <div className="space-y-1">
-                                      {studentDocs.map((doc) => (
-                                        <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
-                                          <div>
-                                            <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
-                                            <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">{doc.file_name}</a>
-                                          </div>
-                                          <Button variant="outline" size="sm" onClick={() => handleDeleteDoc(doc.id)} className="text-destructive border-destructive hover:bg-destructive/10">
-                                            <Trash2 className="h-3 w-3" />
-                                          </Button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                              <Button variant="outline" size="sm"
+                                onClick={() => handleDeleteFolderDoc(doc.id, s.name)}
+                                className="text-destructive border-destructive hover:bg-destructive/10">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
-                  </TabsContent>
+                  )}
+                </div>
+              );
+            })}
+        </div>
+      )}
+    </div>
+  </TabsContent>
+)}
                 )}
                 {isAdmin && (
   <TabsContent value="folders" className="space-y-4">
@@ -1942,42 +2080,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
               {folderDocs.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic text-center py-2">
                   No documents uploaded yet.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-600">{folderDocs.length} document{folderDocs.length !== 1 ? "s" : ""}</p>
-                  {folderDocs.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between bg-white border rounded-md px-3 py-2">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800">{doc.document_name}</p>
-                        <a
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 underline"
-                        >
-                          📄 {doc.file_name}
-                        </a>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteFolderDoc(doc.id, studentName)}
-                        className="text-destructive border-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  </TabsContent>
-)}
+
                 
                 {/* PREFECTS COUNCIL MODULE */}
                 <TabsContent value="prefects" className="space-y-4">
