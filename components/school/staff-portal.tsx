@@ -465,18 +465,17 @@ const handleDeleteOccurrence = async (id: string) => {
   const studentResults = results.filter((r) => r.student === selectedStudent);
 
   const handleClassChange = (className: string) => {
-    setSelectedClass(className);
-    const firstStudent = classStudents[className][0];
-    setSelectedStudent(firstStudent);
-    setFeeTotal((fees[firstStudent]?.total || 45000).toString());
-    setFeePaid((fees[firstStudent]?.paid || 30000).toString());
-  };
-
+  setSelectedClass(className);
+  const firstStudent = classStudents[className][0];
+  setSelectedStudent(firstStudent);
+  setFeeTotal("");
+  setFeePaid("");
+};
   const handleStudentSelect = (student: string) => {
-    setSelectedStudent(student);
-    setFeeTotal((fees[student]?.total || 45000).toString());
-    setFeePaid((fees[student]?.paid || 30000).toString());
-  };
+  setSelectedStudent(student);
+  setFeeTotal("");
+  setFeePaid("");
+};
 
   const handleUploadResult = () => {
     if (!newSubject.trim() || !newMarks.trim()) { alert("Enter subject and marks."); return; }
