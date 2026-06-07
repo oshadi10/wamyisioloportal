@@ -55,41 +55,31 @@ export function StudentPortal({ studentName, results, fees, materials, timetable
   const [activeTab, setActiveTab] = useState("results");
   const [studentFeeRecords, setStudentFeeRecords] = useState<any[]>([]);
   const [feeLoading, setFeeLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("results");
 
-// NEW — add these two state lines
-const [studentFeeRecords, setStudentFeeRecords] = useState<any[]>([]);
-const [feeLoading, setFeeLoading] = useState(false);
+  const fetchStudentFees = async () => {
+    setFeeLoading(true);
+    const { data, error } = await supabase
+      .from("student_fees")
+      .select("*")
+      .eq("student_name", studentName)
+      .order("year", { ascending: true })
+      .order("term", { ascending: true });
+    if (!error && data) setStudentFeeRecords(data);
+    setFeeLoading(false);
+  };
 
-// NEW — Step 3: fetch function, effect, and totals
-const fetchStudentFees = async () => {
-  setFeeLoading(true);
-  const { data, error } = await supabase
-    .from("student_fees")
-    .select("*")
-    .eq("student_name", studentName)
-    .order("year", { ascending: true })
-    .order("term", { ascending: true });
-  if (!error && data) setStudentFeeRecords(data);
-  setFeeLoading(false);
-};
+  useEffect(() => {
+    if (activeTab === "fees") fetchStudentFees();
+  }, [activeTab, studentName]);
 
-useEffect(() => {
-  if (activeTab === "fees") fetchStudentFees();
-}, [activeTab, studentName]);
-
-const totalExpected = studentFeeRecords.reduce((s, r) => s + (r.expected_fee || 0), 0);
-const totalPaid = studentFeeRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
-const totalBalance = Math.max(0, totalExpected - totalPaid);
-const totalSurplus = Math.max(0, totalPaid - totalExpected);
-
-// existing code continues below...
-const studentClass = getStudentClass(studentName);
+  const totalExpected = studentFeeRecords.reduce((s, r) => s + (r.expected_fee || 0), 0);
+  const totalPaid = studentFeeRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
+  const totalBalance = Math.max(0, totalExpected - totalPaid);
+  const totalSurplus = Math.max(0, totalPaid - totalExpected);
 
   const studentClass = getStudentClass(studentName);
   const admNo = studentAccounts[studentName] || "N/A";
-  const myFees = fees[studentName] || { total: 45000, paid: 30000 };
-  const balance = myFees.total - myFees.paid;
+  const myFees = fees[studentName] || { total: 0, paid: 0 };
 
   const myResults = results.filter(
     (r) => r.student === studentName && r.term === selectedTerm
