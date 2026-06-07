@@ -10,6 +10,7 @@ import { Trash2, Plus, Trophy, Calendar, FileText, CheckCircle2, XCircle, HelpCi
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { classStudents, Lecturer, Result, FeeRecord, getGrade, getGrade10Grade, termOptions } from "@/lib/school-data";
+import { Printer, TrendingUp, AlertTriangle } from "lucide-react";
 
 interface StaffPortalProps {
   lecturer: Lecturer;
@@ -76,6 +77,18 @@ export function StaffPortal({
   const [newClosingDate, setNewClosingDate] = useState("");
   const [feeTotal, setFeeTotal] = useState((fees[selectedStudent]?.total || 45000).toString());
   const [feePaid, setFeePaid] = useState((fees[selectedStudent]?.paid || 30000).toString());
+  // FEES ENHANCED STATE
+  const [feeCategory, setFeeCategory] = useState<"boarding"|"day"|"sponsored">("day");
+  const [feeSource, setFeeSource] = useState<"bursary"|"personal">("bursary");
+  const [feeTerm, setFeeTerm] = useState<number>(1);
+  const [feeYear, setFeeYear] = useState<number>(2026);
+  const [feeRecords, setFeeRecords] = useState<any[]>([]);
+  const [feeLoading, setFeeLoading] = useState(false);
+  const [feeSaving, setFeeSaving] = useState(false);
+  const [feeSubTab, setFeeSubTab] = useState<"update"|"receipt"|"summary">("update");
+  const [summaryYear, setSummaryYear] = useState<number>(2026);
+  const [summaryData, setSummaryData] = useState<any[]>([]);
+  const [receiptNo, setReceiptNo] = useState<number>(100);
   const [students, setStudents] = useState<any[]>([]);
   const [stdName, setStdName] = useState("");
   const [stdClass, setStdClass] = useState(classNames[0]);
@@ -475,6 +488,225 @@ const handleDeleteOccurrence = async (id: string) => {
     if (paid > total) { alert("Amount paid cannot exceed total fees."); return; }
     onUpdateFees(selectedStudent, total, paid);
     alert(`Fees updated for ${selectedStudent}.`);
+  };
+  // FEE STRUCTURE
+  const FEE_STRUCTURE: Record<string, number[]> = {
+    boarding: [18000, 15000, 12000],
+    day: [8000, 6000, 6000],
+    sponsored: [0, 0, 0],
+  };
+
+  const getExpectedFee = (cat: string, term: number) => FEE_STRUCTURE[cat]?.[term - 1] ?? 0;
+
+  // Fetch all fee records for selected student
+  const fetchFeeRecords = async (studentName: string) => {
+    setFeeLoading(true);
+    const { data, error } = await supabase
+      .from("student_fees")
+      .select("*")
+      .eq("student_name", studentName)
+      .order("year", { ascending: true })
+      .order("term", { ascending: true });
+    if (!error && data) setFeeRecords(data);
+    setFeeLoading(false);
+  };
+
+  // Get carry-forward balance from previous terms
+  const getCarryForward = () => {
+    let balance = 0;
+    feeRecords
+      .filter(r => r.year < feeYear || (r.year === feeYear && r.term < feeTerm))
+      .forEach(r => {
+        balance += Math.max(0, r.expected_fee - r.amount_paid);
+      });
+    return balance;
+  };
+
+  // Get advance credit from overpayments in previous terms
+  const getAdvanceCredit = () => {
+    let credit = 0;
+    feeRecords
+      .filter(r => r.year < feeYear || (r.year === feeYear && r.term < feeTerm))
+      .forEach(r => {
+        credit += Math.max(0, r.amount_paid - r.expected_fee);
+      });
+    return credit;
+  };
+
+  // Allocate payment across arrears → current → advance
+  const allocatePayment = (paid: number, cat: string, term: number) => {
+    const carryForward = getCarryForward();
+    const advanceCredit = getAdvanceCredit();
+    const currentFee = getExpectedFee(cat, term);
+    const nextFee = term < 3 ? getExpectedFee(cat, term + 1) : 0;
+    const effectivePaid = paid + advanceCredit;
+
+    let rem = effectivePaid;
+    const clearedArrears = Math.min(rem, carryForward); rem -= clearedArrears;
+    const clearedCurrent = Math.min(rem, currentFee); rem -= clearedCurrent;
+    const advanceNext = term < 3 ? Math.min(rem, nextFee) : 0; rem -= advanceNext;
+    const surplus = rem;
+    const balance = Math.max(0, carryForward + currentFee - effectivePaid);
+
+    return { carryForward, advanceCredit, currentFee, nextFee, clearedArrears, clearedCurrent, advanceNext, surplus, balance };
+  };
+
+  const handleSaveFeeRecord = async () => {
+    const paid = Number(feePaid);
+    if (isNaN(paid) || paid < 0) { alert("Enter a valid amount paid."); return; }
+    const alloc = allocatePayment(paid, feeCategory, feeTerm);
+    const spansTerms = alloc.clearedArrears > 0 && alloc.clearedCurrent > 0;
+    const hasAdvance = alloc.advanceNext > 0;
+    if ((spansTerms || hasAdvance) && !confirm(
+      `⚠️ This payment spans multiple terms:\n` +
+      (alloc.clearedArrears > 0 ? `→ Clears arrears: KSh ${alloc.clearedArrears.toLocaleString()}\n` : "") +
+      `→ Applied to Term ${feeTerm}: KSh ${alloc.clearedCurrent.toLocaleString()}\n` +
+      (hasAdvance ? `→ Advance to Term ${feeTerm + 1}: KSh ${alloc.advanceNext.toLocaleString()}\n` : "") +
+      `\nConfirm and record?`
+    )) return;
+
+    setFeeSaving(true);
+    const existing = feeRecords.find(r => r.student_name === selectedStudent && r.year === feeYear && r.term === feeTerm);
+    const record = {
+      student_name: selectedStudent,
+      class_name: selectedClass,
+      category: feeCategory,
+      year: feeYear,
+      term: feeTerm,
+      expected_fee: getExpectedFee(feeCategory, feeTerm),
+      amount_paid: paid,
+      payment_source: feeCategory === "sponsored" ? feeSource : "fee-paying",
+      carry_forward: alloc.carryForward,
+      advance_next: alloc.advanceNext,
+      balance: alloc.balance,
+    };
+
+    if (existing) {
+      await supabase.from("student_fees").update(record).eq("id", existing.id);
+    } else {
+      const { data: lastReceipt } = await supabase.from("student_fees").select("receipt_no").order("created_at", { ascending: false }).limit(1);
+      const nextNo = lastReceipt?.[0]?.receipt_no ? lastReceipt[0].receipt_no + 1 : 101;
+      setReceiptNo(nextNo);
+      await supabase.from("student_fees").insert({ ...record, receipt_no: nextNo });
+    }
+
+    setFeeSaving(false);
+    await fetchFeeRecords(selectedStudent);
+    setFeeSubTab("receipt");
+  };
+
+  const fetchSummary = async (year: number) => {
+    const { data, error } = await supabase
+      .from("student_fees")
+      .select("*")
+      .eq("year", year);
+    if (!error && data) setSummaryData(data);
+  };
+
+  const getSummaryStats = () => {
+    const feePayingRecords = summaryData.filter(r => r.category !== "sponsored");
+    const sponsoredRecords = summaryData.filter(r => r.category === "sponsored");
+    const totalExpected = feePayingRecords.reduce((s, r) => s + (r.expected_fee || 0), 0);
+    const feePayingCollected = feePayingRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
+    const sponsoredSurplus = sponsoredRecords.reduce((s, r) => s + (r.amount_paid || 0), 0);
+    const totalCollected = feePayingCollected + sponsoredSurplus;
+    const totalArrears = Math.max(0, totalExpected - feePayingCollected);
+    return { totalExpected, feePayingCollected, sponsoredSurplus, totalCollected, totalArrears };
+  };
+
+  const getTermStats = (term: number) => {
+    const fp = summaryData.filter(r => r.term === term && r.category !== "sponsored");
+    const sp = summaryData.filter(r => r.term === term && r.category === "sponsored");
+    const expected = fp.reduce((s, r) => s + (r.expected_fee || 0), 0);
+    const fpCollected = fp.reduce((s, r) => s + (r.amount_paid || 0), 0);
+    const spSurplus = sp.reduce((s, r) => s + (r.amount_paid || 0), 0);
+    const arrears = Math.max(0, expected - fpCollected);
+    const pct = expected > 0 ? Math.round((fpCollected / expected) * 100) : 100;
+    return { expected, fpCollected, spSurplus, arrears, pct };
+  };
+
+  const handlePrintReceipt = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    const paid = Number(feePaid);
+    const alloc = allocatePayment(paid, feeCategory, feeTerm);
+    const admNo = `WHS/2023/${Math.floor(Math.random() * 900) + 100}`;
+    const catLabel = feeCategory === "boarding" ? "Boarding · Fee-paying" : feeCategory === "day" ? "Day scholar · Fee-paying" : `Sponsored (${feeSource})`;
+    const fullyPaid = alloc.balance === 0;
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Fee Receipt</title>
+    <style>
+      body{font-family:Arial,sans-serif;max-width:520px;margin:40px auto;color:#222;font-size:13px;}
+      .header{text-align:center;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:14px;}
+      .school-name{font-size:18px;font-weight:bold;margin-bottom:4px;}
+      .school-meta{font-size:11px;color:#555;line-height:1.6;}
+      .receipt-title{display:flex;justify-content:space-between;margin-bottom:14px;}
+      .label{color:#666;font-size:11px;}
+      .val{font-weight:600;}
+      .section{margin-bottom:12px;}
+      .section-head{font-size:10px;font-weight:bold;letter-spacing:.6px;text-transform:uppercase;color:#666;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:8px;}
+      .row{display:flex;justify-content:space-between;padding:3px 0;}
+      .alloc{background:#f5f5f5;border-radius:4px;padding:8px 10px;margin:8px 0;}
+      .alloc-title{font-size:10px;font-weight:bold;color:#666;margin-bottom:5px;}
+      .alloc-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+      .total-row{display:flex;justify-content:space-between;border-top:2px solid #222;padding-top:8px;margin-top:6px;font-size:14px;font-weight:bold;}
+      .paid-stamp{border:2px solid #06a056;color:#06a056;display:inline-block;padding:3px 16px;border-radius:3px;font-weight:bold;letter-spacing:2px;font-size:14px;margin:10px 0;}
+      .sig-row{display:flex;gap:40px;margin-top:24px;}
+      .sig-block{flex:1;text-align:center;}
+      .sig-line{border-bottom:1px solid #999;margin-bottom:4px;height:32px;}
+      .footer{text-align:center;font-size:10px;color:#888;margin-top:20px;border-top:1px solid #ddd;padding-top:8px;}
+      @media print{body{margin:10px;}}
+    </style></head><body>
+    <div class="header">
+      <div class="school-name">WAMY Isiolo High School</div>
+      <div class="school-meta">P.O. Box 123, Isiolo, Kenya | Tel: 0700 000 000<br>Email: info@wamyisiolo.sc.ke | KRA PIN: A123456789B</div>
+    </div>
+    <div class="receipt-title">
+      <div><div class="label">OFFICIAL FEE RECEIPT</div><div style="font-size:11px;color:#555;">${new Date().toLocaleDateString("en-KE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div>
+      <div style="text-align:right"><div class="label">Receipt no.</div><div class="val">#WHS-${feeYear}-${String(receiptNo).padStart(5,"0")}</div></div>
+    </div>
+    <div class="section">
+      <div class="section-head">Student details</div>
+      <div class="row"><span class="label">Full name</span><span class="val">${selectedStudent}</span></div>
+      <div class="row"><span class="label">Admission no.</span><span>${admNo}</span></div>
+      <div class="row"><span class="label">Class</span><span>${selectedClass}</span></div>
+      <div class="row"><span class="label">Category</span><span>${catLabel}</span></div>
+      <div class="row"><span class="label">Academic year</span><span>${feeYear}</span></div>
+      <div class="row"><span class="label">Payment for</span><span>Term ${feeTerm}</span></div>
+    </div>
+    <div class="section">
+      <div class="section-head">Fee statement</div>
+      ${alloc.carryForward > 0 ? `<div class="row"><span class="label">Balance b/f (arrears)</span><span style="color:#c0392b;font-weight:600;">KSh ${alloc.carryForward.toLocaleString()}</span></div>` : ""}
+      <div class="row"><span class="label">Term ${feeTerm} fee</span><span>KSh ${alloc.currentFee.toLocaleString()}</span></div>
+      ${feeCategory === "sponsored" ? `<div class="row"><span class="label">Expected</span><span>KSh 0 (fully sponsored)</span></div>` : ""}
+    </div>
+    ${(alloc.clearedArrears > 0 || alloc.advanceNext > 0 || feeCategory === "sponsored") ? `
+    <div class="alloc">
+      <div class="alloc-title">PAYMENT ALLOCATION</div>
+      ${alloc.clearedArrears > 0 ? `<div class="alloc-row"><span>→ Clears arrears</span><span style="color:#06a056;font-weight:600;">KSh ${alloc.clearedArrears.toLocaleString()}</span></div>` : ""}
+      ${alloc.clearedCurrent > 0 ? `<div class="alloc-row"><span>→ Applied to Term ${feeTerm}</span><span style="color:#06a056;font-weight:600;">KSh ${alloc.clearedCurrent.toLocaleString()}</span></div>` : ""}
+      ${alloc.advanceNext > 0 ? `<div class="alloc-row"><span>→ Advance to Term ${feeTerm + 1}</span><span style="color:#1a56a0;font-weight:600;">KSh ${alloc.advanceNext.toLocaleString()}</span></div>` : ""}
+      ${feeCategory === "sponsored" ? `<div class="alloc-row"><span>→ ${feeSource === "bursary" ? "Bursary" : "Personal"} surplus</span><span style="color:#06a056;font-weight:600;">KSh ${paid.toLocaleString()}</span></div>` : ""}
+    </div>` : ""}
+    <div class="section">
+      <div class="row"><span class="label">Amount tendered</span><span style="color:#06a056;font-weight:600;">KSh ${paid.toLocaleString()}</span></div>
+      ${alloc.advanceNext > 0 ? `<div class="row"><span class="label">Advance credit to Term ${feeTerm + 1}</span><span style="color:#1a56a0;font-weight:600;">KSh ${alloc.advanceNext.toLocaleString()}</span></div>` : ""}
+      <div class="total-row">
+        <span>${feeCategory === "sponsored" ? "Surplus recorded" : "Outstanding balance"}</span>
+        <span style="color:${fullyPaid || feeCategory === "sponsored" ? "#06a056" : "#c0392b"};">
+          ${feeCategory === "sponsored" ? `KSh ${paid.toLocaleString()}` : fullyPaid ? "KSh 0 — fully cleared" : `KSh ${alloc.balance.toLocaleString()}`}
+        </span>
+      </div>
+      ${fullyPaid && feeCategory !== "sponsored" ? `<div style="margin-top:10px;"><span class="paid-stamp">PAID IN FULL</span></div>` : ""}
+    </div>
+    <div class="sig-row">
+      <div class="sig-block"><div class="sig-line"></div><div style="font-weight:600;">Mr. Osman Halake</div><div style="font-size:11px;color:#666;">Principal / Administrator</div></div>
+      <div class="sig-block"><div class="sig-line"></div><div style="font-weight:600;">School Stamp</div><div style="font-size:11px;color:#666;">Official seal</div></div>
+    </div>
+    <div class="footer">This is an official receipt of WAMY Isiolo High School. Please retain for your records.<br>Disputes must be raised within 7 days of issue.</div>
+    </body></html>`);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const handlePostEvent = async () => {
@@ -1124,21 +1356,340 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                 {/* FEES TAB */}
                 {isAdmin && (
                   <TabsContent value="fees" className="space-y-4">
-                    <h4 className="font-medium text-sm">Update Fees</h4>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Total Fees (KSh)</Label>
-                        <input type="number" value={feeTotal} onChange={(e) => setFeeTotal(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Amount Paid (KSh)</Label>
-                        <input type="number" value={feePaid} onChange={(e) => setFeePaid(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      </div>
-                      <div className="p-3 bg-muted rounded-md text-sm">
-                        Balance: <span className="text-destructive font-medium">KSh {(Number(feeTotal) - Number(feePaid)).toLocaleString()}</span>
-                      </div>
-                      <Button onClick={handleUpdateFees} className="bg-[#1a56a0] hover:bg-[#154a8a]">Update Fees</Button>
+                    {/* Sub-tab bar */}
+                    <div className="flex gap-1 border-b pb-2 flex-wrap">
+                      {(["update","receipt","summary"] as const).map(t => (
+                        <button key={t} onClick={() => { setFeeSubTab(t); if (t === "summary") fetchSummary(summaryYear); }}
+                          className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${feeSubTab === t ? "bg-[#1a56a0] text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
+                          {t === "update" ? "💳 Record payment" : t === "receipt" ? "🧾 Receipt" : "📊 Summary report"}
+                        </button>
+                      ))}
                     </div>
+
+                    {/* UPDATE FEES SUB-TAB */}
+                    {feeSubTab === "update" && (
+                      <div className="space-y-4">
+                        {/* Student header */}
+                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm">
+                            {selectedStudent.split(" ").map(n => n[0]).join("").slice(0,2)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-slate-800">{selectedStudent}</p>
+                            <p className="text-xs text-muted-foreground">{selectedClass}</p>
+                          </div>
+                          {feeLoading && <span className="ml-auto text-xs text-muted-foreground animate-pulse">Loading...</span>}
+                          {!feeLoading && <button onClick={() => fetchFeeRecords(selectedStudent)} className="ml-auto text-xs text-blue-600 underline">Load records</button>}
+                        </div>
+
+                        {/* Previous records */}
+                        {feeRecords.length > 0 && (
+                          <div className="border rounded-md overflow-hidden">
+                            <table className="w-full text-xs">
+                              <thead className="bg-slate-50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left font-semibold text-slate-600">Term</th>
+                                  <th className="px-3 py-2 text-right font-semibold text-slate-600">Expected</th>
+                                  <th className="px-3 py-2 text-right font-semibold text-slate-600">Paid</th>
+                                  <th className="px-3 py-2 text-right font-semibold text-slate-600">Balance</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {feeRecords.map((r, i) => {
+                                  const bal = Math.max(0, r.expected_fee - r.amount_paid);
+                                  const surplus = Math.max(0, r.amount_paid - r.expected_fee);
+                                  return (
+                                    <tr key={i} className="border-t">
+                                      <td className="px-3 py-2 font-medium">Term {r.term}, {r.year}</td>
+                                      <td className="px-3 py-2 text-right">KSh {(r.expected_fee || 0).toLocaleString()}</td>
+                                      <td className="px-3 py-2 text-right text-emerald-700 font-semibold">KSh {(r.amount_paid || 0).toLocaleString()}</td>
+                                      <td className="px-3 py-2 text-right">
+                                        {surplus > 0 ? <span className="text-blue-600 font-semibold">+KSh {surplus.toLocaleString()} adv.</span>
+                                        : bal > 0 ? <span className="text-red-600 font-semibold">KSh {bal.toLocaleString()}</span>
+                                        : <span className="text-emerald-600 font-semibold">✓ Cleared</span>}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                                {/* Carry forward row */}
+                                {getCarryForward() > 0 && (
+                                  <tr className="bg-red-50 border-t-2 border-red-200">
+                                    <td colSpan={3} className="px-3 py-2 font-semibold text-red-700 text-xs">Total arrears carried forward</td>
+                                    <td className="px-3 py-2 text-right font-bold text-red-700">KSh {getCarryForward().toLocaleString()}</td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        {/* Form */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Academic year</Label>
+                            <select value={feeYear} onChange={e => setFeeYear(Number(e.target.value))} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                              <option value={2026}>2026</option>
+                              <option value={2025}>2025</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Term</Label>
+                            <select value={feeTerm} onChange={e => setFeeTerm(Number(e.target.value))} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                              <option value={1}>Term 1</option>
+                              <option value={2}>Term 2</option>
+                              <option value={3}>Term 3</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Category</Label>
+                            <select value={feeCategory} onChange={e => setFeeCategory(e.target.value as any)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                              <option value="boarding">Boarding (fee-paying)</option>
+                              <option value="day">Day scholar (fee-paying)</option>
+                              <option value="sponsored">Sponsored</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Expected fee (KSh)</Label>
+                            <input readOnly value={feeCategory === "sponsored" ? "0 — fully sponsored" : getExpectedFee(feeCategory, feeTerm).toLocaleString()}
+                              className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground cursor-default" />
+                          </div>
+                        </div>
+
+                        {feeCategory === "sponsored" && (
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Payment source</Label>
+                            <div className="flex gap-2">
+                              {(["bursary","personal"] as const).map(s => (
+                                <button key={s} onClick={() => setFeeSource(s)}
+                                  className={`flex-1 py-2 text-sm rounded-md border font-medium transition-colors ${feeSource === s ? (s === "bursary" ? "bg-blue-50 border-blue-300 text-blue-700" : "bg-emerald-50 border-emerald-300 text-emerald-700") : "border-border text-muted-foreground hover:bg-muted"}`}>
+                                  {s === "bursary" ? "🏦 Bursary" : "👤 Personal"}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Amount paid (KSh)</Label>
+                          <input type="number" value={feePaid} onChange={e => setFeePaid(e.target.value)} min={0}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                        </div>
+
+                        {/* Live allocation preview */}
+                        {Number(feePaid) > 0 && (() => {
+                          const alloc = allocatePayment(Number(feePaid), feeCategory, feeTerm);
+                          const spansTerms = alloc.clearedArrears > 0 && alloc.clearedCurrent > 0;
+                          const hasAdvance = alloc.advanceNext > 0;
+                          const showWarn = spansTerms || hasAdvance;
+                          return (
+                            <div className={`rounded-md p-3 border text-sm space-y-1 ${showWarn ? "bg-amber-50 border-amber-200" : alloc.balance === 0 ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
+                              {showWarn && <p className={`flex items-center gap-1 font-semibold text-xs ${showWarn ? "text-amber-700" : ""}`}><AlertTriangle className="h-3.5 w-3.5" /> Payment spans multiple terms</p>}
+                              {alloc.clearedArrears > 0 && <div className="flex justify-between text-xs"><span className="text-slate-600">→ Clears arrears</span><span className="font-semibold text-emerald-700">KSh {alloc.clearedArrears.toLocaleString()}</span></div>}
+                              {alloc.clearedCurrent > 0 && <div className="flex justify-between text-xs"><span className="text-slate-600">→ Applied to Term {feeTerm}</span><span className="font-semibold text-emerald-700">KSh {alloc.clearedCurrent.toLocaleString()}</span></div>}
+                              {hasAdvance && <div className="flex justify-between text-xs"><span className="text-slate-600">→ Advance to Term {feeTerm + 1}</span><span className="font-semibold text-blue-700">KSh {alloc.advanceNext.toLocaleString()}</span></div>}
+                              {feeCategory === "sponsored" && <div className="flex justify-between text-xs"><span className="text-slate-600">→ {feeSource === "bursary" ? "Bursary" : "Personal"} surplus</span><span className="font-semibold text-emerald-700">KSh {Number(feePaid).toLocaleString()}</span></div>}
+                              <div className={`flex justify-between text-sm font-semibold pt-1 border-t ${alloc.balance === 0 || feeCategory === "sponsored" ? "border-emerald-200 text-emerald-700" : "border-red-200 text-red-700"}`}>
+                                <span>{feeCategory === "sponsored" ? "Surplus recorded" : "Remaining balance"}</span>
+                                <span>{feeCategory === "sponsored" ? `KSh ${Number(feePaid).toLocaleString()}` : alloc.balance === 0 ? "KSh 0 — fully cleared" : `KSh ${alloc.balance.toLocaleString()}`}</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => setFeeSubTab("receipt")} className="flex-1">
+                            🧾 Preview receipt
+                          </Button>
+                          <Button onClick={handleSaveFeeRecord} disabled={feeSaving} className="flex-1 bg-[#1a56a0] hover:bg-[#154a8a]">
+                            {feeSaving ? "Saving..." : "Record payment"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* RECEIPT SUB-TAB */}
+                    {feeSubTab === "receipt" && (() => {
+                      const paid = Number(feePaid);
+                      const alloc = allocatePayment(paid, feeCategory, feeTerm);
+                      const fullyPaid = alloc.balance === 0;
+                      const catLabel = feeCategory === "boarding" ? "Boarding · Fee-paying" : feeCategory === "day" ? "Day scholar · Fee-paying" : `Sponsored (${feeSource})`;
+                      return (
+                        <div className="max-w-md mx-auto border rounded-lg overflow-hidden shadow-sm">
+                          {/* Header */}
+                          <div className="border-b-2 border-slate-300 p-5 bg-white">
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xl">🏫</span>
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-base">WAMY Isiolo High School</p>
+                                <p className="text-xs text-slate-500 leading-relaxed">P.O. Box 123, Isiolo, Kenya · Tel: 0700 000 000<br />info@wamyisiolo.sc.ke · KRA PIN: A123456789B</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="p-5 bg-white space-y-4">
+                            {/* Receipt meta */}
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold text-xs tracking-wide text-slate-500 uppercase">Fee receipt</p>
+                                <p className="text-xs text-slate-400 mt-0.5">{new Date().toLocaleDateString("en-KE",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-slate-400">Receipt no.</p>
+                                <p className="font-bold text-sm text-slate-800">#WHS-{feeYear}-{String(receiptNo).padStart(5,"0")}</p>
+                              </div>
+                            </div>
+
+                            {/* Student details */}
+                            <div>
+                              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase border-b border-dashed pb-1 mb-2">Student details</p>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                {[["Full name", selectedStudent],["Class", selectedClass],["Category", catLabel],["Academic year", String(feeYear)],["Payment for", `Term ${feeTerm}`]].map(([l,v]) => (
+                                  <div key={l}>
+                                    <p className="text-[10px] text-slate-400">{l}</p>
+                                    <p className="text-xs font-semibold text-slate-800">{v}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Fee statement */}
+                            <div>
+                              <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase border-b border-dashed pb-1 mb-2">Fee statement</p>
+                              {alloc.carryForward > 0 && <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Balance b/f (arrears)</span><span className="font-semibold text-red-600">KSh {alloc.carryForward.toLocaleString()}</span></div>}
+                              <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {feeTerm} fee</span><span className="font-semibold text-slate-700">{feeCategory === "sponsored" ? "KSh 0 (fully sponsored)" : `KSh ${alloc.currentFee.toLocaleString()}`}</span></div>
+                            </div>
+
+                            {/* Allocation box */}
+                            {(alloc.clearedArrears > 0 || alloc.advanceNext > 0 || feeCategory === "sponsored") && (
+                              <div className="bg-slate-50 rounded-md p-3 border border-slate-200">
+                                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-2">Payment allocation</p>
+                                {alloc.clearedArrears > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Clears arrears</span><span className="font-semibold text-emerald-700">KSh {alloc.clearedArrears.toLocaleString()}</span></div>}
+                                {alloc.clearedCurrent > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Applied to Term {feeTerm}</span><span className="font-semibold text-emerald-700">KSh {alloc.clearedCurrent.toLocaleString()}</span></div>}
+                                {alloc.advanceNext > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Advance to Term {feeTerm + 1}</span><span className="font-semibold text-blue-700">KSh {alloc.advanceNext.toLocaleString()}</span></div>}
+                                {feeCategory === "sponsored" && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ {feeSource === "bursary" ? "Bursary" : "Personal"} surplus</span><span className="font-semibold text-emerald-700">KSh {paid.toLocaleString()}</span></div>}
+                              </div>
+                            )}
+
+                            {/* Totals */}
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Amount tendered</span><span className="font-semibold text-emerald-700">KSh {paid.toLocaleString()}</span></div>
+                              {alloc.advanceNext > 0 && <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {feeTerm + 1} balance after advance</span><span className={`font-semibold ${alloc.nextFee - alloc.advanceNext <= 0 ? "text-emerald-700" : "text-red-600"}`}>KSh {Math.max(0, alloc.nextFee - alloc.advanceNext).toLocaleString()}</span></div>}
+                              <div className="flex justify-between text-sm font-bold border-t-2 border-slate-300 pt-2 mt-1">
+                                <span>{feeCategory === "sponsored" ? "Surplus recorded" : "Outstanding balance"}</span>
+                                <span className={fullyPaid || feeCategory === "sponsored" ? "text-emerald-700" : "text-red-600"}>
+                                  {feeCategory === "sponsored" ? `KSh ${paid.toLocaleString()}` : fullyPaid ? "KSh 0 — fully cleared" : `KSh ${alloc.balance.toLocaleString()}`}
+                                </span>
+                              </div>
+                              {fullyPaid && feeCategory !== "sponsored" && (
+                                <div className="mt-2">
+                                  <span className="inline-block border-2 border-emerald-600 text-emerald-700 text-sm font-bold px-4 py-1 rounded tracking-widest">PAID IN FULL</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Signature row */}
+                            <div className="border-t border-dashed pt-4">
+                              <div className="grid grid-cols-2 gap-6">
+                                {["Mr. Osman Halake\nPrincipal / Administrator", "School Stamp\nOfficial seal"].map((sig, i) => {
+                                  const [name, role] = sig.split("\n");
+                                  return (
+                                    <div key={i} className="text-center">
+                                      <div className="border-b border-slate-300 mb-1 h-8" />
+                                      <p className="text-xs font-semibold text-slate-800">{name}</p>
+                                      <p className="text-[10px] text-slate-400">{role}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Footer */}
+                          <div className="bg-slate-50 border-t px-5 py-3 text-center text-[10px] text-slate-400 leading-relaxed">
+                            This is an official receipt of WAMY Isiolo High School. Please retain for your records.<br />Disputes must be raised within 7 days of issue.
+                          </div>
+
+                          {/* Print button */}
+                          <div className="p-3 bg-white border-t flex gap-2">
+                            <Button variant="outline" onClick={handlePrintReceipt} className="flex-1 text-sm">
+                              <Printer className="h-4 w-4 mr-2" /> Print / Save PDF
+                            </Button>
+                            <Button onClick={() => setFeeSubTab("update")} className="flex-1 bg-[#1a56a0] hover:bg-[#154a8a] text-sm">
+                              ← Back to fees
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* SUMMARY SUB-TAB */}
+                    {feeSubTab === "summary" && (() => {
+                      const stats = getSummaryStats();
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">🔒 Principal only</p>
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs text-muted-foreground">Year</label>
+                              <select value={summaryYear} onChange={e => { setSummaryYear(Number(e.target.value)); fetchSummary(Number(e.target.value)); }} className="border rounded-md px-2 py-1 text-sm bg-white">
+                                <option value={2026}>2026</option>
+                                <option value={2025}>2025</option>
+                              </select>
+                              <Button variant="outline" size="sm" onClick={() => fetchSummary(summaryYear)} className="text-xs">🔄 Refresh</Button>
+                            </div>
+                          </div>
+
+                          {/* Metric cards */}
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { label: "Total collected", value: `KSh ${stats.totalCollected.toLocaleString()}`, sub: "all students", color: "text-slate-900" },
+                              { label: "Expected (fee-paying)", value: `KSh ${stats.totalExpected.toLocaleString()}`, sub: "excl. sponsored", color: "text-slate-900" },
+                              { label: "Total arrears", value: `KSh ${stats.totalArrears.toLocaleString()}`, sub: "fee-paying only", color: "text-red-600" },
+                              { label: "Sponsored surplus", value: `KSh ${stats.sponsoredSurplus.toLocaleString()}`, sub: "bursary + personal", color: "text-emerald-600" },
+                            ].map(m => (
+                              <div key={m.label} className="bg-muted rounded-md p-3">
+                                <p className="text-xs text-muted-foreground mb-1">{m.label}</p>
+                                <p className={`text-lg font-semibold ${m.color}`}>{m.value}</p>
+                                <p className="text-xs text-muted-foreground">{m.sub}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Per-term breakdown */}
+                          <h5 className="font-semibold text-xs text-slate-700 border-b pb-1">Per-term breakdown</h5>
+                          <div className="space-y-3">
+                            {[1,2,3].map(term => {
+                              const t = getTermStats(term);
+                              return (
+                                <div key={term} className="border rounded-md p-3 bg-white space-y-1.5">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-sm font-semibold text-slate-800">Term {term}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.pct >= 90 ? "bg-emerald-100 text-emerald-700" : t.pct >= 70 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>{t.pct}% collected</span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                                    {[["Expected", `KSh ${t.expected.toLocaleString()}`, "text-slate-700"],["Fee-paying collected", `KSh ${t.fpCollected.toLocaleString()}`, "text-emerald-700"],["Sponsored surplus", `KSh ${t.spSurplus.toLocaleString()}`, "text-blue-700"],["Total collected", `KSh ${(t.fpCollected + t.spSurplus).toLocaleString()}`, "text-slate-900"],["Arrears", `KSh ${t.arrears.toLocaleString()}`, "text-red-600"]].map(([l,v,c]) => (
+                                      <div key={l} className="flex justify-between text-xs py-0.5 col-span-2 border-b border-slate-50 last:border-0">
+                                        <span className="text-slate-500">{l}</span>
+                                        <span className={`font-semibold ${c}`}>{v}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {summaryData.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-6 italic">No fee records found for {summaryYear}. Record some payments first.</p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TabsContent>
                 )}
 
