@@ -139,3 +139,36 @@ export const initialResults: Result[] = [
   { student: 'Talha Hussein', className: 'Form 3', subject: 'Mathematics', marks: 90, grade: 'A', term: 'Term 1, 2026' },
   { student: 'Talha Hussein', className: 'Form 3', subject: 'English', marks: 82, grade: 'A-', term: 'Term 1, 2026' }
 ];
+export const studentCategories: Record<string, "boarding" | "day" | "sponsored"> = {
+  // Fee-paying students (only 8 in the whole school)
+  'Ibrahim Hussein': 'day',
+  'Abubakar Halkano': 'day',
+  'Guyo Tadicha': 'day',
+  'Ramadhan Sabls': 'day',
+  'Abdiaziz Mohamed': 'day',
+  'Abdulkarim Ramadhan': 'boarding',
+  'Hamza Halkano': 'boarding',
+  'Abdi Osman': 'boarding',
+};
+
+export const getStudentCategory = (name: string): "boarding" | "day" | "sponsored" => {
+  return studentCategories[name] ?? 'sponsored';
+};
+
+// Expected fees per term per category
+export const SCHOOL_FEE_STRUCTURE: Record<string, number[]> = {
+  boarding: [18000, 15000, 12000],
+  day: [8000, 6000, 6000],
+  sponsored: [0, 0, 0],
+};
+
+export const getExpectedFee = (studentName: string, term: number): number => {
+  const cat = getStudentCategory(studentName);
+  return SCHOOL_FEE_STRUCTURE[cat][term - 1] ?? 0;
+};
+
+// Total expected from ALL fee-paying students per term
+export const getSchoolExpectedPerTerm = (term: number): number => {
+  const allStudents = Object.values(classStudents).flat();
+  return allStudents.reduce((sum, name) => sum + getExpectedFee(name, term), 0);
+};
