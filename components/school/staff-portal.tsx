@@ -676,8 +676,9 @@ const handleDeleteOccurrence = async (id: string) => {
       @media print{body{margin:10px;}}
     </style></head><body>
     <div class="header">
+      <div style="text-align:center;margin-bottom:8px;"><img src="https://v0-wamyisioloportal.vercel.app/wamy%20logggo.png" style="width:70px;height:70px;object-fit:contain;" /></div>
       <div class="school-name">WAMY Isiolo High School</div>
-      <div class="school-meta">P.O. Box 123, Isiolo, Kenya | Tel: 0700 000 000<br>Email: info@wamyisiolo.sc.ke | KRA PIN: A123456789B</div>
+      <div class="school-meta">P.O. Box 734-60300, Isiolo, Kenya | Tel: 0715254336<br>Email: wamyisioloschool@gmail.com</div>
     </div>
     <div class="receipt-title">
       <div><div class="label">OFFICIAL FEE RECEIPT</div><div style="font-size:11px;color:#555;">${new Date().toLocaleDateString("en-KE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div>
@@ -1556,12 +1557,12 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                           {/* Header */}
                           <div className="border-b-2 border-slate-300 p-5 bg-white">
                             <div className="flex items-start gap-3">
-                              <div className="w-11 h-11 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                                <span className="text-xl">🏫</span>
+                              <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0">
+                                <img src="https://v0-wamyisioloportal.vercel.app/wamy%20logggo.png" alt="WAMY Logo" className="w-full h-full object-contain" />
                               </div>
                               <div>
                                 <p className="font-bold text-slate-900 text-base">WAMY Isiolo High School</p>
-                                <p className="text-xs text-slate-500 leading-relaxed">P.O. Box 123, Isiolo, Kenya · Tel: 0700 000 000<br />info@wamyisiolo.sc.ke · KRA PIN: A123456789B</p>
+                                <p className="text-xs text-slate-500 leading-relaxed">P.O. Box 734-60300, Isiolo, Kenya · Tel: 0715254336<br />wamyisioloschool@gmail.com</p>
                               </div>
                             </div>
                           </div>
