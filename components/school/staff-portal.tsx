@@ -738,15 +738,23 @@ const handleDeleteOccurrence = async (id: string) => {
   };
 
   const handleRegisterStudent = async () => {
-    if (!stdName.trim() || !stdAdmNo.trim()) { alert("Enter student name and admission number."); return; }
-    setStdRegistering(true);
-    const { error } = await supabase.from("students").insert({ name: stdName, class_name: stdClass, admission_no: stdAdmNo, parent_contact: stdParent, category: stdCategory });
-    if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
-    alert(`${stdName} registered successfully!`);
-    setStdName(""); setStdAdmNo(""); setStdParent("");
-    setStdRegistering(false);
-    fetchStudents();
-  };
+  if (!stdName.trim() || !stdAdmNo.trim()) { alert("Enter student name and admission number."); return; }
+  setStdRegistering(true);
+  const { error } = await supabase.from("students").insert({ 
+    name: stdName, 
+    class_name: stdClass, 
+    admission_no: stdAdmNo, 
+    parent_contact: stdParent,
+    category: stdCategory 
+  });
+  if (error) { alert("Failed to register student."); setStdRegistering(false); return; }
+  setStdName(""); 
+  setStdAdmNo(""); 
+  setStdParent("");
+  setStdCategory("sponsored");
+  setStdRegistering(false);
+  await fetchStudents();
+};
 
   const handleDeleteStudent = async (id: string) => {
     if (!confirm("Delete this student and all their documents?")) return;
