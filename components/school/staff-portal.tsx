@@ -704,13 +704,34 @@ const handleSaveRollCall = async () => {
 };
 
   const handlePrintReceipt = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    const paid = Number(feePaid);
-    const alloc = allocatePayment(paid, feeCategory, feeTerm);
-    const admNo = `WHS/2023/${Math.floor(Math.random() * 900) + 100}`;
-    const catLabel = feeCategory === "boarding" ? "Boarding · Fee-paying" : feeCategory === "day" ? "Day scholar · Fee-paying" : `Sponsored (${feeSource})`;
-    const fullyPaid = alloc.balance === 0;
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
+  const lastRecord = feeRecords.length > 0 ? feeRecords[feeRecords.length - 1] : null;
+  const rcPaid = lastRecord ? lastRecord.amount_paid : Number(feePaid);
+  const rcCat = lastRecord ? lastRecord.category : feeCategory;
+  const rcTerm = lastRecord ? lastRecord.term : feeTerm;
+  const rcYear = lastRecord ? lastRecord.year : feeYear;
+  const rcSource = lastRecord ? lastRecord.payment_source : feeSource;
+  const paid = rcPaid;
+
+  const rcCarryForward = feeRecords
+    .filter(r => r.year < rcYear || (r.year === rcYear && r.term < rcTerm))
+    .reduce((sum, r) => sum + Math.max(0, (r.expected_fee || 0) - (r.amount_paid || 0)), 0);
+  const rcAdvanceCredit = feeRecords
+    .filter(r => r.year < rcYear || (r.year === rcYear && r.term < rcTerm))
+    .reduce((sum, r) => sum + Math.max(0, (r.amount_paid || 0) - (r.expected_fee || 0)), 0);
+  const rcCurrentFee = FEE_STRUCTURE[rcCat]?.[rcTerm - 1] ?? 0;
+  const rcBalance = Math.max(0, rcCurrentFee + rcCarryForward - rcAdvanceCredit - paid);
+
+  const alloc = {
+    ...allocatePayment(paid, rcCat, rcTerm),
+    carryForward: rcCarryForward,
+    currentFee: rcCurrentFee,
+    balance: rcBalance,
+  };
+  const admNo = `WHS/${rcYear}/${lastRecord?.receipt_no || Math.floor(Math.random() * 900) + 100}`;
+  const catLabel = rcCat === "boarding" ? "Boarding · Fee-paying" : rcCat === "day" ? "Day scholar · Fee-paying" : `Sponsored (${rcSource})`;
+  const fullyPaid = rcBalance === 0;
 
     printWindow.document.write(`<!DOCTYPE html><html><head><title>Fee Receipt</title>
     <style>
@@ -750,13 +771,14 @@ const handleSaveRollCall = async () => {
       <div class="row"><span class="label">Admission no.</span><span>${admNo}</span></div>
       <div class="row"><span class="label">Class</span><span>${selectedClass}</span></div>
       <div class="row"><span class="label">Category</span><span>${catLabel}</span></div>
-      <div class="row"><span class="label">Academic year</span><span>${feeYear}</span></div>
-      <div class="row"><span class="label">Payment for</span><span>Term ${feeTerm}</span></div>
+      <div class="row"><span class="label">Academic year</span><span>${rcYear}</span></div>
+      <div class="row"><span class="label">Payment for</span><span>Term ${rcTerm}</span></div>
     </div>
     <div class="section">
       <div class="section-head">Fee statement</div>
-      ${alloc.carryForward > 0 ? `<div class="row"><span class="label">Balance b/f (arrears)</span><span style="color:#c0392b;font-weight:600;">KSh ${alloc.carryForward.toLocaleString()}</span></div>` : ""}
-      <div class="row"><span class="label">Term ${feeTerm} fee</span><span>KSh ${alloc.currentFee.toLocaleString()}</span></div>
+      ${rcCarryForward > 0 ? `<div class="row"><span class="label">Balance b/f (arrears)</span><span style="color:#c0392b;font-weight:600;">KSh ${rcCarryForward.toLocaleString()}</span></div>` : ""}
+${rcAdvanceCredit > 0 ? `<div class="row"><span class="label">Advance credit from previous term</span><span style="color:#1a56a0;font-weight:600;">− KSh ${rcAdvanceCredit.toLocaleString()}</span></div>` : ""}
+<div class="row"><span class="label">Term ${rcTerm} fee</span><span>KSh ${rcCurrentFee.toLocaleString()}</span></div>
       ${feeCategory === "sponsored" ? `<div class="row"><span class="label">Expected</span><span>KSh 0 (fully sponsored)</span></div>` : ""}
     </div>
     ${(alloc.clearedArrears > 0 || alloc.advanceNext > 0 || feeCategory === "sponsored") ? `
@@ -772,8 +794,8 @@ const handleSaveRollCall = async () => {
       ${alloc.advanceNext > 0 ? `<div class="row"><span class="label">Advance credit to Term ${feeTerm + 1}</span><span style="color:#1a56a0;font-weight:600;">KSh ${alloc.advanceNext.toLocaleString()}</span></div>` : ""}
       <div class="total-row">
         <span>${feeCategory === "sponsored" ? "Surplus recorded" : "Outstanding balance"}</span>
-        <span style="color:${fullyPaid || feeCategory === "sponsored" ? "#06a056" : "#c0392b"};">
-          ${feeCategory === "sponsored" ? `KSh ${paid.toLocaleString()}` : fullyPaid ? "KSh 0 — fully cleared" : `KSh ${alloc.balance.toLocaleString()}`}
+        <span style="color:${rcBalance === 0 || rcCat === "sponsored" ? "#06a056" : "#c0392b"};">
+          ${rcCat === "sponsored" ? `KSh ${paid.toLocaleString()}` : rcBalance === 0 ? "KSh 0 — fully cleared" : `KSh ${rcBalance.toLocaleString()}`}
         </span>
       </div>
       ${fullyPaid && feeCategory !== "sponsored" ? `<div style="margin-top:10px;"><span class="paid-stamp">PAID IN FULL</span></div>` : ""}
