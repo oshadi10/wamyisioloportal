@@ -138,6 +138,15 @@ export function StaffPortal({
   const [folderDocs, setFolderDocs] = useState<any[]>([]);
   const [stdCategory, setStdCategory] = useState("sponsored");
   const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [rcSession, setRcSession] = useState("");
+  const [rcDate, setRcDate] = useState(SYSTEM_TODAY);
+  const [rcTime, setRcTime] = useState("");
+  const [rcClass, setRcClass] = useState(classNames[0]);
+  const [rcStatuses, setRcStatuses] = useState<Record<string, string>>({});
+  const [rcSaving, setRcSaving] = useState(false);
+  const [rcLogs, setRcLogs] = useState<any[]>([]);
+  const [rcLogDate, setRcLogDate] = useState(SYSTEM_TODAY);
+  const [rcLogClass, setRcLogClass] = useState(classNames[0]);
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
@@ -146,7 +155,7 @@ export function StaffPortal({
     if (activeTab === "prefects") fetchPrefects();
     if (activeTab === "occurrence") fetchOccurrences();
     if (activeTab === "fees") fetchAllStudentsForFees();
-    
+    if (activeTab === "rollcall") fetchRollCallLogs(); 
   }, [activeTab, selectedClass, attDate]);
 
   // Dedicated effect listener monitoring date changes for teacher logs
@@ -156,6 +165,9 @@ export function StaffPortal({
   useEffect(() => {
   if (activeTab === "occurrence") fetchOccurrences();
 }, [occViewDate, occTeacherFilter]);
+  useEffect(() => {
+  if (activeTab === "rollcall") fetchRollCallLogs();
+}, [rcLogDate, rcLogClass]);
 
   const isAdmin = lecturer?.name === "Mr. Osman Halake";
 
@@ -316,6 +328,54 @@ const handleDeleteOccurrence = async (id: string) => {
   if (!confirm("Delete this occurrence record?")) return;
   await supabase.from("daily_occurrence").delete().eq("id", id);
   fetchOccurrences();
+};
+  const fetchRollCallLogs = async () => {
+  const { data, error } = await supabase
+    .from("roll_call")
+    .select("*")
+    .eq("roll_date", rcLogDate)
+    .eq("class_name", rcLogClass)
+    .order("created_at", { ascending: false });
+  if (!error && data) setRcLogs(data);
+};
+
+const handleRcToggle = (studentName: string) => {
+  setRcStatuses(prev => {
+    const cur = prev[studentName] || "unmarked";
+    const next = cur === "unmarked" ? "present" : cur === "present" ? "absent" : "unmarked";
+    return { ...prev, [studentName]: next };
+  });
+};
+
+const handleRcMarkAll = (status: string) => {
+  const updated: Record<string, string> = {};
+  classStudents[rcClass].forEach(s => updated[s] = status);
+  setRcStatuses(updated);
+};
+
+const handleSaveRollCall = async () => {
+  if (!rcSession.trim()) { alert("Enter a session name."); return; }
+  const students = classStudents[rcClass];
+  const unmarked = students.filter(s => !rcStatuses[s] || rcStatuses[s] === "unmarked");
+  if (unmarked.length > 0 && !confirm(`${unmarked.length} student(s) not marked. Save anyway?`)) return;
+  setRcSaving(true);
+  const rows = students.map(s => ({
+    class_name: rcClass,
+    session_name: rcSession,
+    roll_date: rcDate,
+    roll_time: rcTime || null,
+    teacher_name: lecturer?.name || "Unknown",
+    student_name: s,
+    status: rcStatuses[s] || "unmarked",
+  }));
+  const { error } = await supabase.from("roll_call").insert(rows);
+  if (error) { alert("Failed to save roll call."); setRcSaving(false); return; }
+  setRcSession("");
+  setRcTime("");
+  setRcStatuses({});
+  setRcSaving(false);
+  alert("✓ Roll call saved.");
+  fetchRollCallLogs();
 };
 
   // STATISTICAL METRIC CALCULATORS
@@ -956,6 +1016,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                   <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
                   <TabsTrigger value="occurrence" className="flex-shrink-0 text-xs px-2 py-1.5">📖 Occurrence</TabsTrigger>
+                  <TabsTrigger value="rollcall" className="flex-shrink-0 text-xs px-2 py-1.5">📋 Roll Call</TabsTrigger>
                 </TabsList>
 
                 {/* ATTENDANCE TAB PANEL */}
@@ -2470,6 +2531,161 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
           )}
         </div>
       );
+    })()}
+  </div>
+</TabsContent>
+                <TabsContent value="rollcall" className="space-y-4">
+  <div className="flex items-center justify-between">
+    <div>
+      <h4 className="font-semibold text-sm text-slate-800">📋 Roll Call</h4>
+      <p className="text-xs text-muted-foreground mt-0.5">Record attendance anytime</p>
+    </div>
+    <span className="text-xs font-semibold text-slate-700">{lecturer?.name}</span>
+  </div>
+
+  {/* RECORD FORM */}
+  <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+    <h5 className="text-xs font-semibold text-blue-900">➕ New Roll Call</h5>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Class</Label>
+        <select value={rcClass} onChange={e => { setRcClass(e.target.value); setRcStatuses({}); }}
+          className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10">
+          {classNames.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Date</Label>
+        <input type="date" value={rcDate} onChange={e => setRcDate(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label className="text-xs font-semibold">Session name</Label>
+        <input placeholder="e.g. After lunch, Evening preps" value={rcSession} onChange={e => setRcSession(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Time</Label>
+        <input type="time" value={rcTime} onChange={e => setRcTime(e.target.value)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+
+    {/* Quick mark buttons */}
+    <div className="flex gap-2">
+      <Button variant="outline" size="sm" onClick={() => handleRcMarkAll("present")}
+        className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs">
+        ✓ All present
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => handleRcMarkAll("absent")}
+        className="flex-1 border-rose-200 text-rose-700 hover:bg-rose-50 text-xs">
+        ✗ All absent
+      </Button>
+    </div>
+
+    {/* Student list */}
+    <div className="border rounded-md overflow-hidden bg-white">
+      {classStudents[rcClass].map((studentName, idx) => {
+        const status = rcStatuses[studentName] || "unmarked";
+        return (
+          <div key={studentName} className="flex items-center justify-between px-3 py-2 border-b last:border-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-5">{idx + 1}</span>
+              <span className="text-sm text-slate-800">{studentName}</span>
+            </div>
+            <button onClick={() => handleRcToggle(studentName)}
+              className={cn("px-3 py-1 text-xs rounded-md border font-medium transition-colors",
+                status === "present" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                status === "absent" && "bg-red-50 text-red-700 border-red-200",
+                status === "unmarked" && "bg-slate-50 text-slate-400 border-slate-200"
+              )}>
+              {status === "present" ? "Present" : status === "absent" ? "Absent" : "Mark"}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Summary counts */}
+    <div className="grid grid-cols-3 gap-2">
+      {[
+        { label: "Present", count: Object.values(rcStatuses).filter(s => s === "present").length, color: "text-emerald-700" },
+        { label: "Absent", count: Object.values(rcStatuses).filter(s => s === "absent").length, color: "text-red-600" },
+        { label: "Unmarked", count: classStudents[rcClass].length - Object.values(rcStatuses).filter(s => s !== "unmarked").length, color: "text-slate-400" },
+      ].map(m => (
+        <div key={m.label} className="bg-muted rounded-md p-2 text-center">
+          <p className="text-xs text-muted-foreground">{m.label}</p>
+          <p className={`text-lg font-semibold ${m.color}`}>{m.count}</p>
+        </div>
+      ))}
+    </div>
+
+    <Button onClick={handleSaveRollCall} disabled={rcSaving}
+      className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+      <Plus className="h-4 w-4 mr-2" />{rcSaving ? "Saving..." : "Save roll call"}
+    </Button>
+  </div>
+
+  {/* LOG VIEWER */}
+  <div className="space-y-3">
+    <div className="flex items-center gap-2 flex-wrap border-b pb-2">
+      <h5 className="text-xs font-semibold text-slate-700">Roll call records</h5>
+      <div className="flex items-center gap-2 ml-auto flex-wrap">
+        <input type="date" value={rcLogDate} max={SYSTEM_TODAY}
+          onChange={e => setRcLogDate(e.target.value)}
+          className="border border-slate-200 rounded-md px-2 py-1 text-xs bg-white font-mono" />
+        <select value={rcLogClass} onChange={e => setRcLogClass(e.target.value)}
+          className="border rounded-md px-2 py-1 text-xs bg-white">
+          {classNames.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <Button variant="outline" size="sm" onClick={fetchRollCallLogs} className="text-xs">🔄</Button>
+      </div>
+    </div>
+
+    {rcLogs.length === 0 ? (
+      <p className="text-xs text-muted-foreground italic text-center py-4 border border-dashed rounded-md bg-white">
+        No roll calls recorded for this date and class.
+      </p>
+    ) : (() => {
+      const grouped = rcLogs.reduce((acc, r) => {
+        const key = `${r.session_name}__${r.roll_time}__${r.teacher_name}`;
+        if (!acc[key]) acc[key] = { session: r.session_name, time: r.roll_time, teacher: r.teacher_name, records: [] };
+        acc[key].records.push(r);
+        return acc;
+      }, {} as Record<string, any>);
+
+      return Object.values(grouped).map((g: any, i) => {
+        const present = g.records.filter((r: any) => r.status === "present");
+        const absent = g.records.filter((r: any) => r.status === "absent");
+        return (
+          <div key={i} className="border rounded-md bg-white p-3 shadow-sm space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-1">
+              <div>
+                <span className="text-sm font-semibold text-slate-800">{g.session}</span>
+                {g.time && <span className="text-xs text-muted-foreground ml-2">· {g.time}</span>}
+              </div>
+              <div className="flex gap-2">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">{present.length} present</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">{absent.length} absent</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-slate-700">{g.teacher}</span> · {rcLogDate}
+            </p>
+            {absent.length > 0 && (
+              <div className="text-xs bg-red-50 border border-red-100 rounded-md px-3 py-2">
+                <span className="font-semibold text-red-700">Absent: </span>
+                <span className="text-red-600">{absent.map((r: any) => r.student_name).join(", ")}</span>
+              </div>
+            )}
+            {absent.length === 0 && (
+              <p className="text-xs text-emerald-600 font-medium">✓ All present</p>
+            )}
+          </div>
+        );
+      });
     })()}
   </div>
 </TabsContent>
