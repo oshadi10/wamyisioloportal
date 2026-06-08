@@ -1456,7 +1456,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                     {/* Sub-tab bar */}
                     <div className="flex gap-1 border-b pb-2 flex-wrap">
                       {(["update","receipt","summary"] as const).map(t => (
-                        <button key={t} onClick={() => { setFeeSubTab(t); if (t === "summary") fetchSummary(summaryYear); }}
+                        <button key={t} onClick={() => { setFeeSubTab(t); if (t === "summary") fetchSummary(summaryYear); if (t === "receipt") fetchFeeRecords(selectedStudent); }}
                           className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${feeSubTab === t ? "bg-[#1a56a0] text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
                           {t === "update" ? "💳 Record payment" : t === "receipt" ? "🧾 Receipt" : "📊 Summary report"}
                         </button>
@@ -1476,7 +1476,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             <p className="text-xs text-muted-foreground">{selectedClass}</p>
                           </div>
                           {feeLoading && <span className="ml-auto text-xs text-muted-foreground animate-pulse">Loading...</span>}
-                          {!feeLoading && <button onClick={() => fetchFeeRecords(selectedStudent)} className="ml-auto text-xs text-blue-600 underline">Load records</button>}
+                          {!feeLoading && <button onClick={async () => { await fetchFeeRecords(selectedStudent); }} className="ml-auto text-xs text-blue-600 underline">Load records</button>}
                         </div>
 
                         {/* Previous records */}
@@ -1609,10 +1609,16 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
 
                     {/* RECEIPT SUB-TAB */}
                     {feeSubTab === "receipt" && (() => {
-                      const paid = Number(feePaid);
-                      const alloc = allocatePayment(paid, feeCategory, feeTerm);
+                      const lastRecord = feeRecords.length > 0 ? feeRecords[feeRecords.length - 1] : null;
+                      const rcPaid = lastRecord ? lastRecord.amount_paid : Number(feePaid);
+                      const rcCat = lastRecord ? lastRecord.category : feeCategory;
+                      const rcTerm = lastRecord ? lastRecord.term : feeTerm;
+                      const rcYear = lastRecord ? lastRecord.year : feeYear;
+                      const rcSource = lastRecord ? lastRecord.payment_source : feeSource;
+                      const paid = rcPaid;
+                      const alloc = allocatePayment(paid, rcCat, rcTerm);
                       const fullyPaid = alloc.balance === 0;
-                      const catLabel = feeCategory === "boarding" ? "Boarding · Fee-paying" : feeCategory === "day" ? "Day scholar · Fee-paying" : `Sponsored (${feeSource})`;
+                      const catLabel = rcCat === "boarding" ? "Boarding · Fee-paying" : rcCat === "day" ? "Day scholar · Fee-paying" : `Sponsored (${rcSource})`;
                       return (
                         <div className="max-w-md mx-auto border rounded-lg overflow-hidden shadow-sm">
                           {/* Header */}
@@ -1645,7 +1651,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             <div>
                               <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase border-b border-dashed pb-1 mb-2">Student details</p>
                               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                {[["Full name", selectedStudent],["Class", selectedClass],["Category", catLabel],["Academic year", String(feeYear)],["Payment for", `Term ${feeTerm}`]].map(([l,v]) => (
+                                {[["Full name", selectedStudent],["Class", selectedClass],["Category", catLabel],["Academic year", String(rcYear)],["Payment for", `Term ${rcTerm}`]].map(([l,v]) => (
                                   <div key={l}>
                                     <p className="text-[10px] text-slate-400">{l}</p>
                                     <p className="text-xs font-semibold text-slate-800">{v}</p>
@@ -1658,7 +1664,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             <div>
                               <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase border-b border-dashed pb-1 mb-2">Fee statement</p>
                               {alloc.carryForward > 0 && <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Balance b/f (arrears)</span><span className="font-semibold text-red-600">KSh {alloc.carryForward.toLocaleString()}</span></div>}
-                              <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {feeTerm} fee</span><span className="font-semibold text-slate-700">{feeCategory === "sponsored" ? "KSh 0 (fully sponsored)" : `KSh ${alloc.currentFee.toLocaleString()}`}</span></div>
+                              <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {rcTerm} fee</span><span className="font-semibold text-slate-700">{feeCategory === "sponsored" ? "KSh 0 (fully sponsored)" : `KSh ${alloc.currentFee.toLocaleString()}`}</span></div>
                             </div>
 
                             {/* Allocation box */}
@@ -1667,7 +1673,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                                 <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-2">Payment allocation</p>
                                 {alloc.clearedArrears > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Clears arrears</span><span className="font-semibold text-emerald-700">KSh {alloc.clearedArrears.toLocaleString()}</span></div>}
                                 {alloc.clearedCurrent > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Applied to Term {feeTerm}</span><span className="font-semibold text-emerald-700">KSh {alloc.clearedCurrent.toLocaleString()}</span></div>}
-                                {alloc.advanceNext > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Advance to Term {feeTerm + 1}</span><span className="font-semibold text-blue-700">KSh {alloc.advanceNext.toLocaleString()}</span></div>}
+                                {alloc.advanceNext > 0 && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ Advance to Term {rcTerm + 1}</span><span className="font-semibold text-blue-700">KSh {alloc.advanceNext.toLocaleString()}</span></div>}
                                 {feeCategory === "sponsored" && <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500">→ {feeSource === "bursary" ? "Bursary" : "Personal"} surplus</span><span className="font-semibold text-emerald-700">KSh {paid.toLocaleString()}</span></div>}
                               </div>
                             )}
@@ -1675,7 +1681,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             {/* Totals */}
                             <div className="space-y-1">
                               <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Amount tendered</span><span className="font-semibold text-emerald-700">KSh {paid.toLocaleString()}</span></div>
-                              {alloc.advanceNext > 0 && <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {feeTerm + 1} balance after advance</span><span className={`font-semibold ${alloc.nextFee - alloc.advanceNext <= 0 ? "text-emerald-700" : "text-red-600"}`}>KSh {Math.max(0, alloc.nextFee - alloc.advanceNext).toLocaleString()}</span></div>}
+                              {alloc.advanceNext > 0 && <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {rcTerm + 1} balance after advance</span><span className={`font-semibold ${alloc.nextFee - alloc.advanceNext <= 0 ? "text-emerald-700" : "text-red-600"}`}>KSh {Math.max(0, alloc.nextFee - alloc.advanceNext).toLocaleString()}</span></div>}
                               <div className="flex justify-between text-sm font-bold border-t-2 border-slate-300 pt-2 mt-1">
                                 <span>{feeCategory === "sponsored" ? "Surplus recorded" : "Outstanding balance"}</span>
                                 <span className={fullyPaid || feeCategory === "sponsored" ? "text-emerald-700" : "text-red-600"}>
