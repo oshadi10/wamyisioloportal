@@ -1616,8 +1616,25 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                       const rcYear = lastRecord ? lastRecord.year : feeYear;
                       const rcSource = lastRecord ? lastRecord.payment_source : feeSource;
                       const paid = rcPaid;
-                      const alloc = allocatePayment(paid, rcCat, rcTerm);
-                      const fullyPaid = alloc.balance === 0;
+                      
+                      const rcCarryForward = feeRecords
+                        .filter(r => r.year < rcYear || (r.year === rcYear && r.term < rcTerm))
+                        .reduce((sum, r) => sum + Math.max(0, (r.expected_fee || 0) - (r.amount_paid || 0)), 0);
+                      
+                      const rcAdvanceCredit = feeRecords
+                        .filter(r => r.year < rcYear || (r.year === rcYear && r.term < rcTerm))
+                        .reduce((sum, r) => sum + Math.max(0, (r.amount_paid || 0) - (r.expected_fee || 0)), 0);
+                      
+                      const rcCurrentFee = FEE_STRUCTURE[rcCat]?.[rcTerm - 1] ?? 0;
+                      const rcBalance = Math.max(0, rcCurrentFee + rcCarryForward - rcAdvanceCredit - paid);
+                      
+                      const alloc = {
+                        ...allocatePayment(paid, rcCat, rcTerm),
+                        carryForward: rcCarryForward,
+                        currentFee: rcCurrentFee,
+                        balance: rcBalance,
+                      };
+                      const fullyPaid = rcBalance === 0;
                       const catLabel = rcCat === "boarding" ? "Boarding · Fee-paying" : rcCat === "day" ? "Day scholar · Fee-paying" : `Sponsored (${rcSource})`;
                       return (
                         <div className="max-w-md mx-auto border rounded-lg overflow-hidden shadow-sm">
@@ -1664,7 +1681,18 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             <div>
                               <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase border-b border-dashed pb-1 mb-2">Fee statement</p>
                               {alloc.carryForward > 0 && <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Balance b/f (arrears)</span><span className="font-semibold text-red-600">KSh {alloc.carryForward.toLocaleString()}</span></div>}
-                              <div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {rcTerm} fee</span><span className="font-semibold text-slate-700">{feeCategory === "sponsored" ? "KSh 0 (fully sponsored)" : `KSh ${alloc.currentFee.toLocaleString()}`}</span></div>
+{(() => {
+  const advCredit = feeRecords
+    .filter(r => r.year < rcYear || (r.year === rcYear && r.term < rcTerm))
+    .reduce((sum, r) => sum + Math.max(0, (r.amount_paid || 0) - (r.expected_fee || 0)), 0);
+  return advCredit > 0 ? (
+    <div className="flex justify-between text-xs py-1">
+      <span className="text-slate-500">Advance credit from previous term</span>
+      <span className="font-semibold text-blue-700">− KSh {advCredit.toLocaleString()}</span>
+    </div>
+  ) : null;
+})()}
+<div className="flex justify-between text-xs py-1"><span className="text-slate-500">Term {rcTerm} fee</span><span className="font-semibold text-slate-700">{feeCategory === "sponsored" ? "KSh 0 (fully sponsored)" : `KSh ${alloc.currentFee.toLocaleString()}`}</span></div>
                             </div>
 
                             {/* Allocation box */}
