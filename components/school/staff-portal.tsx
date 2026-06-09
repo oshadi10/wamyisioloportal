@@ -988,7 +988,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
       const average = subjects > 0 ? Math.round((totalMarks / subjects) * 10) / 10 : 0;
       const overallGrade = subjects > 0 ? (meritClass === 'Grade 10' ? getGrade10Grade(average) : getGrade(average)) : "-";
       return { student, totalMarks, subjects, average, overallGrade };
-    }).filter((s) => s.subjects > 0).sort((a, b) => b.totalMarks - a.totalMarks);
+}).filter((s) => s.subjects > 0).sort((a, b) => b.average - a.average);
   };
 
   const meritList = getMeritList();
