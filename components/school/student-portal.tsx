@@ -108,7 +108,12 @@ classResults.forEach((r) => {
   if (!studentTotals[r.student]) studentTotals[r.student] = 0;
   studentTotals[r.student] += r.marks;
 });
-const sorted = Object.entries(studentTotals).sort((a, b) => b[1] - a[1]);
+const studentMeans: Record<string, number> = {};
+Object.keys(studentTotals).forEach(name => {
+  const subjectCount = classResults.filter(r => r.student === name).length;
+  studentMeans[name] = subjectCount > 0 ? studentTotals[name] / subjectCount : 0;
+});
+const sorted = Object.entries(studentMeans).sort((a, b) => b[1] - a[1]);
 const positionIndex = sorted.findIndex(([name]) => name === studentName);
 const classPosition = positionIndex >= 0 ? positionIndex + 1 : null;
 
