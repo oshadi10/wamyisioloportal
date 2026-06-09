@@ -773,7 +773,7 @@ const handleSaveRollCall = async () => {
     </div>
     <div class="receipt-title">
       <div><div class="label">OFFICIAL FEE RECEIPT</div><div style="font-size:11px;color:#555;">${new Date().toLocaleDateString("en-KE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div>
-      <div style="text-align:right"><div class="label">Receipt no.</div><div class="val">#WHS-${rcYear}-${printReceiptNo}</div></div>
+      <div style="text-align:right"><div class="label">Receipt no.</div><div class="val">#WIHS-${rcYear}-${printReceiptNo}</div></div>
     </div>
     <div class="section">
       <div class="section-head">Student details</div>
@@ -1692,7 +1692,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                               </div>
                               <div className="text-right">
                                 <p className="text-xs text-slate-400">Receipt no.</p>
-                                <p className="font-bold text-sm text-slate-800">#WHS-{rcYear}-{String(lastRecord?.receipt_no || receiptNo).padStart(5,"0")}</p>
+                                <p className="font-bold text-sm text-slate-800">#WIHS-{rcYear}-{String(lastRecord?.receipt_no || receiptNo).padStart(5,"0")}</p>
                               </div>
                             </div>
 
