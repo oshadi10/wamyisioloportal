@@ -769,7 +769,7 @@ const handleSaveRollCall = async () => {
     <div class="header">
       <div style="text-align:center;margin-bottom:8px;"><img src="https://v0-wamyisioloportal.vercel.app/wamy%20logggo.png" style="width:70px;height:70px;object-fit:contain;" /></div>
       <div class="school-name">WAMY Isiolo High School</div>
-      <div class="school-meta">P.O. Box 734-60300, Isiolo, Kenya | Tel: 0715254336<br>Email: wamyisioloschool@gmail.com</div>
+      <div class="school-meta">P.O. Box 734-60300, Isiolo, Kenya | Tel: +254 143639938<br>Email: wamyisioloschool@gmail.com</div>
     </div>
     <div class="receipt-title">
       <div><div class="label">OFFICIAL FEE RECEIPT</div><div style="font-size:11px;color:#555;">${new Date().toLocaleDateString("en-KE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div>
@@ -1678,7 +1678,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                               </div>
                               <div>
                                 <p className="font-bold text-slate-900 text-base">WAMY Isiolo High School</p>
-                                <p className="text-xs text-slate-500 leading-relaxed">P.O. Box 734-60300, Isiolo, Kenya · Tel: 0715254336<br />wamyisioloschool@gmail.com</p>
+                                <p className="text-xs text-slate-500 leading-relaxed">P.O. Box 734-60300, Isiolo, Kenya · Tel: +254 143639938<br />wamyisioloschool@gmail.com</p>
                               </div>
                             </div>
                           </div>
