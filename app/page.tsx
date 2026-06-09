@@ -680,7 +680,7 @@ useEffect(() => {
       <footer className="bg-black text-gray-300 py-10">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h3 className="text-2xl font-bold text-white mb-4">WAMY Isiolo High School</h3>
-          <p>Email: info@wamyisiolo.sc.ke</p>
+          <p>Email: wamyisioloschool@gmail.com</p>
           <p>Isiolo, Kenya</p>
           <div className="mt-6 text-sm text-gray-500">© 2026 WAMY Isiolo High School. All rights reserved.</div>
         </div>
