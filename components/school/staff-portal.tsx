@@ -147,6 +147,7 @@ export function StaffPortal({
   const [rcLogs, setRcLogs] = useState<any[]>([]);
   const [rcLogDate, setRcLogDate] = useState(SYSTEM_TODAY);
   const [rcLogClass, setRcLogClass] = useState(classNames[0]);
+  const [selectedStudentAdmNo, setSelectedStudentAdmNo] = useState<string>("");
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
@@ -564,16 +565,24 @@ const handleSaveRollCall = async () => {
 
   // Fetch all fee records for selected student
   const fetchFeeRecords = async (studentName: string) => {
-    setFeeLoading(true);
-    const { data, error } = await supabase
-      .from("student_fees")
-      .select("*")
-      .eq("student_name", studentName)
-      .order("year", { ascending: true })
-      .order("term", { ascending: true });
-    if (!error && data) setFeeRecords(data);
-    setFeeLoading(false);
-  };
+  setFeeLoading(true);
+  const { data, error } = await supabase
+    .from("student_fees")
+    .select("*")
+    .eq("student_name", studentName)
+    .order("year", { ascending: true })
+    .order("term", { ascending: true });
+  if (!error && data) setFeeRecords(data);
+
+  const { data: stdData } = await supabase
+    .from("students")
+    .select("admission_no")
+    .eq("name", studentName)
+    .single();
+  if (stdData) setSelectedStudentAdmNo(stdData.admission_no || "N/A");
+
+  setFeeLoading(false);
+};
 
   // Get carry-forward balance from previous terms
   const getCarryForward = () => {
@@ -713,6 +722,7 @@ const handleSaveRollCall = async () => {
   const rcYear = lastRecord ? lastRecord.year : feeYear;
   const rcSource = lastRecord ? lastRecord.payment_source : feeSource;
   const paid = rcPaid;
+  const admNo = selectedStudentAdmNo || "N/A";  
 
   const rcCarryForward = feeRecords
     .filter(r => r.year < rcYear || (r.year === rcYear && r.term < rcTerm))
@@ -729,7 +739,7 @@ const handleSaveRollCall = async () => {
     currentFee: rcCurrentFee,
     balance: rcBalance,
   };
-  const admNo = `WHS/${rcYear}/${lastRecord?.receipt_no || Math.floor(Math.random() * 900) + 100}`;
+  const printReceiptNo = lastRecord?.receipt_no ? String(lastRecord.receipt_no).padStart(5, "0") : String(receiptNo).padStart(5, "0");
   const catLabel = rcCat === "boarding" ? "Boarding · Fee-paying" : rcCat === "day" ? "Day scholar · Fee-paying" : `Sponsored (${rcSource})`;
   const fullyPaid = rcBalance === 0;
 
@@ -763,7 +773,7 @@ const handleSaveRollCall = async () => {
     </div>
     <div class="receipt-title">
       <div><div class="label">OFFICIAL FEE RECEIPT</div><div style="font-size:11px;color:#555;">${new Date().toLocaleDateString("en-KE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div>
-      <div style="text-align:right"><div class="label">Receipt no.</div><div class="val">#WHS-${feeYear}-${String(receiptNo).padStart(5,"0")}</div></div>
+      <div style="text-align:right"><div class="label">Receipt no.</div><div class="val">#WHS-${rcYear}-${printReceiptNo}</div></div>
     </div>
     <div class="section">
       <div class="section-head">Student details</div>
@@ -1682,7 +1692,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                               </div>
                               <div className="text-right">
                                 <p className="text-xs text-slate-400">Receipt no.</p>
-                                <p className="font-bold text-sm text-slate-800">#WHS-{feeYear}-{String(receiptNo).padStart(5,"0")}</p>
+                                <p className="font-bold text-sm text-slate-800">#WHS-{rcYear}-{String(lastRecord?.receipt_no || receiptNo).padStart(5,"0")}</p>
                               </div>
                             </div>
 
@@ -1690,7 +1700,7 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                             <div>
                               <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase border-b border-dashed pb-1 mb-2">Student details</p>
                               <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                {[["Full name", selectedStudent],["Class", selectedClass],["Category", catLabel],["Academic year", String(rcYear)],["Payment for", `Term ${rcTerm}`]].map(([l,v]) => (
+                                {[["Full name", selectedStudent],["Admission no.", selectedStudentAdmNo || "N/A"],["Class", selectedClass],["Category", catLabel],["Academic year", String(rcYear)],["Payment for", `Term ${rcTerm}`]].map(([l,v]) => (
                                   <div key={l}>
                                     <p className="text-[10px] text-slate-400">{l}</p>
                                     <p className="text-xs font-semibold text-slate-800">{v}</p>
