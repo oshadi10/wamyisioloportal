@@ -645,7 +645,7 @@ useEffect(() => {
         <section className="max-w-6xl mx-auto px-6 py-16">
           <h2 className="text-4xl font-bold text-blue-900 mb-10 text-center">Academic Programs</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
+            {["Mathematics","English","Kiswahili","Physics","Chemistry","Biology","General Science","History","Arabic / IRE","Business Studies","Agriculture","Literature"].map((s) => (
               <div key={s} className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-3">
                 <span className="text-2xl">📚</span>
                 <p className="font-semibold text-gray-800">{s}</p>
