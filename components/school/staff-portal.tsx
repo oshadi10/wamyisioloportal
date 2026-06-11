@@ -1976,7 +1976,8 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{s.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-muted-foreground">Adm: {s.admission_no}</p>
+                          <p className="text-xs text-muted-foreground">Adm: {s.admission_no} · {s.class_name}</p>
+                          <p className="text-xs text-muted-foreground">👤 {s.parent_name || "N/A"} · 📞 {s.parent_contact || "N/A"}</p>
                           {s.category && (
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${catColors[s.category] || "bg-slate-100 text-slate-600"}`}>
                               {catLabel[s.category] || s.category}
