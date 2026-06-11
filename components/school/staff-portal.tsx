@@ -148,6 +148,7 @@ export function StaffPortal({
   const [rcLogDate, setRcLogDate] = useState(SYSTEM_TODAY);
   const [rcLogClass, setRcLogClass] = useState(classNames[0]);
   const [selectedStudentAdmNo, setSelectedStudentAdmNo] = useState<string>("");
+  const [photoUploading, setPhotoUploading] = useState<string | null>(null);
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
@@ -938,6 +939,24 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
   if (!confirm("Delete this document?")) return;
   await supabase.from("student_documents").delete().eq("id", id);
   fetchStudentFolderDocs(studentName);
+};
+  const handleUploadStudentPhoto = async (studentId: string, studentName: string, file: File) => {
+  setPhotoUploading(studentId);
+  const ext = file.name.split('.').pop();
+  const filePath = `photos/${studentId}.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from("student-photos")
+    .upload(filePath, file, { upsert: true });
+  if (uploadError) { alert("Photo upload failed."); setPhotoUploading(null); return; }
+  const { data } = supabase.storage.from("student-photos").getPublicUrl(filePath);
+  const { error: updateError } = await supabase
+    .from("students")
+    .update({ photo_url: data.publicUrl })
+    .eq("id", studentId);
+  if (updateError) { alert("Failed to save photo."); setPhotoUploading(null); return; }
+  setPhotoUploading(null);
+  await fetchStudents();
+  alert(`✓ Photo uploaded for ${studentName}`);
 };
  
   const handlePostMaterial = async () => {
@@ -1972,7 +1991,14 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg">📁</span>
+                      {s.photo_url ? (
+                        <img src={s.photo_url} alt={s.name}
+                          className="w-10 h-10 rounded-full object-cover border border-slate-200 flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm flex-shrink-0">
+                          {s.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                        </div>
+                      )}
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{s.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -2002,6 +2028,27 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                   {openFolderStudent === s.name && (
                     <div className="border-t p-4 space-y-3 bg-slate-50">
                       {/* Upload form */}
+                      <div className="space-y-2 bg-white border rounded-md p-3">
+                        <p className="text-xs font-semibold text-blue-900">🖼️ Student Photo</p>
+                        {s.photo_url && (
+                          <div className="flex justify-center">
+                            <img src={s.photo_url} alt={s.name}
+                              className="w-24 h-24 rounded-lg object-cover border border-slate-200" />
+                          </div>
+                        )}
+                        <input type="file" accept=".jpg,.jpeg,.png"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) await handleUploadStudentPhoto(s.id, s.name, file);
+                          }}
+                          className="text-sm w-full" />
+                        {photoUploading === s.id && (
+                          <p className="text-xs text-blue-600 animate-pulse">Uploading photo...</p>
+                        )}
+                        {s.photo_url && (
+                          <p className="text-xs text-emerald-600">✓ Photo uploaded</p>
+                        )}
+                      </div>
                       <div className="space-y-2 bg-white border rounded-md p-3">
                         <p className="text-xs font-semibold text-blue-900">📎 Upload Document</p>
                         <select value={folderDocType} onChange={(e) => setFolderDocType(e.target.value)}
