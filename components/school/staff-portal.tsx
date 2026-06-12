@@ -1853,16 +1853,7 @@ const handleDownloadContactsByClass = (className: string) => {
                                 <option value={2025}>2025</option>
                               </select>
                               <Button variant="outline" size="sm" onClick={() => fetchSummary(summaryYear)} className="text-xs">🔄 Refresh</Button>
-                              <div className="flex gap-2 flex-wrap">
-                              <Button onClick={() => handleDownloadContacts()} variant="outline" size="sm" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                                📥 All contacts
-                              </Button>
-                              {classNames.map(cls => (
-                                <Button key={cls} onClick={() => handleDownloadContactsByClass(cls)} variant="outline" size="sm" className="text-xs">
-                                  📥 {cls}
-                                </Button>
-                              ))}
-                            </div>
+                              
                             </div>
                           </div>
 
@@ -1994,6 +1985,14 @@ const handleDownloadContactsByClass = (className: string) => {
             {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <Button onClick={fetchStudents} variant="outline" size="sm" className="text-xs">🔄 Refresh</Button>
+          <Button onClick={() => handleDownloadContacts()} variant="outline" size="sm" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+            📥 All contacts
+          </Button>
+          {classNames.map(cls => (
+            <Button key={cls} onClick={() => handleDownloadContactsByClass(cls)} variant="outline" size="sm" className="text-xs">
+              📥 {cls}
+            </Button>
+          ))}
         </div>
       </div>
 
