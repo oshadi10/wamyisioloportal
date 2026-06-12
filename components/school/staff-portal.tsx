@@ -940,6 +940,36 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
   await supabase.from("student_documents").delete().eq("id", id);
   fetchStudentFolderDocs(studentName);
 };
+  const handleDownloadContacts = (className?: string) => {
+  let filtered = students.filter(s => s.parent_contact);
+  if (className) filtered = filtered.filter(s => s.class_name === className);
+  if (filtered.length === 0) { alert("No contacts found. Click Refresh first."); return; }
+
+  let vcf = "";
+  filtered.forEach(s => {
+    vcf += `BEGIN:VCARD\n`;
+    vcf += `VERSION:3.0\n`;
+    vcf += `FN:${s.parent_name || "Parent"} (${s.name})\n`;
+    vcf += `TEL;TYPE=CELL:${s.parent_contact}\n`;
+    vcf += `ORG:WAMY Isiolo High School\n`;
+    vcf += `NOTE:Parent of ${s.name} - ${s.class_name} - Adm: ${s.admission_no}\n`;
+    vcf += `END:VCARD\n\n`;
+  });
+
+  const blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `WAMY_${className || "All"}_Parent_Contacts.vcf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+const handleDownloadContactsByClass = (className: string) => {
+  handleDownloadContacts(className);
+};
   const handleUploadStudentPhoto = async (studentId: string, studentName: string, file: File) => {
   setPhotoUploading(studentId);
   const ext = file.name.split('.').pop();
@@ -1823,6 +1853,16 @@ const handleDeleteFolderDoc = async (id: string, studentName: string) => {
                                 <option value={2025}>2025</option>
                               </select>
                               <Button variant="outline" size="sm" onClick={() => fetchSummary(summaryYear)} className="text-xs">🔄 Refresh</Button>
+                              <div className="flex gap-2 flex-wrap">
+                              <Button onClick={() => handleDownloadContacts()} variant="outline" size="sm" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                                📥 All contacts
+                              </Button>
+                              {classNames.map(cls => (
+                                <Button key={cls} onClick={() => handleDownloadContactsByClass(cls)} variant="outline" size="sm" className="text-xs">
+                                  📥 {cls}
+                                </Button>
+                              ))}
+                            </div>
                             </div>
                           </div>
 
