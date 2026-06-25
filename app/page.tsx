@@ -237,7 +237,7 @@ useEffect(() => {
 
   // FIX: This variable is now declared before any portal conditional returns
   const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title 
-    || "📢 Mid-Term Exams will start on 21st June 2026.";
+    || "📢 Students should report back to school on 30th June 2026 before 5pm.";
 
   if (view === "student-portal" && loggedInStudent) {
     return (
