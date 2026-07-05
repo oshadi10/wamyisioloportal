@@ -48,7 +48,7 @@ const heroSlides = [
 export default function SchoolPortal() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroFade, setHeroFade] = useState(true);
-  const [showReminder, setShowReminder] = useState(true);
+  const [showReminder, setShowReminder] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
