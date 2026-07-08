@@ -1288,7 +1288,9 @@ const handleDownloadContactsByClass = (className: string) => {
                                 <TableRow key={index}>
                                   <TableCell>{result.subject}</TableCell>
                                   <TableCell>{result.marks}</TableCell>
-                                  <TableCell className="font-semibold">{result.grade}</TableCell>
+                                  <TableCell className="font-semibold">
+                                  {selectedClass === 'Grade 10' ? getGrade10Grade(result.marks) : getGrade(result.marks)}
+                                </TableCell>
                                   <TableCell>
                                     {lecturerSubjects.includes(result.subject) && (
                                       <Button variant="outline" size="sm" onClick={() => onDeleteResult(selectedStudent, result.subject, result.term)}>
