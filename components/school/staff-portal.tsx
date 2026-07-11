@@ -217,9 +217,21 @@ export function StaffPortal({
   const [prefectsSaving, setPrefectsSaving] = useState(false);
 
   const fetchPrefects = async () => {
-    const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
-    if (!error && data && data.length > 0) setPrefects(data);
-  };
+  const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
+  if (error) return;
+
+  if (data && data.length > 0) {
+    setPrefects(data);
+  } else {
+    // Table is empty — seed it once with the default list
+    const seedRows = prefects.map(({ id, ...rest }) => rest); // drop fake ids, let Supabase generate real ones
+    const { error: seedError } = await supabase.from("prefects").insert(seedRows);
+    if (!seedError) {
+      const { data: seeded } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
+      if (seeded) setPrefects(seeded);
+    }
+  }
+};
 
   const handleAddPrefect = async () => {
     if (!newPrefectName.trim() || !newPrefectRole.trim()) { alert("Enter name and role."); return; }
