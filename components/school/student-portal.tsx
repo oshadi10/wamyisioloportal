@@ -136,11 +136,11 @@ const positionSuffix = classPosition === 1 ? "st" : classPosition === 2 ? "nd" :
         : "More seriousness is required.";
 
     const rows = myResults
-      .map(
-        (r) =>
-          `<tr><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px">${r.marks}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px;font-weight:bold">${r.grade}</td><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject === 'Kiswahili' ? getKiswahiliComment(r.marks) : getComment(r.marks)}</td></tr>`
-      )
-      .join("");
+  .map((r) => {
+    const computedGrade = studentClass === 'Grade 10' ? getGrade10Grade(r.marks) : getGrade(r.marks);
+    return `<tr><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px">${r.marks}</td><td style="border:1px solid #444;padding:10px;text-align:center;font-size:16px;font-weight:bold">${computedGrade}</td><td style="border:1px solid #444;padding:10px;font-size:16px">${r.subject === 'Kiswahili' ? getKiswahiliComment(r.marks) : getComment(r.marks)}</td></tr>`;
+  })
+  .join("");
 
     const feeBalance = totalBalance;
 
@@ -257,7 +257,9 @@ ${studentClass !== 'Grade 10' && classPosition ? `<div><strong>CLASS POSITION:</
                       <TableRow key={index}>
                         <TableCell>{result.subject}</TableCell>
                         <TableCell>{result.marks}</TableCell>
-                        <TableCell className="font-semibold">{result.grade}</TableCell>
+                        <TableCell className="font-semibold">
+                          {studentClass === 'Grade 10' ? getGrade10Grade(result.marks) : getGrade(result.marks)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
