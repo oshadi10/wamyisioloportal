@@ -27,6 +27,8 @@ interface StaffPortalProps {
   onUploadTimetable: (timetable: any) => void;
   onDeleteTimetable: (id: string) => void;
   onUploadTermDate: (termRow: any) => void;
+  events: any[];
+  onEventsChanged: () => void;
 }
 
 // Strict school registration master teacher assignment data map
@@ -39,7 +41,7 @@ const CLASS_TEACHERS: Record<string, string> = {
 export function StaffPortal({
   lecturer, results, fees, onUploadResult, onDeleteResult, onUpdateFees,
   materials, onPostMaterial, onDeleteMaterial, timetables, onUploadTimetable,
-  onDeleteTimetable, onUploadTermDate,
+  onDeleteTimetable, onUploadTermDate, events, onEventsChanged,
 }: StaffPortalProps) {
   const classNames = Object.keys(classStudents);
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
@@ -834,17 +836,19 @@ ${rcAdvanceCredit > 0 ? `<div class="row"><span class="label">Advance credit fro
   };
 
   const handlePostEvent = async () => {
-    if (!evtTitle.trim()) { alert("Enter a title."); return; }
-    const { error } = await supabase.from("events").insert({ type: evtType, title: evtTitle, description: evtDesc, date: evtDate });
-    if (error) { alert("Failed to post."); return; }
-    setEvtTitle(""); setEvtDesc(""); setEvtDate("");
-    alert("Posted successfully!");
-  };
+  if (!evtTitle.trim()) { alert("Enter a title."); return; }
+  const { error } = await supabase.from("events").insert({ type: evtType, title: evtTitle, description: evtDesc, date: evtDate });
+  if (error) { alert("Failed to post."); return; }
+  setEvtTitle(""); setEvtDesc(""); setEvtDate("");
+  onEventsChanged();
+  alert("Posted successfully!");
+};
 
-  const handleDeleteEvent = async (id: string) => {
-    await supabase.from("events").delete().eq("id", id);
-  };
-
+const handleDeleteEvent = async (id: string) => {
+  if (!confirm("Delete this item?")) return;
+  await supabase.from("events").delete().eq("id", id);
+  onEventsChanged();
+};
   const fetchStudents = async () => {
   const { data, error } = await supabase
     .from("students")
@@ -1922,24 +1926,50 @@ const handleDownloadContactsByClass = (className: string) => {
 
                 {/* EVENTS TAB */}
                 {isAdmin && (
-                  <TabsContent value="events" className="space-y-4">
-                    <h4 className="font-medium text-sm">Post New Announcement / Event / Notice</h4>
-                    <div className="space-y-2">
-                      <select value={evtType} onChange={(e) => setEvtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                        <option value="announcement">📢 Announcement</option>
-                        <option value="event">🗓️ Upcoming Event</option>
-                        <option value="notice">📋 School Notice</option>
-                      </select>
-                      <input placeholder="Title" value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      <textarea placeholder="Description (optional)" value={evtDesc} onChange={(e) => setEvtDesc(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm min-h-[80px] bg-white" />
-                      <input placeholder="Date (e.g. June 5, 2026)" value={evtDate} onChange={(e) => setEvtDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      <Button onClick={handlePostEvent} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
-                        <Plus className="h-4 w-4 mr-2" /> Post to Homepage Sidebar
-                      </Button>
-                    </div>
-                  </TabsContent>
-                )}
+  <TabsContent value="events" className="space-y-4">
+    <h4 className="font-medium text-sm">Post New Announcement / Event / Notice</h4>
+    <div className="space-y-2">
+      <select value={evtType} onChange={(e) => setEvtType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+        <option value="announcement">📢 Announcement</option>
+        <option value="event">🗓️ Upcoming Event</option>
+        <option value="notice">📋 School Notice</option>
+      </select>
+      <input placeholder="Title" value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      <textarea placeholder="Description (optional)" value={evtDesc} onChange={(e) => setEvtDesc(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm min-h-[80px] bg-white" />
+      <input placeholder="Date (e.g. June 5, 2026)" value={evtDate} onChange={(e) => setEvtDate(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      <Button onClick={handlePostEvent} className="bg-blue-700 hover:bg-blue-800 text-white w-full">
+        <Plus className="h-4 w-4 mr-2" /> Post to Homepage Sidebar
+      </Button>
+    </div>
 
+    <div className="pt-4 border-t space-y-3">
+      <h4 className="font-medium text-sm">Existing announcements, events & notices</h4>
+      {events.filter(e => e.type !== "moving_announcement").length === 0 ? (
+        <p className="text-sm text-muted-foreground italic">Nothing posted yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {events.filter(e => e.type !== "moving_announcement").map((e) => (
+            <div key={e.id} className="flex items-start justify-between gap-3 border rounded-md p-3 bg-white">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase text-blue-700">
+                    {e.type === "announcement" ? "📢 Announcement" : e.type === "event" ? "🗓️ Event" : "📋 Notice"}
+                  </span>
+                  {e.date && <span className="text-xs text-muted-foreground">· {e.date}</span>}
+                </div>
+                <p className="text-sm font-medium text-slate-800 mt-0.5">{e.title}</p>
+                {e.description && <p className="text-xs text-muted-foreground mt-0.5">{e.description}</p>}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => handleDeleteEvent(e.id)} className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </TabsContent>
+)}
                 {/* STUDENTS TAB */}
                {isAdmin && (
   <TabsContent value="students" className="space-y-4">
