@@ -24,12 +24,12 @@ type ViewType = "home" | "student-login" | "staff-login" | "student-portal" | "s
 
 const heroSlides = [
   {
-    title: "COUNTY CHAMPION",
+    title: "REGIONAL CHAMPION",
     subtitle: "Our Scout Team achieved a remarkable milestone by securing first position in the county and bringing home our first trophy.",
     image: "/winners.jpeg",
   },
   {
-    title: "TROPHY WINNERS",
+    title: "HEADING TO NATIONALS ON 1ST AUGUST 2026",
     subtitle: "Happy to celebrate our first trophy in Wamy Isiolo high school.",
     image: "/trophy.jpeg",
   },
@@ -231,7 +231,7 @@ export default function SchoolPortal() {
   };
 
   const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title
-    || "📢 Students should report back to school on 30th June 2026 before 5pm.";
+    || "📢 EXAMS START ON 17TH JULY AND ENDS ON 25TH JULY 2026.";
 
   if (view === "student-portal" && loggedInStudent) {
     return (
