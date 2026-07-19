@@ -280,6 +280,8 @@ export default function SchoolPortal() {
           onUploadTermDate={handleUploadTermDate}
           currentAnnouncement={liveAnnouncement}
           onUpdateAnnouncement={handleUpdateMovingAnnouncement}
+          events={events}
+          onEventsChanged={fetchEvents}
         />
       </main>
     );
