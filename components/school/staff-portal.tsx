@@ -217,6 +217,7 @@ export function StaffPortal({
   const [editingName, setEditingName] = useState("");
   const [editingRole, setEditingRole] = useState("");
   const [prefectsSaving, setPrefectsSaving] = useState(false);
+  const [filterTerm, setFilterTerm] = useState("All");
 
   const fetchPrefects = async () => {
   const { data, error } = await supabase.from("prefects").select("*").order("created_at", { ascending: true });
@@ -1288,9 +1289,24 @@ const handleDownloadContactsByClass = (className: string) => {
                     </div>
                   </div>
                   {studentResults.length > 0 ? (
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-sm">Existing Results</h4>
-                      {Object.entries(resultsByTerm).map(([term, termResults]) => (
+  <div className="space-y-4">
+    <div className="flex items-center justify-between">
+      <h4 className="font-medium text-sm">Existing Results</h4>
+      <select
+        value={filterTerm}
+        onChange={(e) => setFilterTerm(e.target.value)}
+        className="border rounded-md px-3 py-1.5 text-sm bg-white"
+      >
+        <option value="All">All Terms</option>
+        {Object.keys(resultsByTerm).map((term) => (
+          <option key={term} value={term}>{term}</option>
+        ))}
+      </select>
+    </div>
+
+    {Object.entries(resultsByTerm)
+      .filter(([term]) => filterTerm === "All" || term === filterTerm)
+      .map(([term, termResults]) => (
                         <div key={term}>
                           <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">{term}</p>
                           <Table>
