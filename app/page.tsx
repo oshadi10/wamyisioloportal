@@ -231,7 +231,7 @@ export default function SchoolPortal() {
   };
 
   const liveAnnouncement = events.find(e => e.type === "moving_announcement")?.title
-    || "📢 EXAMS START ON 17TH JULY AND ENDS ON 25TH JULY 2026.";
+    || "📢 School reopens on Tuesday, 25th August 2026.";
 
   if (view === "student-portal" && loggedInStudent) {
     return (
