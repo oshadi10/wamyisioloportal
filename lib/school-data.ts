@@ -30,10 +30,12 @@ export interface Lecturer {
   subject: string;
   email: string;
   password: string;
+  isAdmin?: boolean;
 }
 
 export const lecturers: Lecturer[] = [
-  { name: 'Mr. Osman Halake', subject: 'Mathematics / Business Studies', email: 'osman@wamyisiolo.sc.ke', password: 'osman5515' },
+  { name: 'Mr. Osman Halake', subject: 'Mathematics / Business Studies', email: 'osman@wamyisiolo.sc.ke', password: 'osman5515', isAdmin: true },
+  { name: 'Mr. Osman Halake', subject: 'Administration', email: 'manager@wamyisiolcenter.local', password: 'Manager123!', isAdmin: true },
   { name: 'Mr. Guyo Halake', subject: 'Arabic / Islamic Religious Education', email: 'guyo@wamyisiolo.sc.ke', password: 'guyo111' },
   { name: 'Mr. Dennis Kipkoech', subject: 'Mathematics / Physics', email: 'dennis@wamyisiolo.sc.ke', password: 'dennis222' },
   { name: 'Mr. John Simiyu', subject: 'Kiswahili / History', email: 'john@wamyisiolo.sc.ke', password: 'john373' },
