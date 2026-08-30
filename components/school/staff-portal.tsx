@@ -2487,8 +2487,8 @@ const handleDownloadContactsByClass = (className: string) => {
       <thead className="bg-slate-50">
         <tr>
           <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
-          <th className="px-3 py-2 text-right font-semibold text-slate-600">In stock (kg)</th>
-          <th className="px-3 py-2 text-right font-semibold text-slate-600">Daily use (kg)</th>
+          <th className="px-3 py-2 text-right font-semibold text-slate-600">In stock</th>
+          <th className="px-3 py-2 text-right font-semibold text-slate-600">Daily use</th>
           <th className="px-3 py-2 text-right font-semibold text-slate-600">Runs out by</th>
         </tr>
       </thead>
@@ -2498,8 +2498,8 @@ const handleDownloadContactsByClass = (className: string) => {
           return (
             <tr key={item.id} className="border-t">
               <td className="px-3 py-2 font-medium">{item.name}</td>
-              <td className="px-3 py-2 text-right">{Number(item.current_stock || 0).toFixed(1)}</td>
-              <td className="px-3 py-2 text-right">{dailyNeed(item).toFixed(2)}</td>
+              <td className="px-3 py-2 text-right">{Number(item.current_stock || 0).toFixed(1)} {item.unit || "kg"}</td>
+              <td className="px-3 py-2 text-right">{dailyNeed(item).toFixed(2)} {item.unit || "kg"}</td>
               <td className="px-3 py-2 text-right font-semibold">
                 {finish ? <span className={new Date(finish) <= new Date(new Date().setDate(new Date().getDate() + 3)) ? "text-red-600" : "text-blue-700"}>{finish}</span> : <span className="text-muted-foreground">—</span>}
               </td>
