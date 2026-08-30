@@ -103,6 +103,15 @@ export function StaffPortal({
   const [docFile, setDocFile] = useState<File | null>(null);
   const [docUploading, setDocUploading] = useState(false);
   const [studentDocs, setStudentDocs] = useState<any[]>([]);
+  const [foodHeadcount, setFoodHeadcount] = useState<any[]>([]);
+  const [foodItems, setFoodItems] = useState<any[]>([]);
+  const [hcDate, setHcDate] = useState(SYSTEM_TODAY);
+  const [hcCount, setHcCount] = useState("");
+  const [hcSaving, setHcSaving] = useState(false);
+  const [newFoodName, setNewFoodName] = useState("");
+  const [newFoodRatio, setNewFoodRatio] = useState("5");
+  const [newFoodTimes, setNewFoodTimes] = useState("7");
+  const [foodSaving, setFoodSaving] = useState(false);
 
   // DYNAMIC TRACKING STATE PARAMETERS
   const SYSTEM_TODAY = new Date().toISOString().split("T")[0];
@@ -154,13 +163,14 @@ export function StaffPortal({
 
   // Auto-fetch hook dependencies map
   useEffect(() => {
-    if (activeTab === "students") fetchStudents();
-    if (activeTab === "attendance") fetchAttendance();
-    if (activeTab === "prefects") fetchPrefects();
-    if (activeTab === "occurrence") fetchOccurrences();
-    if (activeTab === "fees") fetchAllStudentsForFees();
-    if (activeTab === "rollcall") fetchRollCallLogs(); 
-  }, [activeTab, selectedClass, attDate]);
+  if (activeTab === "students") fetchStudents();
+  if (activeTab === "attendance") fetchAttendance();
+  if (activeTab === "prefects") fetchPrefects();
+  if (activeTab === "occurrence") fetchOccurrences();
+  if (activeTab === "fees") fetchAllStudentsForFees();
+  if (activeTab === "rollcall") fetchRollCallLogs();
+  if (activeTab === "food") { fetchFoodHeadcount(); fetchFoodItems(); }
+}, [activeTab, selectedClass, attDate]);
 
   // Dedicated effect listener monitoring date changes for teacher logs
   useEffect(() => {
@@ -355,6 +365,84 @@ const handleDeleteOccurrence = async (id: string) => {
     .order("created_at", { ascending: false });
   if (!error && data) setRcLogs(data);
 };
+  const fetchFoodHeadcount = async () => {
+  const { data, error } = await supabase
+    .from("food_headcount")
+    .select("*")
+    .order("log_date", { ascending: false })
+    .limit(30);
+  if (!error && data) setFoodHeadcount(data);
+};
+
+const fetchFoodItems = async () => {
+  const { data, error } = await supabase
+    .from("food_items")
+    .select("*")
+    .order("name", { ascending: true });
+  if (error) return;
+  if (data && data.length > 0) {
+    setFoodItems(data);
+  } else {
+    // seed with a starter list on first use
+    const seed = [
+      { name: "Rice", ratio: 5, times_per_week: 3 },
+      { name: "Maize flour (ugali)", ratio: 5, times_per_week: 4 },
+      { name: "Beans", ratio: 5, times_per_week: 3 },
+      { name: "Milk", ratio: 5, times_per_week: 7 },
+      { name: "Bread", ratio: 5, times_per_week: 2 },
+      { name: "Cooking oil", ratio: 5, times_per_week: 7 },
+      { name: "Sugar", ratio: 5, times_per_week: 7 },
+    ];
+    const { error: seedError } = await supabase.from("food_items").insert(seed);
+    if (!seedError) {
+      const { data: seeded } = await supabase.from("food_items").select("*").order("name", { ascending: true });
+      if (seeded) setFoodItems(seeded);
+    }
+  }
+};
+
+const handleLogHeadcount = async () => {
+  const count = Number(hcCount);
+  if (!hcDate || isNaN(count) || count <= 0) { alert("Enter a valid headcount."); return; }
+  setHcSaving(true);
+  const { error } = await supabase.from("food_headcount").upsert(
+    { log_date: hcDate, headcount: count },
+    { onConflict: "log_date" }
+  );
+  setHcSaving(false);
+  if (error) { alert("Failed to save headcount."); return; }
+  setHcCount("");
+  fetchFoodHeadcount();
+};
+
+const handleAddFoodItem = async () => {
+  if (!newFoodName.trim()) { alert("Enter an item name."); return; }
+  setFoodSaving(true);
+  const { error } = await supabase.from("food_items").insert({
+    name: newFoodName.trim(),
+    ratio: Number(newFoodRatio) || 5,
+    times_per_week: Number(newFoodTimes) || 7,
+  });
+  setFoodSaving(false);
+  if (error) { alert("Failed to add item."); return; }
+  setNewFoodName(""); setNewFoodRatio("5"); setNewFoodTimes("7");
+  fetchFoodItems();
+};
+
+const handleUpdateFoodItem = async (id: string, field: string, value: string) => {
+  const num = Number(value);
+  if (isNaN(num) || num <= 0) return;
+  await supabase.from("food_items").update({ [field]: num }).eq("id", id);
+  fetchFoodItems();
+};
+
+const handleDeleteFoodItem = async (id: string) => {
+  if (!confirm("Remove this item?")) return;
+  await supabase.from("food_items").delete().eq("id", id);
+  fetchFoodItems();
+};
+
+const latestHeadcount = foodHeadcount.length > 0 ? foodHeadcount[0].headcount : 0;
 
 const handleRcToggle = (studentName: string) => {
   setRcStatuses(prev => {
@@ -1111,6 +1199,7 @@ const handleDownloadContactsByClass = (className: string) => {
                   {isAdmin && <TabsTrigger value="fees" className="flex-shrink-0 text-xs px-2 py-1.5">Fees</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="events" className="flex-shrink-0 text-xs px-2 py-1.5">📣 Events</TabsTrigger>}
                   {isAdmin && <TabsTrigger value="students" className="flex-shrink-0 text-xs px-2 py-1.5">🎓 Students</TabsTrigger>}
+                  {isAdmin && <TabsTrigger value="food" className="flex-shrink-0 text-xs px-2 py-1.5">🍽️ Food Supply</TabsTrigger>}
                   <TabsTrigger value="prefects" className="flex-shrink-0 text-xs px-2 py-1.5">🏅 Prefects</TabsTrigger>
                   <TabsTrigger value="mylog" className="flex-shrink-0 text-xs px-2 py-1.5">📋 My Log</TabsTrigger>
                   <TabsTrigger value="occurrence" className="flex-shrink-0 text-xs px-2 py-1.5">📖 Occurrence</TabsTrigger>
@@ -2205,6 +2294,143 @@ const handleDownloadContactsByClass = (className: string) => {
             })}
         </div>
       )}
+    </div>
+  </TabsContent>
+)}
+                {isAdmin && (
+  <TabsContent value="food" className="space-y-6">
+    <div>
+      <h4 className="font-semibold text-sm text-slate-800">🍽️ Food Supply Tracking</h4>
+      <p className="text-xs text-muted-foreground mt-0.5">Log today's headcount and see the calculated weekly need per item — carry the numbers over to WICHMIS as a requisition yourself.</p>
+    </div>
+
+    {/* HEADCOUNT LOGGING */}
+    <div className="border rounded-md p-4 bg-muted/30 space-y-3">
+      <h5 className="text-xs font-semibold text-blue-900">➕ Log Today's Headcount</h5>
+      <p className="text-xs text-muted-foreground">Enrollment varies on midterms, sports days, etc. — log the actual number eating today.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs font-semibold">Date</Label>
+          <input type="date" value={hcDate} onChange={(e) => setHcDate(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <Label className="text-xs font-semibold">Headcount</Label>
+          <input type="number" placeholder="e.g. 65" value={hcCount} onChange={(e) => setHcCount(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <Button onClick={handleLogHeadcount} disabled={hcSaving} className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+        <Plus className="h-4 w-4 mr-2" />{hcSaving ? "Saving..." : "Save headcount"}
+      </Button>
+    </div>
+
+    {/* RECENT HEADCOUNT LOG */}
+    <div className="space-y-2">
+      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">Recent headcount log</h5>
+      {foodHeadcount.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">No headcount logged yet.</p>
+      ) : (
+        <div className="border rounded-md overflow-hidden bg-white">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-50">
+              <tr><th className="px-3 py-2 text-left font-semibold text-slate-600">Date</th><th className="px-3 py-2 text-right font-semibold text-slate-600">Headcount</th></tr>
+            </thead>
+            <tbody>
+              {foodHeadcount.slice(0, 10).map((h) => (
+                <tr key={h.id} className="border-t">
+                  <td className="px-3 py-2">{h.log_date}</td>
+                  <td className="px-3 py-2 text-right font-semibold">{h.headcount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    {/* FOOD ITEMS CONFIG */}
+    <div className="space-y-2">
+      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">Food items & ratios</h5>
+      <div className="border rounded-md overflow-hidden bg-white">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
+              <th className="px-3 py-2 text-center font-semibold text-slate-600">1kg feeds (students)</th>
+              <th className="px-3 py-2 text-center font-semibold text-slate-600">Times/week</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {foodItems.map((item) => (
+              <tr key={item.id} className="border-t">
+                <td className="px-3 py-2 font-medium">{item.name}</td>
+                <td className="px-3 py-2 text-center">
+                  <input type="number" defaultValue={item.ratio} onBlur={(e) => handleUpdateFoodItem(item.id, "ratio", e.target.value)}
+                    className="w-16 border rounded px-2 py-1 text-center text-xs" />
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <input type="number" defaultValue={item.times_per_week} onBlur={(e) => handleUpdateFoodItem(item.id, "times_per_week", e.target.value)}
+                    className="w-16 border rounded px-2 py-1 text-center text-xs" />
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <Button variant="outline" size="sm" onClick={() => handleDeleteFoodItem(item.id)} className="text-destructive border-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        <input placeholder="New item name" value={newFoodName} onChange={(e) => setNewFoodName(e.target.value)}
+          className="col-span-2 flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
+        <input type="number" placeholder="Ratio" value={newFoodRatio} onChange={(e) => setNewFoodRatio(e.target.value)}
+          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
+        <input type="number" placeholder="Times/wk" value={newFoodTimes} onChange={(e) => setNewFoodTimes(e.target.value)}
+          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
+      </div>
+      <Button onClick={handleAddFoodItem} disabled={foodSaving} variant="outline" className="w-full text-xs">
+        <Plus className="h-3 w-3 mr-1" />{foodSaving ? "Adding..." : "Add item"}
+      </Button>
+    </div>
+
+    {/* CALCULATED WEEKLY NEED */}
+    <div className="space-y-2">
+      <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">
+        Calculated weekly need {latestHeadcount > 0 ? `(based on ${latestHeadcount} students)` : ""}
+      </h5>
+      {latestHeadcount === 0 ? (
+        <p className="text-xs text-muted-foreground italic">Log a headcount above to see calculated needs.</p>
+      ) : (
+        <div className="border rounded-md overflow-hidden bg-white">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">Per serving (kg)</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">Weekly need (kg)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {foodItems.map((item) => {
+                const perServing = latestHeadcount / item.ratio;
+                const weekly = perServing * item.times_per_week;
+                return (
+                  <tr key={item.id} className="border-t">
+                    <td className="px-3 py-2 font-medium">{item.name}</td>
+                    <td className="px-3 py-2 text-right">{perServing.toFixed(1)} kg</td>
+                    <td className="px-3 py-2 text-right font-semibold text-blue-700">{weekly.toFixed(1)} kg</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground italic">Use these numbers to raise a requisition in WICHMIS against a registered supplier.</p>
     </div>
   </TabsContent>
 )}
