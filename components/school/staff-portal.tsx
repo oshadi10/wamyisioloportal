@@ -47,6 +47,7 @@ export function StaffPortal({
   const [selectedClass, setSelectedClass] = useState(classNames[0]);
   const [selectedStudent, setSelectedStudent] = useState(classStudents[classNames[0]][0]);
   const [activeTab, setActiveTab] = useState("results");
+  const SYSTEM_TODAY = new Date().toISOString().split("T")[0];
   
   // Crash protection logic for admin profiles without standard teaching lines
   const lecturerSubjects = lecturer?.subject ? lecturer.subject.split(" / ") : ["General"];
@@ -114,7 +115,7 @@ export function StaffPortal({
   const [foodSaving, setFoodSaving] = useState(false);
 
   // DYNAMIC TRACKING STATE PARAMETERS
-  const SYSTEM_TODAY = new Date().toISOString().split("T")[0];
+  
   const [attDate, setAttDate] = useState(SYSTEM_TODAY);
   const [attRecords, setAttRecords] = useState<Record<string, { am: string; pm: string }>>({});
   const [isClassSubmitted, setIsClassSubmitted] = useState(false);
