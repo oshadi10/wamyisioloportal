@@ -173,7 +173,7 @@ export function StaffPortal({
   if (activeTab === "rollcall") fetchRollCallLogs();
 }, [rcLogDate, rcLogClass]);
 
-  const isAdmin = lecturer?.name === "Mr. Osman Halake";
+  const isAdmin = lecturer?.isAdmin === true;
 
   const isClassTeacher = 
     isAdmin ||
