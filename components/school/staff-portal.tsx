@@ -118,6 +118,7 @@ export function StaffPortal({
   const [delQty, setDelQty] = useState("");
   const [delDate, setDelDate] = useState(SYSTEM_TODAY);
   const [delSaving, setDelSaving] = useState(false);
+  const [newFoodUnit, setNewFoodUnit] = useState("kg");
 
   // DYNAMIC TRACKING STATE PARAMETERS
   
@@ -428,13 +429,13 @@ const handleAddFoodItem = async () => {
     name: newFoodName.trim(),
     ratio: Number(newFoodRatio) || 5,
     times_per_week: Number(newFoodTimes) || 7,
+    unit: newFoodUnit,
   });
   setFoodSaving(false);
   if (error) { alert("Failed to add item."); return; }
-  setNewFoodName(""); setNewFoodRatio("5"); setNewFoodTimes("7");
+  setNewFoodName(""); setNewFoodRatio("5"); setNewFoodTimes("7"); setNewFoodUnit("kg");
   fetchFoodItems();
 };
-
 const handleUpdateFoodItem = async (id: string, field: string, value: string) => {
   const num = Number(value);
   if (isNaN(num) || num <= 0) return;
@@ -487,6 +488,10 @@ const runsOutDate = (item: any) => {
   const d = new Date();
   d.setDate(d.getDate() + Math.floor(daysLeft));
   return d.toISOString().split("T")[0];
+};
+  const handleUpdateFoodUnit = async (id: string, unit: string) => {
+  await supabase.from("food_items").update({ unit }).eq("id", id);
+  fetchFoodItems();
 };
 
 const latestHeadcount = foodHeadcount.length > 0 ? foodHeadcount[0].headcount : 0;
@@ -2401,44 +2406,57 @@ const handleDownloadContactsByClass = (className: string) => {
       <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">Food items & ratios</h5>
       <div className="border rounded-md overflow-hidden bg-white">
         <table className="w-full text-xs">
+          
           <thead className="bg-slate-50">
-            <tr>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
-              <th className="px-3 py-2 text-center font-semibold text-slate-600">1kg feeds (students)</th>
-              <th className="px-3 py-2 text-center font-semibold text-slate-600">Times/week</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {foodItems.map((item) => (
-              <tr key={item.id} className="border-t">
-                <td className="px-3 py-2 font-medium">{item.name}</td>
-                <td className="px-3 py-2 text-center">
-                  <input type="number" defaultValue={item.ratio} onBlur={(e) => handleUpdateFoodItem(item.id, "ratio", e.target.value)}
-                    className="w-16 border rounded px-2 py-1 text-center text-xs" />
-                </td>
-                <td className="px-3 py-2 text-center">
-                  <input type="number" defaultValue={item.times_per_week} onBlur={(e) => handleUpdateFoodItem(item.id, "times_per_week", e.target.value)}
-                    className="w-16 border rounded px-2 py-1 text-center text-xs" />
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteFoodItem(item.id)} className="text-destructive border-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  <tr>
+    <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
+    <th className="px-3 py-2 text-center font-semibold text-slate-600">1 unit feeds (students)</th>
+    <th className="px-3 py-2 text-center font-semibold text-slate-600">Times/week</th>
+    <th className="px-3 py-2 text-center font-semibold text-slate-600">Unit</th>
+    <th className="px-3 py-2"></th>
+  </tr>
+</thead>
+<tbody>
+  {foodItems.map((item) => (
+    <tr key={item.id} className="border-t">
+      <td className="px-3 py-2 font-medium">{item.name}</td>
+      <td className="px-3 py-2 text-center">
+        <input type="number" defaultValue={item.ratio} onBlur={(e) => handleUpdateFoodItem(item.id, "ratio", e.target.value)}
+          className="w-16 border rounded px-2 py-1 text-center text-xs" />
+      </td>
+      <td className="px-3 py-2 text-center">
+        <input type="number" defaultValue={item.times_per_week} onBlur={(e) => handleUpdateFoodItem(item.id, "times_per_week", e.target.value)}
+          className="w-16 border rounded px-2 py-1 text-center text-xs" />
+      </td>
+      <td className="px-3 py-2 text-center">
+        <select value={item.unit || "kg"} onChange={(e) => handleUpdateFoodUnit(item.id, e.target.value)}
+          className="border rounded px-2 py-1 text-center text-xs bg-white">
+          <option value="kg">kg</option>
+          <option value="L">L</option>
+        </select>
+      </td>
+      <td className="px-3 py-2 text-right">
+        <Button variant="outline" size="sm" onClick={() => handleDeleteFoodItem(item.id)} className="text-destructive border-destructive hover:bg-destructive/10">
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </td>
+    </tr>
+  ))}
+</tbody>
         </table>
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        <input placeholder="New item name" value={newFoodName} onChange={(e) => setNewFoodName(e.target.value)}
-          className="col-span-2 flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
-        <input type="number" placeholder="Ratio" value={newFoodRatio} onChange={(e) => setNewFoodRatio(e.target.value)}
-          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
-        <input type="number" placeholder="Times/wk" value={newFoodTimes} onChange={(e) => setNewFoodTimes(e.target.value)}
-          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
-      </div>
+      <div className="grid grid-cols-5 gap-2">
+  <input placeholder="New item name" value={newFoodName} onChange={(e) => setNewFoodName(e.target.value)}
+    className="col-span-2 flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
+  <input type="number" placeholder="Ratio" value={newFoodRatio} onChange={(e) => setNewFoodRatio(e.target.value)}
+    className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
+  <input type="number" placeholder="Times/wk" value={newFoodTimes} onChange={(e) => setNewFoodTimes(e.target.value)}
+    className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-xs" />
+  <select value={newFoodUnit} onChange={(e) => setNewFoodUnit(e.target.value)} className="flex h-9 rounded-md border border-input bg-white px-2 text-xs">
+    <option value="kg">kg</option>
+    <option value="L">L</option>
+  </select>
+</div>
       <Button onClick={handleAddFoodItem} disabled={foodSaving} variant="outline" className="w-full text-xs">
         <Plus className="h-3 w-3 mr-1" />{foodSaving ? "Adding..." : "Add item"}
       </Button>
@@ -2507,8 +2525,8 @@ const handleDownloadContactsByClass = (className: string) => {
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600">Per serving (kg)</th>
-                <th className="px-3 py-2 text-right font-semibold text-slate-600">Weekly need (kg)</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">Per serving</th>
+                <th className="px-3 py-2 text-right font-semibold text-slate-600">Weekly need</th>
               </tr>
             </thead>
             <tbody>
@@ -2518,8 +2536,8 @@ const handleDownloadContactsByClass = (className: string) => {
                 return (
                   <tr key={item.id} className="border-t">
                     <td className="px-3 py-2 font-medium">{item.name}</td>
-                    <td className="px-3 py-2 text-right">{perServing.toFixed(1)} kg</td>
-                    <td className="px-3 py-2 text-right font-semibold text-blue-700">{weekly.toFixed(1)} kg</td>
+                    <td className="px-3 py-2 text-right">{perServing.toFixed(1)} {item.unit || "kg"} </td>
+                    <td className="px-3 py-2 text-right font-semibold text-blue-700">{weekly.toFixed(1)} {item.unit || "kg"} </td>
                   </tr>
                 );
               })}
