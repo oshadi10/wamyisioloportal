@@ -113,6 +113,11 @@ export function StaffPortal({
   const [newFoodRatio, setNewFoodRatio] = useState("5");
   const [newFoodTimes, setNewFoodTimes] = useState("7");
   const [foodSaving, setFoodSaving] = useState(false);
+  const [foodDeliveries, setFoodDeliveries] = useState<any[]>([]);
+  const [delItemId, setDelItemId] = useState("");
+  const [delQty, setDelQty] = useState("");
+  const [delDate, setDelDate] = useState(SYSTEM_TODAY);
+  const [delSaving, setDelSaving] = useState(false);
 
   // DYNAMIC TRACKING STATE PARAMETERS
   
@@ -170,7 +175,7 @@ export function StaffPortal({
   if (activeTab === "occurrence") fetchOccurrences();
   if (activeTab === "fees") fetchAllStudentsForFees();
   if (activeTab === "rollcall") fetchRollCallLogs();
-  if (activeTab === "food") { fetchFoodHeadcount(); fetchFoodItems(); }
+  if (activeTab === "food") { fetchFoodHeadcount(); fetchFoodItems(); fetchFoodDeliveries(); }
 }, [activeTab, selectedClass, attDate]);
 
   // Dedicated effect listener monitoring date changes for teacher logs
@@ -441,6 +446,47 @@ const handleDeleteFoodItem = async (id: string) => {
   if (!confirm("Remove this item?")) return;
   await supabase.from("food_items").delete().eq("id", id);
   fetchFoodItems();
+};
+  const fetchFoodDeliveries = async () => {
+  const { data, error } = await supabase
+    .from("food_deliveries")
+    .select("*, food_items(name)")
+    .order("delivered_date", { ascending: false })
+    .limit(20);
+  if (!error && data) setFoodDeliveries(data);
+};
+
+const handleLogDelivery = async () => {
+  const qty = Number(delQty);
+  if (!delItemId || isNaN(qty) || qty <= 0) { alert("Choose an item and enter a valid quantity."); return; }
+  setDelSaving(true);
+  const { error: insertError } = await supabase.from("food_deliveries").insert({
+    item_id: delItemId,
+    quantity: qty,
+    delivered_date: delDate,
+  });
+  if (insertError) { alert("Failed to log delivery."); setDelSaving(false); return; }
+
+  const item = foodItems.find(i => i.id === delItemId);
+  if (item) {
+    await supabase.from("food_items").update({ current_stock: Number(item.current_stock || 0) + qty }).eq("id", delItemId);
+  }
+  setDelQty("");
+  setDelSaving(false);
+  fetchFoodDeliveries();
+  fetchFoodItems();
+};
+
+// how many kg of this item are used per day, based on the latest headcount and this item's ratio/frequency
+const dailyNeed = (item: any) => (latestHeadcount / item.ratio) * (item.times_per_week / 7);
+
+const runsOutDate = (item: any) => {
+  const rate = dailyNeed(item);
+  if (rate <= 0 || Number(item.current_stock || 0) <= 0) return null;
+  const daysLeft = Number(item.current_stock) / rate;
+  const d = new Date();
+  d.setDate(d.getDate() + Math.floor(daysLeft));
+  return d.toISOString().split("T")[0];
 };
 
 const latestHeadcount = foodHeadcount.length > 0 ? foodHeadcount[0].headcount : 0;
@@ -2397,6 +2443,56 @@ const handleDownloadContactsByClass = (className: string) => {
         <Plus className="h-3 w-3 mr-1" />{foodSaving ? "Adding..." : "Add item"}
       </Button>
     </div>
+    {/* LOG A DELIVERY */}
+<div className="border rounded-md p-4 bg-muted/30 space-y-3">
+  <h5 className="text-xs font-semibold text-blue-900">➕ Log a Delivery to the Store</h5>
+  <div className="grid grid-cols-3 gap-2">
+    <select value={delItemId} onChange={(e) => setDelItemId(e.target.value)} className="border rounded-md px-3 py-2 text-sm bg-white h-10">
+      <option value="">Choose item…</option>
+      {foodItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+    </select>
+    <input type="number" placeholder="Quantity (kg)" value={delQty} onChange={(e) => setDelQty(e.target.value)}
+      className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+    <input type="date" value={delDate} onChange={(e) => setDelDate(e.target.value)}
+      className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+  </div>
+  <Button onClick={handleLogDelivery} disabled={delSaving} className="bg-[#1a56a0] hover:bg-[#154a8a] w-full">
+    <Plus className="h-4 w-4 mr-2" />{delSaving ? "Saving..." : "Log delivery"}
+  </Button>
+</div>
+
+{/* CURRENT STOCK + RUNS OUT ESTIMATE */}
+<div className="space-y-2">
+  <h5 className="text-xs font-semibold text-slate-700 border-b pb-1">Current stock & estimated run-out</h5>
+  <div className="border rounded-md overflow-hidden bg-white">
+    <table className="w-full text-xs">
+      <thead className="bg-slate-50">
+        <tr>
+          <th className="px-3 py-2 text-left font-semibold text-slate-600">Item</th>
+          <th className="px-3 py-2 text-right font-semibold text-slate-600">In stock (kg)</th>
+          <th className="px-3 py-2 text-right font-semibold text-slate-600">Daily use (kg)</th>
+          <th className="px-3 py-2 text-right font-semibold text-slate-600">Runs out by</th>
+        </tr>
+      </thead>
+      <tbody>
+        {foodItems.map((item) => {
+          const finish = runsOutDate(item);
+          return (
+            <tr key={item.id} className="border-t">
+              <td className="px-3 py-2 font-medium">{item.name}</td>
+              <td className="px-3 py-2 text-right">{Number(item.current_stock || 0).toFixed(1)}</td>
+              <td className="px-3 py-2 text-right">{dailyNeed(item).toFixed(2)}</td>
+              <td className="px-3 py-2 text-right font-semibold">
+                {finish ? <span className={new Date(finish) <= new Date(new Date().setDate(new Date().getDate() + 3)) ? "text-red-600" : "text-blue-700"}>{finish}</span> : <span className="text-muted-foreground">—</span>}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+  <p className="text-xs text-muted-foreground italic">Dates within 3 days show in red — a good trigger to raise a requisition in WICHMIS.</p>
+</div>
 
     {/* CALCULATED WEEKLY NEED */}
     <div className="space-y-2">
