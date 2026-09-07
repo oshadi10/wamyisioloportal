@@ -18,7 +18,7 @@ export const studentAccounts: Record<string, string> = {
 
 export const classStudents: Record<string, string[]> = {
   'Form 4': ['Bagayo Khalil', 'Casim Lope', 'Shahid Ali', 'Rama Said', 'Abdalla Jamal', 'Ismail Abdullahi', 'Adan Isack', 'Abdikadir Kimgol', 'Alex Ogendi', 'Abdi Ture', 'Yunis Halake', 'Ian Hamatun', 'John Diyo', 'Ibrahim Mohamed', 'Bilal Ilchagi', 'Farhan Ngurusi', 'Hassanoor Jalafow'],
-  'Form 3': ['Mamo Godana', 'Roba Kampu', 'Ismail Laranyu', 'Rob Wario', 'Kadir Adan', 'Muqsin Maqbul', 'Saidnur Rogicha', 'Wako Roba', 'Jatani Jarso', 'Dida Galma', 'Somo Galgalo', 'Ramadham Ekwom', 'Hassan Achuka', 'Yahya Hassan', 'Ramadhan Lepir', 'Talha Hussein', 'Mohamed Said', 'Tadiku Kampu', 'Alnoor Hussein', 'Dulqifli Mohamed', 'Galgesa Arigele', 'Mansur Mohamed', 'Wilson Jamal'],
+  'Form 3': ['Mamo Godana', 'Roba Kampu', 'Ismail Laranyu', 'Rob Wario', 'Kadir Adan', 'Muqsin Maqbul', 'Saidnur Rogicha', 'Wako Roba', 'Jatani Jarso', 'Dida Galma', 'Somo Galgalo', 'Ramadham Ekwom', 'Hassan Achuka', 'Yahya Hassan', 'Ramadhan Lepir', 'Talha Hussein', 'Mohamed Said', 'Tadiku Kampu', 'Alnoor Hussein', 'Dulqifli Mohamed', 'Galgesa Arigele', 'Musa Mohamed', 'Mansur Mohamed', 'Wilson Jamal'],
   'Grade 10': ['Abdirahman Ekusekope', 'Abdinassir Ibrahim', 'Abubakar Halkano', 'Mohamed Galo', 'Abdulkarim Ramadhan', 'Guyo Tadicha', 'Muhidin Mohamed', 'Abdirizack Abubakar', 'Badrudin Mohamed', 'Idi Mohamed', 'Ali Kini', 'Abubakarsidiq Hassan', 'Abdikadir Ismail', 'Zakaria Jillo', 'Frankline Ewoi', 'Mohamed Amin', 'Abdishkur Mohamed', 'Ramadhan Sabla', 'Abdirizack Yussuf', 'Abdirahman Ahmed', 'Abdi Osman', 'Daniel Lemoris', 'Ledula Kimlahau', 'Kampicha Golicha', 'Isack Munene', 'Suleiman Mutethia', 'Ahmed Noor', 'Abdiaziz Mohamed']
 };
 
