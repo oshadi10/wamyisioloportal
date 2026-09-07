@@ -8,7 +8,7 @@ export const studentAccounts: Record<string, string> = {
   'Wako Roba': '363', 'Jatani Jarso': '351', 'Dida Galma': '385', 'Somo Galgalo': '359',
   'Ramadham Ekwom': '333', 'Hassan Achuka': '369', 'Yahya Hassan': '357', 'Ramadhan Lepir': '347',
   'Talha Hussein': '390', 'Mohamed Said': '355', 'Tadiku Kampu': '345', 'Alnoor Hussein': '361',
-  'Dulqifli Mohamed': '365', 'Galgesa Arigele': '319', 'Mansur Mohamed': '373', 'Wilson Jamal': '335', 'Abdirahman Ekusekope': '432', 'Abdinassir Ibrahim': '400', 'Abubakar Halkano': '402',
+  'Dulqifli Mohamed': '365', 'Galgesa Arigele': '319', 'Musa Mohamed': '379', 'Mansur Mohamed': '373', 'Wilson Jamal': '335', 'Abdirahman Ekusekope': '432', 'Abdinassir Ibrahim': '400', 'Abubakar Halkano': '402',
   'Mohamed Galo': '403', 'Abdulkarim Ramadhan': '404', 'Guyo Tadicha': '405', 'Muhidin Mohamed': '407',
   'Abdirizack Abubakar': '408', 'Badrudin Mohamed': '409', 'Idi Mohamed': '410', 'Ali Kini': '412',
   'Abubakarsidiq Hassan': '413', 'Abdikadir Ismail': '414', 'Zakaria Jillo': '415',
