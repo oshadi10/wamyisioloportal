@@ -54,7 +54,7 @@ export function StaffPortal({
   const [newSubject, setNewSubject] = useState(lecturerSubjects[0] || "");
   const [newMarks, setNewMarks] = useState("");
   const [newGrade, setNewGrade] = useState("");
-  const [newTerm, setNewTerm] = useState("Term 1, 2026");
+  const [newTerm, setNewTerm] = useState("Term 3, 2026");
   const [meritClass, setMeritClass] = useState(classNames[0]);
   const [meritTerm, setMeritTerm] = useState("Term 1, 2026");
   const [matTitle, setMatTitle] = useState("");
@@ -695,12 +695,13 @@ const handleSaveRollCall = async () => {
 };
 
   const handleUploadResult = () => {
-    if (!newSubject.trim() || !newMarks.trim()) { alert("Enter subject and marks."); return; }
-    const marks = Number(newMarks);
-    const grade = newGrade.trim() || (selectedClass === 'Grade 10' ? getGrade10Grade(marks) : getGrade(marks));
-    onUploadResult({ student: selectedStudent, className: selectedClass, subject: newSubject.trim(), marks, grade, term: newTerm });
-    setNewMarks(""); setNewGrade("");
-  };
+  if (!newSubject.trim() || !newMarks.trim()) { alert("Enter subject and marks."); return; }
+  const marks = Number(newMarks);
+  const grade = newGrade.trim() || (selectedClass === 'Grade 10' ? getGrade10Grade(marks) : getGrade(marks));
+  onUploadResult({ student: selectedStudent, className: selectedClass, subject: newSubject.trim(), marks, grade, term: newTerm });
+  alert(`Saved: ${selectedStudent} – ${newSubject.trim()} (${newTerm})`);
+  setNewMarks(""); setNewGrade("");
+};
 
   const handleUpdateFees = () => {
     const total = Number(feeTotal);
