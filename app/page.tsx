@@ -159,18 +159,30 @@ export default function SchoolPortal() {
   };
 
   const fetchResults = async () => {
-    const { data, error } = await supabase.from("results").select("*");
-    if (error) { console.error(error); return; }
-    const mapped: Result[] = (data || []).map((r: any) => ({
-      student: r.student,
-      className: r.class_name,
-      subject: r.subject,
-      marks: r.marks,
-      grade: r.grade,
-      term: r.term,
-    }));
-    setResults(mapped);
-  };
+  const all: any[] = [];
+  const pageSize = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("results")
+      .select("*")
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) { console.error(error); alert("Load failed: " + error.message); return; }
+    all.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  const mapped: Result[] = all.map((r: any) => ({
+    student: r.student,
+    className: r.class_name,
+    subject: r.subject,
+    marks: r.marks,
+    grade: r.grade,
+    term: r.term,
+  }));
+  setResults(mapped);
+};
 
   const handleStudentLogin = (studentName: string) => {
     setLoggedInStudent(studentName);
