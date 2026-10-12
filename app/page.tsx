@@ -189,23 +189,30 @@ export default function SchoolPortal() {
   };
 
   const handleUploadResult = async (result: Result) => {
-    await supabase.from("results").delete().match({
-      student: result.student,
-      subject: result.subject,
-      term: result.term,
-    });
-    const { error } = await supabase.from("results").insert({
-      student: result.student,
-      class_name: result.className,
-      subject: result.subject,
-      marks: result.marks,
-      grade: result.grade,
-      term: result.term,
-    });
-    if (error) { console.error(error); return; }
-    fetchResults();
-  };
-
+  const { error: delError } = await supabase.from("results").delete().match({
+    student: result.student,
+    subject: result.subject,
+    term: result.term,
+  });
+  if (delError) {
+    alert("Delete failed: " + delError.message);
+    return;
+  }
+  const { error } = await supabase.from("results").insert({
+    student: result.student,
+    class_name: result.className,
+    subject: result.subject,
+    marks: result.marks,
+    grade: result.grade,
+    term: result.term,
+  });
+  if (error) {
+    alert("Upload failed: " + error.message);
+    return;
+  }
+  alert("Saved: " + result.student + " – " + result.subject + " (" + result.term + ")");
+  fetchResults();
+};
   const handleDeleteResult = async (student: string, subject: string, term: string) => {
     const { error } = await supabase.from("results").delete().match({
       student,
